@@ -1,10 +1,9 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.6
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.7
  *
- * Changes from v5.5:
- *   - Add poster_score (海報票選分) column 22
- *   - Add contribution bonus to score (+3/item, max +9)
- *   - poster_score added to total score
+ * Changes from v5.6:
+ *   - Add judgeScore action: writes external teacher poster scores to "海報評審" sheet
+ *   - Sheet: 組別 | 評審A×4 | 評審B×4 | 評審C×4 (13 cols)
  */
 
 const GAS_SECRET = "zodiac-2026-cmuh"; // must match CONFIG.GAS_SECRET in zzzzzz.html
@@ -24,6 +23,11 @@ function doPost(e) {
     if (data.secret !== GAS_SECRET) {
       return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Forbidden' }))
         .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── Judge scoring (external teachers) ──────────────────────────────
+    if (data.action === 'judgeScore') {
+      return handleJudgeScore(data);
     }
 
     const sessionId = data.sessionId;
@@ -138,4 +142,59 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// ── External judge poster scoring ─────────────────────────────────────
+function handleJudgeScore(data) {
+  const judge = data.judge;   // 'A', 'B', or 'C'
+  const rows  = data.rows;    // [{zodiac, content, design, creativity, total}, ...]
+  if (!judge || !rows || !rows.length) throw new Error("Missing judge or rows");
+
+  const SHEET_NAME = "海報評審";
+  const ZODIAC_ORDER = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+  const JUDGE_COL = { A: 2, B: 6, C: 10 }; // 1-indexed start column per judge (4 cols each)
+  if (!JUDGE_COL[judge]) throw new Error("Invalid judge id: " + judge);
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    // Write header row
+    const headers = [
+      "組別",
+      "評審A_內容", "評審A_視覺", "評審A_創意", "評審A_總分",
+      "評審B_內容", "評審B_視覺", "評審B_創意", "評審B_總分",
+      "評審C_內容", "評審C_視覺", "評審C_創意", "評審C_總分"
+    ];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers])
+         .setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+    // Pre-fill zodiac rows in correct order
+    const zodiacRows = ZODIAC_ORDER.map(z => [z, 0,0,0,0, 0,0,0,0, 0,0,0,0]);
+    sheet.getRange(2, 1, zodiacRows.length, 13).setValues(zodiacRows);
+  }
+
+  // Build lookup: zodiac label → row number (2-based)
+  const rowMap = {};
+  ZODIAC_ORDER.forEach((z, i) => { rowMap[z] = i + 2; });
+
+  const col = JUDGE_COL[judge];
+  rows.forEach(r => {
+    const rowNum = rowMap[r.zodiac];
+    if (!rowNum) return;
+    sheet.getRange(rowNum, col, 1, 4).setValues([[
+      Number(r.content) || 0,
+      Number(r.design)  || 0,
+      Number(r.creativity) || 0,
+      Number(r.total)   || 0
+    ]]);
+  });
+
+  // Timestamp in cell N1
+  const now = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy/MM/dd HH:mm:ss");
+  sheet.getRange(1, 14).setValue(`評審${judge} 最後送出: ${now}`);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'success',
+    message: `評審 ${judge} 已成功送出 ${rows.length} 組評分`
+  })).setMimeType(ContentService.MimeType.JSON);
 }
