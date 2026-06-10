@@ -305,7 +305,7 @@ function handleJudgeScore(data) {
 // ── Confirmation email ────────────────────────────────────────────────
 function sendConfirmationEmail_(email, name, rows, timestamp) {
   var honorific = name.match(/教授|老師|博士|主任|院長|所長|醫師|醫生|副教授/) ? name : name + '老師';
-  var subject   = '【Zodiac Ops 海報評審】評分確認 — ' + honorific;
+  var subject   = '【藥學系 Pathophysiology 海報評審】評分確認 — ' + honorific;
 
   var tableRows = '';
   rows.forEach(function(r) {
