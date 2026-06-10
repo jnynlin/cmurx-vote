@@ -136,7 +136,8 @@
         <div class="field-label"><i class="fa-solid fa-lock"></i> 個人 PIN 碼</div>
         <input v-model.trim="form.pin" class="field-input pin-input"
                type="password" inputmode="numeric" placeholder="••••"
-               maxlength="4" pattern="[0-9]{4}"
+               autocomplete="off"
+               @input="form.pin = form.pin.replace(/\D/g,'').slice(0,4)"
                @keyup.enter="signIn" ref="pinInput" />
         <div class="field-hint">設定 4 位數字 PIN 碼，用於日後修改評分</div>
       </div>
@@ -313,9 +314,7 @@ createApp({
       return name + '老師';
     };
 
-    const LS_SCORES = (pin) => `pj_scores_${pin}`;
-    const LS_SLOT   = (pin) => `pj_slot_${pin}`;
-    const LS_NAME   = (pin) => `pj_name_${pin}`;
+    const LS_SCORES = (slot) => `pj_scores_${slot}`; // key = slot (A/B/C), never PIN
 
     const showToast = (msg, type='success', icon='fa-solid fa-circle-check') => {
       toast.msg=msg; toast.type=type; toast.icon=icon;
@@ -346,10 +345,10 @@ createApp({
         }
 
         judgeName.value = form.name;
-        judgeSlot.value = json.slot;   // stored internally
+        judgeSlot.value = json.slot;   // stored internally, never shown
 
-        // restore scores from localStorage if available
-        const savedScores = localStorage.getItem(LS_SCORES(form.pin));
+        // restore scores from localStorage keyed by slot (not PIN)
+        const savedScores = localStorage.getItem(LS_SCORES(json.slot));
         if (savedScores) {
           try {
             JSON.parse(savedScores).forEach((s, i) => { if (scores[i]) Object.assign(scores[i], s); });
@@ -357,8 +356,6 @@ createApp({
         } else {
           scores.forEach(s => { s.content=0; s.design=0; s.creativity=0; s.total=0; });
         }
-        localStorage.setItem(LS_SLOT(form.pin), json.slot);
-        localStorage.setItem(LS_NAME(form.pin), form.name);
 
         submitted.value = false;
         phase.value = 'scoring';
@@ -383,7 +380,7 @@ createApp({
     // ── Scoring ──────────────────────────────────────────────────────
     const setScore = (i, key, val) => {
       scores[i][key] = val;
-      localStorage.setItem(LS_SCORES(form.pin), JSON.stringify(scores.map(s => ({...s}))));
+      localStorage.setItem(LS_SCORES(judgeSlot.value), JSON.stringify(scores.map(s => ({...s}))));
     };
 
     const isScored    = (i) => CRITERIA.every(c => scores[i][c.key] > 0);
@@ -418,7 +415,7 @@ createApp({
         if (!resp.ok || json.status === 'error') throw new Error(json.message || 'GAS error');
         submitted.value  = true;
         submitTime.value = ts;
-        localStorage.removeItem(LS_SCORES(form.pin));
+        localStorage.removeItem(LS_SCORES(judgeSlot.value));
         setTimeout(() => { phase.value = 'result'; }, 800);
       } catch(e) {
         showToast('送出失敗：' + e.message, 'error', 'fa-solid fa-triangle-exclamation');
