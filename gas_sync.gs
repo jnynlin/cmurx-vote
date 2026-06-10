@@ -149,78 +149,105 @@ function doPost(e) {
   }
 }
 
+// ── Shared sheet constants ─────────────────────────────────────────────
+const JUDGE_SHEET   = "海報評審";
+const ZODIAC_ORDER  = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+const ZODIAC_ELEM   = {'子鼠':'水','丑牛':'土','寅虎':'木','卯兔':'木','辰龍':'土','巳蛇':'火','午馬':'火','未羊':'土','申猴':'氣','酉雞':'氣','戌狗':'土','亥豬':'水'};
+// Col layout: 1=組別 2=元素 | 3-6=評審A | 7-10=評審B | 11-14=評審C | 15-18=均分 | 19=最終總分 | 20=排名
+const JUDGE_COL     = { A: 3, B: 7, C: 11 };  // start col of each judge's 4-col block
+const NAME_ROW      = 15;
+const PIN_ROW       = 16;
+
+function getOrCreateJudgeSheet_() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName(JUDGE_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(JUDGE_SHEET);
+    const headers = [
+      "組別","元素",
+      "評審A_內容","評審A_視覺","評審A_創意","評審A_總分",
+      "評審B_內容","評審B_視覺","評審B_創意","評審B_總分",
+      "評審C_內容","評審C_視覺","評審C_創意","評審C_總分",
+      "均分_內容","均分_視覺","均分_創意","均分_創意評分",
+      "★ 最終總分","排名"
+    ];
+    sheet.getRange(1,1,1,headers.length).setValues([headers])
+         .setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+
+    // Pre-fill 12 zodiac rows with element
+    const zodiacRows = ZODIAC_ORDER.map(z => [z, ZODIAC_ELEM[z]||'', 0,0,0,0, 0,0,0,0, 0,0,0,0, '','','','','','']);
+    sheet.getRange(2,1,zodiacRows.length,20).setValues(zodiacRows);
+
+    // Avg + rank formulas (rows 2–13)
+    for (let r = 2; r <= 13; r++) {
+      sheet.getRange(r,15).setFormula(`=IFERROR(AVERAGE(C${r},G${r},K${r}),"")`);  // 均分_內容
+      sheet.getRange(r,16).setFormula(`=IFERROR(AVERAGE(D${r},H${r},L${r}),"")`);  // 均分_視覺
+      sheet.getRange(r,17).setFormula(`=IFERROR(AVERAGE(E${r},I${r},M${r}),"")`);  // 均分_創意
+      sheet.getRange(r,18).setFormula(`=IFERROR(AVERAGE(E${r},I${r},M${r}),"")`);  // 均分_創意評分 (same)
+      sheet.getRange(r,19).setFormula(`=IFERROR(AVERAGE(F${r},J${r},N${r}),"")`);  // ★ 最終總分
+      sheet.getRange(r,20).setFormula(`=IFERROR(RANK(S${r},S$2:S$13,0),"")`);      // 排名
+    }
+    // Highlight final score + rank columns
+    sheet.getRange(2,19,12,2).setBackground("#1a2e1a").setFontColor("#4ade80").setFontWeight("bold");
+    // Row 15: signature label
+    sheet.getRange(NAME_ROW,1).setValue("評審簽名").setFontWeight("bold").setFontColor("#94a3b8");
+    sheet.getRange(PIN_ROW, 1).setValue("識別碼").setFontWeight("bold").setFontColor("#334155");
+  }
+  return sheet;
+}
+
 // ── Judge login: auto-assign slot by arrival order ────────────────────
 function handleLoginJudge(data) {
   const name = (data.name || '').trim();
   const pin  = (data.pin  || '').trim();
   if (!name || !pin) throw new Error("Missing name or pin");
 
-  const SHEET_NAME  = "海報評審";
-  const JUDGE_SLOTS = ['A', 'B', 'C'];
-  const NAME_ROW    = 14;
-  const PIN_ROW     = 15;
-  const COL_START   = { A: 2, B: 6, C: 10 };
+  const sheet = getOrCreateJudgeSheet_();
+  const SLOTS = ['A','B','C'];
 
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  let   sheet = ss.getSheetByName(SHEET_NAME);
-
-  // If sheet doesn't exist yet, create it (handleJudgeScore will fill headers on first score submit)
-  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
-
-  // ── Check if this name+PIN already has a slot (returning judge) ────
-  for (const slot of JUDGE_SLOTS) {
-    const col         = COL_START[slot];
-    const storedName  = (sheet.getRange(NAME_ROW, col).getValue() || '').toString().replace(/^✍ /, '').trim();
-    const storedPin   = (sheet.getRange(PIN_ROW,  col).getValue() || '').toString().trim();
+  // Returning judge: name + PIN match
+  for (const slot of SLOTS) {
+    const col        = JUDGE_COL[slot];
+    const storedName = (sheet.getRange(NAME_ROW, col).getValue()||'').toString().replace(/^✍ /,'').trim();
+    const storedPin  = (sheet.getRange(PIN_ROW,  col).getValue()||'').toString().trim();
     if (storedName === name && storedPin === pin) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: 'ok', slot, returning: true,
-        message: `歡迎回來，${name}`
-      })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({status:'ok',slot,returning:true}))
+        .setMimeType(ContentService.MimeType.JSON);
     }
   }
 
-  // ── Name matches but PIN wrong → reject ───────────────────────────
-  for (const slot of JUDGE_SLOTS) {
-    const col        = COL_START[slot];
-    const storedName = (sheet.getRange(NAME_ROW, col).getValue() || '').toString().replace(/^✍ /, '').trim();
+  // Name matches but PIN wrong
+  for (const slot of SLOTS) {
+    const col        = JUDGE_COL[slot];
+    const storedName = (sheet.getRange(NAME_ROW, col).getValue()||'').toString().replace(/^✍ /,'').trim();
     if (storedName === name) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: 'error', message: 'PIN 碼錯誤，請重新輸入'
-      })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({status:'error',message:'識別碼錯誤，請重新輸入'}))
+        .setMimeType(ContentService.MimeType.JSON);
     }
   }
 
-  // ── Claim next empty slot ─────────────────────────────────────────
-  for (const slot of JUDGE_SLOTS) {
-    const col        = COL_START[slot];
-    const storedName = (sheet.getRange(NAME_ROW, col).getValue() || '').toString().trim();
+  // Claim next empty slot
+  for (const slot of SLOTS) {
+    const col        = JUDGE_COL[slot];
+    const storedName = (sheet.getRange(NAME_ROW, col).getValue()||'').toString().trim();
     if (!storedName) {
       sheet.getRange(NAME_ROW, col).setValue(`✍ ${name}`);
       sheet.getRange(PIN_ROW,  col).setValue(pin);
-      return ContentService.createTextOutput(JSON.stringify({
-        status: 'ok', slot, returning: false,
-        message: `已登錄，${name}`
-      })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({status:'ok',slot,returning:false}))
+        .setMimeType(ContentService.MimeType.JSON);
     }
   }
 
-  // ── All 3 slots taken ─────────────────────────────────────────────
-  return ContentService.createTextOutput(JSON.stringify({
-    status: 'error', message: '三位評審名額已滿，請洽主辦單位'
-  })).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({status:'error',message:'三位評審名額已滿，請洽主辦單位'}))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ── External judge poster scoring ─────────────────────────────────────
 function handleJudgeScore(data) {
-  const judge     = data.judge;      // 'A', 'B', or 'C'
+  const judge     = data.judge;
   const judgeName = data.judgeName || '';
-  const rows      = data.rows;       // [{zodiac, content, design, creativity, total}, ...]
+  const rows      = data.rows;
   if (!judge || !rows || !rows.length) throw new Error("Missing judge or rows");
-
-  const SHEET_NAME = "海報評審";
-  const ZODIAC_ORDER = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
-  const JUDGE_COL = { A: 2, B: 6, C: 10 }; // 1-indexed start column per judge (4 cols each)
   if (!JUDGE_COL[judge]) throw new Error("Invalid judge id: " + judge);
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -230,20 +257,7 @@ function handleJudgeScore(data) {
     // Write header row
     const headers = [
       "組別",
-      "評審A_內容", "評審A_視覺", "評審A_創意", "評審A_總分",
-      "評審B_內容", "評審B_視覺", "評審B_創意", "評審B_總分",
-      "評審C_內容", "評審C_視覺", "評審C_創意", "評審C_總分"
-    ];
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers])
-         .setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
-    // Pre-fill zodiac rows in correct order
-    const zodiacRows = ZODIAC_ORDER.map(z => [z, 0,0,0,0, 0,0,0,0, 0,0,0,0]);
-    sheet.getRange(2, 1, zodiacRows.length, 13).setValues(zodiacRows);
-    // Row 14: signature row label
-    sheet.getRange(14, 1).setValue('評審簽名').setFontWeight('bold').setFontColor('#94a3b8');
-  }
-
-  // Build lookup: zodiac label → row number (2-based)
+  const sheet  = getOrCreateJudgeSheet_();
   const rowMap = {};
   ZODIAC_ORDER.forEach((z, i) => { rowMap[z] = i + 2; });
 
@@ -252,20 +266,19 @@ function handleJudgeScore(data) {
     const rowNum = rowMap[r.zodiac];
     if (!rowNum) return;
     sheet.getRange(rowNum, col, 1, 4).setValues([[
-      Number(r.content) || 0,
-      Number(r.design)  || 0,
+      Number(r.content)    || 0,
+      Number(r.design)     || 0,
       Number(r.creativity) || 0,
-      Number(r.total)   || 0
+      Number(r.total)      || 0
     ]]);
   });
 
-  // Write judge name into row 14 (below 12 zodiac rows + 1 header)
-  const nameRowStart = { A: 2, B: 6, C: 10 };
-  sheet.getRange(14, nameRowStart[judge]).setValue(judgeName ? `✍ ${judgeName}` : '');
+  // Update name row (also done at login, but refresh here for safety)
+  if (judgeName) sheet.getRange(NAME_ROW, col).setValue(`✍ ${judgeName}`);
 
-  // Timestamp
+  // Timestamp in col 21
   const now = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy/MM/dd HH:mm:ss");
-  sheet.getRange(1, 14).setValue(`評審${judge}${judgeName ? ' (' + judgeName + ')' : ''} 最後送出: ${now}`);
+  sheet.getRange(1, 21).setValue(`最後送出: ${now}`);
 
   return ContentService.createTextOutput(JSON.stringify({
     status: 'success',

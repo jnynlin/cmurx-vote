@@ -12,13 +12,12 @@
   .fade-in{animation:fadeIn .35s ease both;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-  /* ── Centered panel ── */
   .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
   .panel{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:44px 40px;max-width:460px;width:100%;}
   @media(max-width:480px){.panel{padding:32px 22px;border-radius:16px;}}
 
   /* ── Sign-in ── */
-  .signin-header{text-align:center;margin-bottom:32px;}
+  .signin-header{text-align:center;margin-bottom:28px;}
   .signin-header .icon{font-size:40px;margin-bottom:14px;}
   .signin-header h1{font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:6px;}
   .signin-header p{font-size:12px;color:#64748b;line-height:1.6;}
@@ -27,18 +26,26 @@
   .field-input{width:100%;background:#0f172a;border:2px solid #334155;border-radius:12px;padding:13px 16px;font-size:15px;color:#f8fafc;outline:none;transition:border-color .2s;font-family:inherit;}
   .field-input:focus{border-color:#3b82f6;}
   .field-input::placeholder{color:#475569;}
-  .pin-input{letter-spacing:6px;font-size:20px;font-weight:700;text-align:center;}
-  .field-hint{font-size:11px;color:#475569;margin-top:6px;}
-  .action-btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+
+  /* ── 4-box PIN ── */
+  .pin-boxes{display:flex;gap:10px;justify-content:center;margin-top:4px;}
+  .pin-box{width:56px;height:60px;background:#0f172a;border:2px solid #334155;border-radius:12px;font-size:24px;font-weight:800;color:#f8fafc;text-align:center;outline:none;transition:border-color .2s;caret-color:transparent;}
+  .pin-box:focus{border-color:#3b82f6;}
+  .pin-box.filled{border-color:#475569;color:#f59e0b;}
+  @media(max-width:380px){.pin-box{width:46px;height:54px;font-size:20px;}}
+  .pin-hint{font-size:11px;color:#475569;text-align:center;margin-top:10px;line-height:1.7;}
+  .pin-notice{background:#172032;border:1px solid #1e3a5f;border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11px;color:#64748b;line-height:1.7;}
+  .pin-notice strong{color:#93c5fd;}
+
+  .action-btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;}
   .action-btn.primary{background:#3b82f6;color:#fff;}
   .action-btn.primary:hover:not(:disabled){background:#2563eb;}
   .action-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
-  .divider{border:none;border-top:1px solid #1e293b;margin:20px 0;}
   .welcome-badge{display:flex;align-items:center;gap:10px;background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:12px 16px;margin-top:16px;}
-  .welcome-badge .wb-name{font-size:16px;font-weight:700;color:#f8fafc;}
-  .welcome-badge .wb-meta{font-size:11px;color:#64748b;margin-top:2px;}
+  .wb-name{font-size:16px;font-weight:700;color:#f8fafc;}
+  .wb-meta{font-size:11px;color:#64748b;margin-top:2px;}
 
-  /* ── Main scoring ── */
+  /* ── Scoring ── */
   .app{max-width:900px;margin:0 auto;padding:24px 16px 88px;}
   .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
   .top-bar h2{font-size:18px;font-weight:800;color:#f8fafc;}
@@ -47,7 +54,6 @@
   .progress-bar{height:4px;background:#1e293b;border-radius:2px;margin-bottom:22px;overflow:hidden;}
   .progress-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;transition:width .4s ease;}
 
-  /* ── Cards ── */
   .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;}}
   .group-card{background:#1e293b;border:2px solid #334155;border-radius:16px;padding:20px;transition:border-color .2s;}
@@ -57,8 +63,6 @@
   .zodiac-icon{width:44px;height:44px;border-radius:12px;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
   .zodiac-name{font-weight:700;font-size:15px;color:#f8fafc;}
   .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;margin-left:auto;flex-shrink:0;transition:background .3s;}
-
-  /* ── Stars ── */
   .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .criteria-label{font-size:11px;color:#94a3b8;flex-shrink:0;width:68px;}
   .stars{display:flex;gap:3px;}
@@ -67,7 +71,6 @@
   .star:hover{transform:scale(1.15);}
   .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
 
-  /* ── Submit bar ── */
   .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:50;}
   .submit-info{font-size:13px;color:#64748b;line-height:1.5;}
   .submit-info strong{color:#f8fafc;}
@@ -89,13 +92,11 @@
   .re-entry-btn{margin-top:24px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:11px 20px;color:#94a3b8;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;}
   .re-entry-btn:hover{border-color:#60a5fa;color:#60a5fa;}
 
-  /* ── Loading overlay ── */
+  /* ── Loading / Toast ── */
   .loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:200;}
-  .loading-overlay .spin{font-size:32px;animation:spin 1s linear infinite;}
+  .loading-overlay .spin{font-size:32px;color:#60a5fa;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
   .loading-overlay p{font-size:14px;color:#94a3b8;}
-
-  /* ── Toast ── */
   .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;z-index:999;animation:fadeIn .2s ease;white-space:nowrap;}
   .toast.success{border-color:#22c55e;color:#4ade80;}
   .toast.error{border-color:#ef4444;color:#f87171;}
@@ -105,13 +106,11 @@
 <body>
 <div id="app">
 
-  <!-- Loading overlay -->
   <div v-if="loading" class="loading-overlay">
-    <i class="fa-solid fa-spinner spin" style="color:#60a5fa;"></i>
+    <i class="fa-solid fa-spinner spin"></i>
     <p>{{ loadingMsg }}</p>
   </div>
 
-  <!-- Toast -->
   <div v-if="toast.msg" :class="['toast', toast.type]">
     <i :class="toast.icon"></i> {{ toast.msg }}
   </div>
@@ -129,20 +128,30 @@
         <div class="field-label"><i class="fa-solid fa-user"></i> 評審姓名</div>
         <input v-model.trim="form.name" class="field-input"
                placeholder="請輸入您的姓名" maxlength="30"
-               @keyup.enter="focusPin" ref="nameInput" />
+               autocomplete="name"
+               @keyup.enter="focusPin(0)" ref="nameInput" />
       </div>
 
       <div class="field">
-        <div class="field-label"><i class="fa-solid fa-lock"></i> 個人 PIN 碼</div>
-        <input v-model.trim="form.pin" class="field-input pin-input"
-               type="password" inputmode="numeric" placeholder="••••"
-               autocomplete="off"
-               @input="form.pin = form.pin.replace(/\D/g,'').slice(0,4)"
-               @keyup.enter="signIn" ref="pinInput" />
-        <div class="field-hint">設定 4 位數字 PIN 碼，用於日後修改評分</div>
+        <div class="field-label"><i class="fa-solid fa-grid-2"></i> 個人識別碼（4位數字）</div>
+        <div class="pin-boxes">
+          <input v-for="i in 4" :key="i"
+                 :class="['pin-box', pinDigits[i-1] ? 'filled' : '']"
+                 type="tel" inputmode="numeric" maxlength="1"
+                 autocomplete="off" autocorrect="off" autocapitalize="off"
+                 :value="pinDigits[i-1]"
+                 @input="onPinInput(i-1, $event)"
+                 @keydown="onPinKey(i-1, $event)"
+                 :ref="el => { if(el) pinRefs[i-1] = el }" />
+        </div>
+        <div class="pin-hint">設定 4 位數字，日後可憑此識別碼重新登入修改評分</div>
+        <div class="pin-notice">
+          <strong>提示：</strong>此欄位為本系統識別碼，非帳號密碼。<br>
+          瀏覽器若出現「儲存密碼」或相關提示，請選擇「略過」即可。
+        </div>
       </div>
 
-      <div v-if="form.name && form.pin.length === 4" class="welcome-badge fade-in">
+      <div v-if="form.name && pinStr.length === 4" class="welcome-badge fade-in">
         <div style="font-size:28px;">✍️</div>
         <div>
           <div class="wb-name">{{ withHonorific(form.name) }}</div>
@@ -150,11 +159,10 @@
         </div>
       </div>
 
-      <button class="action-btn primary" style="margin-top:20px;"
-              :disabled="!form.name || form.pin.length !== 4"
+      <button class="action-btn primary"
+              :disabled="!form.name || pinStr.length !== 4"
               @click="signIn">
-        <i class="fa-solid fa-pen-nib"></i>
-        確認簽名，進入評審
+        <i class="fa-solid fa-pen-nib"></i> 確認簽名，進入評審
       </button>
     </div>
   </div>
@@ -168,8 +176,7 @@
           <div class="progress-tag">{{ scoredCount }} / {{ ZODIAC.length }} 組已完成評分</div>
         </div>
         <div class="judge-chip">
-          <i class="fa-solid fa-user-tie"></i>
-          {{ withHonorific(judgeName) }}
+          <i class="fa-solid fa-user-tie"></i>{{ withHonorific(judgeName) }}
         </div>
       </div>
 
@@ -177,7 +184,6 @@
         <div class="progress-fill" :style="`width:${scoredCount/ZODIAC.length*100}%`"></div>
       </div>
 
-      <!-- Gallery banner -->
       <a :href="GALLERY_URL" target="_blank"
          style="display:flex;align-items:center;justify-content:space-between;background:#1c1917;border:1px solid #f59e0b;border-radius:12px;padding:12px 18px;margin-bottom:20px;text-decoration:none;color:#fbbf24;font-size:13px;font-weight:600;transition:background .2s;"
          onmouseover="this.style.background='#292524'" onmouseout="this.style.background='#1c1917'">
@@ -185,7 +191,6 @@
         <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
       </a>
 
-      <!-- Group cards -->
       <div class="group-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label"
              :class="['group-card', isScored(i) ? 'scored' : '']">
@@ -193,7 +198,7 @@
             <div class="zodiac-icon">{{ z.icon }}</div>
             <div>
               <div class="zodiac-name">{{ z.label }}</div>
-              <div style="font-size:11px;color:#64748b;">第 {{ i+1 }} 組</div>
+              <div style="font-size:11px;color:#64748b;">{{ z.element }} · 第 {{ i+1 }} 組</div>
             </div>
             <div class="status-dot"></div>
           </div>
@@ -215,17 +220,13 @@
     <div class="submit-bar">
       <div class="submit-info">
         <div>已評 <strong>{{ scoredCount }}</strong> / {{ ZODIAC.length }} 組</div>
-        <div v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;font-size:11px;">
-          還有 {{ ZODIAC.length - scoredCount }} 組未完成
-        </div>
+        <div v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;font-size:11px;">還有 {{ ZODIAC.length - scoredCount }} 組未完成</div>
         <div v-else style="color:#4ade80;font-size:11px;">全部完成，可以送出！</div>
       </div>
       <button :disabled="scoredCount < ZODIAC.length || submitting"
               :class="['submit-btn', submitted ? 'done' : '']"
               @click="submitScores">
-        <i :class="submitting ? 'fa-solid fa-spinner fa-spin'
-                  : submitted ? 'fa-solid fa-check'
-                  : 'fa-solid fa-paper-plane'"></i>
+        <i :class="submitting ? 'fa-solid fa-spinner fa-spin' : submitted ? 'fa-solid fa-check' : 'fa-solid fa-paper-plane'"></i>
         {{ submitting ? '送出中…' : submitted ? '已送出' : '送出評分' }}
       </button>
     </div>
@@ -236,19 +237,16 @@
     <div class="result-card">
       <div style="font-size:48px;margin-bottom:16px;">✅</div>
       <h2>評分已正式送出</h2>
-
       <div class="sig-box">
         <div class="sb-label">官方評審簽名 Official Reviewer Signature</div>
         <div class="sb-name">{{ withHonorific(judgeName) }}</div>
         <div class="sb-meta">
           Zodiac Ops Poster Review 2026<br>
           {{ submitTime }}<br>
-          <span style="color:#60a5fa;">可憑原 PIN 碼重新登入修改評分</span>
+          <span style="color:#60a5fa;">可憑原識別碼重新登入修改評分</span>
         </div>
       </div>
-
       <p style="color:#94a3b8;font-size:13px;">評分結果已同步至 Google Sheets。</p>
-
       <table class="result-table">
         <tr><th>組別</th><th>內容</th><th>視覺</th><th>創意</th><th>總分</th></tr>
         <tr v-for="(z, i) in ZODIAC" :key="z.label">
@@ -259,7 +257,6 @@
           <td><strong style="color:#f59e0b;">{{ scores[i].total }}</strong></td>
         </tr>
       </table>
-
       <button class="re-entry-btn" @click="backToSignIn">
         <i class="fa-solid fa-rotate-left"></i> 重新登入修改
       </button>
@@ -267,7 +264,6 @@
   </div>
 
 </div>
-
 <script>
 const { createApp, reactive, ref, computed, nextTick } = Vue;
 
@@ -276,9 +272,12 @@ const GAS_SECRET  = "zodiac-2026-cmuh";
 const GALLERY_URL = "https://padlet.com/jnynlin/cmurx";
 
 const ZODIAC = [
-  {label:'子鼠',icon:'⚡️'},{label:'丑牛',icon:'🧱'},{label:'寅虎',icon:'🔥'},{label:'卯兔',icon:'🧐'},
-  {label:'辰龍',icon:'🌟'},{label:'巳蛇',icon:'🧠'},{label:'午馬',icon:'🚀'},{label:'未羊',icon:'🤝'},
-  {label:'申猴',icon:'💡'},{label:'酉雞',icon:'⏱'}, {label:'戌狗',icon:'🛡'},{label:'亥豬',icon:'📚'},
+  {label:'子鼠',icon:'⚡️',element:'水'},{label:'丑牛',icon:'🧱',element:'土'},
+  {label:'寅虎',icon:'🔥',element:'木'},{label:'卯兔',icon:'🧐',element:'木'},
+  {label:'辰龍',icon:'🌟',element:'土'},{label:'巳蛇',icon:'🧠',element:'火'},
+  {label:'午馬',icon:'🚀',element:'火'},{label:'未羊',icon:'🤝',element:'土'},
+  {label:'申猴',icon:'💡',element:'氣'},{label:'酉雞',icon:'⏱', element:'氣'},
+  {label:'戌狗',icon:'🛡', element:'土'},{label:'亥豬',icon:'📚',element:'水'},
 ];
 
 const CRITERIA = [
@@ -299,92 +298,91 @@ createApp({
     const submitted  = ref(false);
     const submitTime = ref('');
     const judgeName  = ref('');
-    const judgeSlot  = ref('');   // A/B/C — internal only, never shown
+    const judgeSlot  = ref('');
     const nameInput  = ref(null);
-    const pinInput   = ref(null);
+    const pinRefs    = ref([null,null,null,null]);
     const toast      = reactive({msg:'', type:'success', icon:''});
 
-    const form   = reactive({name:'', pin:''});
-    const scores = reactive(ZODIAC.map(() => ({content:0, design:0, creativity:0, total:0})));
+    const form      = reactive({name:''});
+    const pinDigits = reactive(['','','','']);
+    const pinStr    = computed(() => pinDigits.join(''));
+    const scores    = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
 
-    // ── Helpers ──────────────────────────────────────────────────────
-    const withHonorific = (name) => {
+    const LS_SCORES = slot => `pj_scores_${slot}`;
+
+    const withHonorific = name => {
       if (!name) return '';
       if (HONORIFIC_TITLES.some(t => name.includes(t))) return name;
       return name + '老師';
     };
-
-    const LS_SCORES = (slot) => `pj_scores_${slot}`; // key = slot (A/B/C), never PIN
 
     const showToast = (msg, type='success', icon='fa-solid fa-circle-check') => {
       toast.msg=msg; toast.type=type; toast.icon=icon;
       setTimeout(() => { toast.msg=''; }, 4000);
     };
 
-    const focusPin = () => { nextTick(() => pinInput.value?.focus()); };
+    // ── 4-box PIN ────────────────────────────────────────────────────
+    const focusPin = (i) => nextTick(() => pinRefs.value[i]?.focus());
 
-    // ── Sign in / slot claim ─────────────────────────────────────────
-    const signIn = async () => {
-      if (!form.name || form.pin.length !== 4) return;
-      loading.value = true;
-      loadingMsg.value = '正在驗證身份…';
-      try {
-        const resp = await fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'loginJudge',
-            secret: GAS_SECRET,
-            name:   form.name,
-            pin:    form.pin,
-          })
-        });
-        const json = await resp.json();
-        if (json.status === 'error') {
-          showToast(json.message, 'error', 'fa-solid fa-triangle-exclamation');
-          return;
-        }
+    const onPinInput = (i, e) => {
+      const val = e.target.value.replace(/\D/g,'').slice(0,1);
+      pinDigits[i] = val;
+      e.target.value = val;
+      if (val && i < 3) nextTick(() => pinRefs.value[i+1]?.focus());
+    };
 
-        judgeName.value = form.name;
-        judgeSlot.value = json.slot;   // stored internally, never shown
-
-        // restore scores from localStorage keyed by slot (not PIN)
-        const savedScores = localStorage.getItem(LS_SCORES(json.slot));
-        if (savedScores) {
-          try {
-            JSON.parse(savedScores).forEach((s, i) => { if (scores[i]) Object.assign(scores[i], s); });
-          } catch(e) {}
-        } else {
-          scores.forEach(s => { s.content=0; s.design=0; s.creativity=0; s.total=0; });
-        }
-
-        submitted.value = false;
-        phase.value = 'scoring';
-
-        if (json.returning) {
-          showToast(`歡迎回來，${withHonorific(form.name)}`, 'info', 'fa-solid fa-handshake');
-        } else {
-          showToast(`歡迎，${withHonorific(form.name)}！`, 'success', 'fa-solid fa-star');
-        }
-      } catch(e) {
-        showToast('連線失敗，請稍後再試', 'error', 'fa-solid fa-triangle-exclamation');
-      } finally {
-        loading.value = false;
+    const onPinKey = (i, e) => {
+      if (e.key === 'Backspace') {
+        if (pinDigits[i]) { pinDigits[i] = ''; }
+        else if (i > 0)   { pinDigits[i-1] = ''; nextTick(() => pinRefs.value[i-1]?.focus()); }
       }
     };
 
+    // ── Sign-in ──────────────────────────────────────────────────────
+    const signIn = async () => {
+      if (!form.name || pinStr.value.length !== 4) return;
+      loading.value = true; loadingMsg.value = '正在驗證身份…';
+      try {
+        const resp = await fetch(GAS_URL, {
+          method:'POST',
+          body: JSON.stringify({action:'loginJudge', secret:GAS_SECRET, name:form.name, pin:pinStr.value})
+        });
+        const json = await resp.json();
+        if (json.status === 'error') { showToast(json.message,'error','fa-solid fa-triangle-exclamation'); return; }
+
+        judgeName.value = form.name;
+        judgeSlot.value = json.slot;
+
+        const saved = localStorage.getItem(LS_SCORES(json.slot));
+        if (saved) {
+          try { JSON.parse(saved).forEach((s,i) => { if(scores[i]) Object.assign(scores[i],s); }); }
+          catch(e) {}
+        } else {
+          scores.forEach(s => { s.content=0; s.design=0; s.creativity=0; s.total=0; });
+        }
+        submitted.value = false;
+        phase.value = 'scoring';
+        showToast(json.returning ? `歡迎回來，${withHonorific(form.name)}` : `歡迎，${withHonorific(form.name)}！`,
+                  json.returning ? 'info' : 'success',
+                  json.returning ? 'fa-solid fa-handshake' : 'fa-solid fa-star');
+      } catch(e) {
+        showToast('連線失敗，請稍後再試','error','fa-solid fa-triangle-exclamation');
+      } finally { loading.value = false; }
+    };
+
     const backToSignIn = () => {
-      form.name = ''; form.pin = '';
+      form.name = ''; pinDigits.forEach((_,i) => { pinDigits[i]=''; });
       phase.value = 'signin';
     };
 
     // ── Scoring ──────────────────────────────────────────────────────
     const setScore = (i, key, val) => {
       scores[i][key] = val;
-      localStorage.setItem(LS_SCORES(judgeSlot.value), JSON.stringify(scores.map(s => ({...s}))));
+      localStorage.setItem(LS_SCORES(judgeSlot.value), JSON.stringify(scores.map(s=>({...s}))));
     };
 
-    const isScored    = (i) => CRITERIA.every(c => scores[i][c.key] > 0);
-    const scoredCount = computed(() => scores.filter((_, i) => isScored(i)).length);
+    const isScored    = i => CRITERIA.every(c => scores[i][c.key] > 0);
+    const scoredCount = computed(() => scores.filter((_,i) => isScored(i)).length);
 
     // ── Submit ───────────────────────────────────────────────────────
     const submitScores = async () => {
@@ -392,45 +390,33 @@ createApp({
       submitting.value = true;
       try {
         const now = new Date();
-        const ts  = now.toLocaleString('zh-TW', {
-          timeZone:'Asia/Taipei', year:'numeric', month:'2-digit',
-          day:'2-digit', hour:'2-digit', minute:'2-digit'
-        });
-        const rows = ZODIAC.map((z, i) => ({
-          zodiac: z.label, content: scores[i].content, design: scores[i].design,
-          creativity: scores[i].creativity, total: scores[i].total,
+        const ts  = now.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        const rows = ZODIAC.map((z,i) => ({
+          zodiac:z.label, element:z.element,
+          content:scores[i].content, design:scores[i].design,
+          creativity:scores[i].creativity, total:scores[i].total,
         }));
         const resp = await fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action:    'judgeScore',
-            judge:     judgeSlot.value,
-            judgeName: judgeName.value,
-            secret:    GAS_SECRET,
-            rows,
-            timestamp: now.toISOString(),
-          })
+          method:'POST',
+          body: JSON.stringify({action:'judgeScore', judge:judgeSlot.value, judgeName:judgeName.value, secret:GAS_SECRET, rows, timestamp:now.toISOString()})
         });
         const json = await resp.json();
-        if (!resp.ok || json.status === 'error') throw new Error(json.message || 'GAS error');
-        submitted.value  = true;
-        submitTime.value = ts;
+        if (!resp.ok || json.status==='error') throw new Error(json.message||'GAS error');
+        submitted.value = true; submitTime.value = ts;
         localStorage.removeItem(LS_SCORES(judgeSlot.value));
-        setTimeout(() => { phase.value = 'result'; }, 800);
+        setTimeout(() => { phase.value='result'; }, 800);
       } catch(e) {
-        showToast('送出失敗：' + e.message, 'error', 'fa-solid fa-triangle-exclamation');
-      } finally {
-        submitting.value = false;
-      }
+        showToast('送出失敗：'+e.message,'error','fa-solid fa-triangle-exclamation');
+      } finally { submitting.value = false; }
     };
 
     return {
       ZODIAC, GALLERY_URL, CRITERIA,
-      phase, loading, loadingMsg, form, scores,
-      judgeName, submitting, submitted, submitTime,
-      scoredCount, toast, nameInput, pinInput,
-      withHonorific, focusPin, signIn, backToSignIn,
-      setScore, isScored, submitScores,
+      phase, loading, loadingMsg, form, pinDigits, pinStr,
+      judgeName, submitting, submitted, submitTime, scores,
+      scoredCount, toast, nameInput, pinRefs,
+      withHonorific, focusPin, onPinInput, onPinKey,
+      signIn, backToSignIn, setScore, isScored, submitScores,
     };
   }
 }).mount('#app');
