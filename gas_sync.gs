@@ -252,13 +252,6 @@ function handleJudgeScore(data) {
   if (!judge || !rows || !rows.length) throw new Error("Missing judge or rows");
   if (!JUDGE_COL[judge]) throw new Error("Invalid judge id: " + judge);
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    // Write header row
-    const headers = [
-      "組別",
   const sheet  = getOrCreateJudgeSheet_();
   const rowMap = {};
   ZODIAC_ORDER.forEach((z, i) => { rowMap[z] = i + 2; });
