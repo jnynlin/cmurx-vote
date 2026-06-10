@@ -1,0 +1,25 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".gitignore",
+      "gas_sync.gs",
+      "TECHGUIDE.md",
+      "after_debugs/**",
+      "cmurx/**",
+      "1150608/**",
+      "node_modules/**",
+      "config.js"
+    ],
+    "rewrites": [],
+    "headers": [
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      }
+    ]
+  }
+}

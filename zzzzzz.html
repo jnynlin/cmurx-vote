@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zodiac Ops Center | Patched</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3.4.19/dist/vue.global.prod.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Noto Sans TC', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { slate: { 750: '#2d3748', 850: '#1a202c', 950: '#0d1117' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background: #0f172a; color: #f1f5f9; }
+        .h-screen-dvh { height: 100vh; height: 100dvh; } 
+        [v-cloak] { display: none; }
+        ::-webkit-scrollbar { width: 12px; height: 12px; } 
+        ::-webkit-scrollbar-track { background: #1e293b; } 
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 6px; border: 2px solid #1e293b; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .panel-card { background: #1e293b; border: 1px solid #475569; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+        .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(255,255,255,0.1); }
+        .status-online { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .status-offline { background-color: #64748b; opacity: 0.5; } 
+        .status-late { background-color: #f59e0b; }
+        .elm-fire { border-left: 6px solid #ef4444; } .elm-water { border-left: 6px solid #3b82f6; }
+        .elm-air { border-left: 6px solid #fbbf24; } .elm-earth { border-left: 6px solid #22c55e; }
+        .elm-wood { border-left: 6px solid #84cc16; }
+        input:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+        .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(30px); }
+        .btn-phase { transition: all 0.2s; border: 1px solid transparent; background: #0f172a; color: #64748b; }
+        .btn-phase:hover { background: #1e293b; color: #94a3b8; }
+        .btn-active-A { background: rgba(59, 130, 246, 0.15) !important; border-color: #3b82f6 !important; color: #60a5fa !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+        .btn-active-B { background: rgba(245, 158, 11, 0.15) !important; border-color: #f59e0b !important; color: #fbbf24 !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+    </style>
+</head>
+<body class="overflow-hidden text-base">
+<div id="app" v-cloak class="h-screen-dvh flex flex-col relative text-slate-100">
+    <div class="fixed top-8 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
+        <transition-group name="toast">
+            <div v-for="t in toasts" :key="t.id" @click="toasts.splice(toasts.indexOf(t), 1)" class="cursor-pointer pointer-events-auto px-6 py-4 rounded-xl shadow-2xl border-2 border-slate-600 bg-slate-800 text-white flex items-center gap-4 min-w-[320px]">
+                <i :class="[t.icon, t.type==='error'?'text-red-400':(t.type==='success'?'text-emerald-400':'text-blue-400')]" class="text-2xl"></i>
+                <div class="text-base font-bold tracking-wide">{{ t.msg }}</div>
+            </div>
+        </transition-group>
+    </div>
+
+    <nav class="bg-slate-900 border-b border-slate-700 h-20 flex-none relative z-50">
+        <div class="container mx-auto px-6 h-full flex justify-between items-center max-w-7xl">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg text-xl"><i class="fa-solid fa-shield-halved"></i></div>
+                <div><div class="font-bold text-xl text-white tracking-wide">ZODIAC OPS</div><div class="text-xs text-slate-400 font-mono tracking-widest">TEACHER SEC & OPS</div></div>
+            </div>
+            <div class="hidden md:flex items-center gap-8 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-800 px-8 py-2 rounded-full border border-slate-600">
+                <div class="flex flex-col items-center"><span class="text-[10px] text-slate-400 tracking-wider font-bold uppercase">總人數</span><span class="text-2xl font-mono font-bold leading-none text-white">{{ studentCount }}</span></div>
+                <div class="w-px h-8 bg-slate-600"></div>
+                <div class="flex flex-col items-center"><span class="text-[10px] text-emerald-400 tracking-wider font-bold uppercase">已連線</span><span class="text-2xl font-mono font-bold leading-none text-emerald-400">{{ activeCount }}</span></div>
+            </div>
+            <div class="flex gap-3">
+                <button @click="showHistory=true" class="bg-slate-800 border border-slate-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-700 hover:border-white transition flex items-center gap-2" title="切換其他課堂"><i class="fa-solid fa-clock-rotate-left text-amber-400 text-lg"></i> 歷史紀錄</button>
+                <button @click="showImporter=true" class="bg-slate-800 border border-slate-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-700 hover:border-white transition flex items-center gap-2"><i class="fa-solid fa-file-excel text-green-400 text-lg"></i> 名單工具</button>
+                <button @click="copyLink" class="bg-indigo-900 border border-indigo-500 text-indigo-100 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-800 hover:border-indigo-300 transition flex items-center gap-2"><i class="fa-solid fa-link text-lg"></i> <span class="hidden sm:inline">複製連結</span></button>
+                <button @click="logout" class="bg-red-900/50 border border-red-500 text-red-200 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-red-900 hover:border-red-300 transition">登出</button>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 w-full h-1.5 bg-slate-800"><div class="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000" :style="`width:${globalProgress}%`"></div></div>
+    </nav>
+
+    <main class="flex-1 h-0 overflow-y-auto p-4 md:p-6 bg-slate-950 relative">
+        <div v-if="!hasJoined" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center p-6 relative">
+            <div class="w-full max-w-md panel-card rounded-2xl p-8 shadow-2xl border-slate-600">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">身份驗證</h2>
+                <form @submit.prevent="login" class="space-y-6">
+                    <div>
+                        <label class="text-sm font-bold text-slate-400 uppercase mb-2 block">Session ID (教室代碼)</label>
+                        <div class="flex gap-3">
+                            <input v-model="form.sessionId" class="w-full p-4 bg-slate-900 border-2 border-slate-600 rounded-xl font-mono font-bold text-center text-2xl text-white tracking-widest" readonly>
+                            <button type="button" @click="refreshId" class="bg-slate-700 hover:bg-slate-600 text-white px-6 rounded-xl border border-slate-500 transition" title="換一組號碼"><i class="fa-solid fa-rotate text-xl"></i></button>
+                        </div>
+                        <div class="text-right mt-2">
+                            <a href="#" @click.prevent="showHistory=true" class="text-sm text-blue-400 hover:text-blue-300 underline">切換至舊課堂...</a>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-bold text-slate-400 uppercase mb-2 block">Access Key (教師密碼)</label>
+                        <input v-model="form.password" type="password" class="w-full p-4 bg-slate-900 border-2 border-slate-600 rounded-xl text-center text-xl text-white placeholder-slate-600" placeholder="請輸入密碼">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-xl text-xl font-bold transition border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 shadow-xl">啟動系統</button>
+                </form>
+            </div>
+        </div>
+
+        <div v-if="showHistory" class="fixed inset-0 z-[160] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="panel-card w-full max-w-lg rounded-2xl p-8 shadow-2xl flex flex-col border-slate-500">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-600 pb-4">
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-3"><i class="fa-solid fa-clock-rotate-left text-amber-400"></i> 課堂時光機</h3>
+                    <button @click="showHistory=false" class="bg-slate-700 hover:bg-slate-600 text-white w-10 h-10 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-sm text-slate-400">點擊以下紀錄可切換至該課堂：</div>
+                    <div class="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                        <div v-for="h in sessionHistory" :key="h.id" @click="switchSession(h.id)" class="p-4 rounded-xl border border-slate-700 hover:bg-slate-700 hover:border-amber-500 cursor-pointer transition group flex justify-between items-center" :class="h.id === form.sessionId ? 'bg-slate-800 border-green-500' : 'bg-slate-900'">
+                            <div>
+                                <div class="font-mono font-bold text-lg group-hover:text-amber-300" :class="h.id === form.sessionId ? 'text-green-400' : 'text-white'">{{ h.id }}</div>
+                                <div class="text-xs text-slate-500">{{ h.date }}</div>
+                            </div>
+                            <div v-if="h.id === form.sessionId" class="text-green-500 text-xs font-bold uppercase px-2 py-1 bg-green-900/30 rounded">Current</div>
+                            <div v-else class="opacity-0 group-hover:opacity-100 text-slate-400"><i class="fa-solid fa-arrow-right"></i></div>
+                        </div>
+                        <div v-if="sessionHistory.length === 0" class="text-center py-8 text-slate-500">尚無歷史紀錄</div>
+                    </div>
+                    <div class="pt-4 mt-4 border-t border-slate-600">
+                        <label class="text-xs font-bold text-slate-400 uppercase mb-2 block">手動輸入 ID</label>
+                        <div class="flex gap-2">
+                            <input v-model="manualSessionId" placeholder="例如：20250101-ABCD" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white font-mono uppercase">
+                            <button @click="switchSession(manualSessionId)" :disabled="!manualSessionId" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition disabled:opacity-50">Go</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showImporter" class="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="panel-card w-full max-w-4xl rounded-2xl p-8 shadow-2xl flex flex-col max-h-[90vh] border-slate-500">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-600 pb-4">
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-2xl font-bold text-white flex items-center gap-3"><i class="fa-solid fa-bolt text-yellow-400"></i> 強護版名單匯入引擎</h3>
+                        <button @click="undoLastImport" class="text-xs text-red-400 underline hover:text-red-300 transition" title="從本地快照還原上一次的名單"><i class="fa-solid fa-rotate-left"></i> 誤刪還原</button>
+                    </div>
+                    <button @click="showImporter=false" class="bg-slate-700 hover:bg-slate-600 text-white w-10 h-10 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto space-y-6">
+                    <div class="flex gap-4 p-5 bg-slate-800 rounded-xl border border-slate-600 flex-wrap">
+                        <div class="flex items-center gap-3"><input type="radio" v-model="importMode" value="append" id="mode_append" class="w-6 h-6 accent-blue-500"><label for="mode_append" class="text-lg font-bold text-white cursor-pointer">加選 (Append)</label></div>
+                        <div class="w-px h-8 bg-slate-600"></div>
+                        <div class="flex items-center gap-3"><input type="radio" v-model="importMode" value="sync" id="mode_sync" class="w-6 h-6 accent-amber-500"><label for="mode_sync" class="text-lg font-bold text-amber-300 cursor-pointer">校正 (Sync)</label></div>
+                        <div class="w-px h-8 bg-slate-600"></div>
+                        <div class="flex items-center gap-3"><input type="radio" v-model="importMode" value="overwrite" id="mode_overwrite" class="w-6 h-6 accent-red-500"><label for="mode_overwrite" class="text-lg font-bold text-red-300 cursor-pointer">重置 (Reset)</label></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <div class="text-sm font-bold text-slate-300 uppercase">貼上 Excel / CSV 資料</div>
+                            <textarea v-model="importRaw" @input="parseInput" class="w-full h-64 bg-slate-900 border-2 border-slate-600 rounded-xl p-5 text-slate-300 font-mono text-sm focus:border-blue-500 outline-none leading-relaxed transition-colors shadow-inner" placeholder="支援任何分隔 (Excel Tab、逗號、空白)&#10;可自動讀取第1~2欄(學號/姓名)及第3欄(自訂生肖)"></textarea>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="text-sm font-bold text-slate-300 uppercase">預覽結果</div>
+                            <div class="w-full h-64 bg-slate-900 rounded-xl border-2 border-slate-600 overflow-y-auto p-2">
+                                <table class="w-full text-left border-collapse" v-if="parsedPreview.length > 0">
+                                    <thead class="text-xs text-slate-400 border-b border-slate-700 sticky top-0 bg-slate-900"><tr><th class="p-2">學號</th><th class="p-2">姓名</th><th class="p-2">指定組別</th><th class="p-2">狀態</th></tr></thead>
+                                    <tbody class="text-sm font-mono text-white">
+                                        <tr v-for="r in parsedPreview" :key="r.id" class="border-b border-slate-800">
+                                            <td class="p-2">{{ r.id }}</td><td class="p-2">{{ r.name }}</td>
+                                            <td class="p-2 text-purple-400 text-xs">{{ r.preZodiac || '自動平衡' }}</td>
+                                            <td class="p-2 font-bold" :class="r.exists ? 'text-yellow-400' : 'text-green-400'">{{ r.exists ? (importMode==='append'?'略過':'更新') : '新增' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div v-else class="h-full flex items-center justify-center text-slate-500 text-lg">等待輸入資料...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-6 mt-6 border-t border-slate-600 flex justify-between items-center gap-4">
+                    <div>
+                        <button @click="exportToCSV" class="px-5 py-3 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl font-bold transition shadow-lg border border-emerald-500/50 flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv text-xl"></i> 匯出名單與分組 (CSV)
+                        </button>
+                    </div>
+                    <div class="flex gap-4">
+                        <button @click="generateDemoRoster" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-emerald-400 rounded-xl font-bold transition border border-emerald-500/50"><i class="fa-solid fa-flask mr-2"></i>載入 12 筆測試名單</button>
+                        <button @click="executeImport" :disabled="parsedPreview.length === 0" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-lg font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="importMode==='append'">確認加選</span><span v-else-if="importMode==='sync'">確認校正</span><span v-else>確認重置</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showGroupLinkSetting" class="fixed inset-0 z-[170] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="panel-card w-full max-w-4xl rounded-2xl p-8 shadow-2xl flex flex-col border-slate-500 max-h-[90vh]">
+                <div class="flex justify-between items-center mb-4 border-b border-slate-600 pb-4">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white flex items-center gap-3"><i class="fa-solid fa-link text-purple-400"></i> 設定 12 生肖專屬連結</h3>
+                        <p class="text-sm text-slate-400 mt-1">討論板與繳交連結分開設定，儲存後學生端將自動跳轉至對應網址。</p>
+                    </div>
+                    <button @click="showGroupLinkSetting=false" class="bg-slate-700 hover:bg-slate-600 text-white w-10 h-10 rounded-lg transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <button @click="groupLinkTab='discussion'" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2" :class="groupLinkTab==='discussion'?'bg-amber-600 text-white':'bg-slate-700 text-slate-400 hover:text-white'"><i class="fa-solid fa-comments"></i> 討論板連結</button>
+                    <button @click="groupLinkTab='submission'" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2" :class="groupLinkTab==='submission'?'bg-amber-600 text-white':'bg-slate-700 text-slate-400 hover:text-white'"><i class="fa-solid fa-file-arrow-up"></i> 繳交連結</button>
+                </div>
+                <div class="overflow-y-auto pr-2 flex-1">
+                    <div v-show="groupLinkTab==='discussion'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-for="(z, i) in zodiacList" :key="'d'+i" class="flex items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-700 focus-within:border-amber-500 transition-colors">
+                            <div class="w-20 font-bold text-slate-300 flex items-center gap-2 shrink-0">
+                                <span class="text-xl">{{ z.icon }}</span> {{ z.label }}
+                            </div>
+                            <input v-model="editingGroupLinks[i]" @input="groupLinksDirty=true" class="flex-1 bg-transparent text-sm text-white outline-none w-full" :placeholder="`${z.label} 討論板網址...`">
+                        </div>
+                    </div>
+                    <div v-show="groupLinkTab==='submission'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-for="(z, i) in zodiacList" :key="'s'+i" class="flex items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-700 focus-within:border-purple-500 transition-colors">
+                            <div class="w-20 font-bold text-slate-300 flex items-center gap-2 shrink-0">
+                                <span class="text-xl">{{ z.icon }}</span> {{ z.label }}
+                            </div>
+                            <input v-model="editingAssignmentLinks[i]" @input="groupLinksDirty=true" class="flex-1 bg-transparent text-sm text-white outline-none w-full" :placeholder="`${z.label} 繳交連結...`">
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-6 mt-6 border-t border-slate-600 flex justify-between items-center">
+                    <div class="flex gap-4">
+                        <button @click="loadTemplate('A')" class="text-sm text-blue-400 hover:text-blue-300 font-bold underline transition flex items-center gap-1"><i class="fa-solid fa-user"></i> 載入：個人作業版 (單一畫布)</button>
+                        <button @click="loadTemplate('B')" class="text-sm text-emerald-400 hover:text-emerald-300 font-bold underline transition flex items-center gap-1"><i class="fa-solid fa-users"></i> 載入：分組討論版 (12間獨立包廂)</button>
+                    </div>
+                    <button @click="saveGroupLinks" class="text-white px-8 py-3 rounded-xl font-bold transition flex items-center gap-2" :class="groupLinksDirty ? 'bg-purple-600 hover:bg-purple-500 animate-pulse shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-slate-700 hover:bg-slate-600'">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> {{ groupLinksDirty ? '儲存並廣播至全班' : '已同步' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mx-auto max-w-7xl space-y-6 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-4 panel-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden bg-slate-800 border-l-4 border-l-blue-500">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">SESSION ID</div>
+                            <div class="text-3xl font-mono font-bold text-white tracking-wider text-shadow cursor-pointer hover:text-blue-400 transition" @click="copySessionId" title="點擊複製代碼">{{ form.sessionId }}</div>
+                        </div>
+                        <div class="bg-white p-2 rounded-xl cursor-pointer hover:scale-105 transition shadow-lg" @click="copySessionId" title="點擊複製 Session ID"><img :src="qrCodeUrl" class="w-16 h-16 rounded"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="text-sm font-bold text-blue-300 uppercase border-b border-blue-500/30 pb-1 mb-2">1. 門禁管理</div>
+                        <p class="text-xs text-slate-400 mb-2">此開關僅控制「學生能否登入」，不影響任務開放。</p>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button @click="setStatus('open')" class="py-4 rounded-xl text-sm font-bold border-2 transition flex flex-col items-center gap-1" :class="state.loginStatus==='open'?'bg-emerald-600 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]':'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-700 hover:text-white'">
+                                <i class="fa-solid fa-door-open text-2xl"></i> 開放入場
+                            </button>
+                            <button @click="setStatus('late')" class="py-4 rounded-xl text-sm font-bold border-2 transition flex flex-col items-center gap-1" :class="state.loginStatus==='late'?'bg-amber-600 border-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]':'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-700 hover:text-white'">
+                                <i class="fa-solid fa-clock text-2xl"></i> 設為遲到
+                            </button>
+                            <button @click="setStatus('locked')" class="py-4 rounded-xl text-sm font-bold border-2 transition flex flex-col items-center gap-1" :class="state.loginStatus==='locked'?'bg-red-600 border-red-400 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]':'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-700 hover:text-white'">
+                                <i class="fa-solid fa-lock text-2xl"></i> 禁止入場
+                            </button>
+                        </div>
+                        <div v-if="sessionTimer" class="mt-3 flex items-center justify-center gap-2 bg-slate-900 rounded-xl py-2 border border-slate-700">
+                            <i class="fa-solid text-sm" :class="[sessionTimer.icon, sessionTimer.color]"></i>
+                            <span class="font-mono font-bold text-xl tracking-widest" :class="sessionTimer.color">{{ sessionTimer.display }}</span>
+                            <span class="text-[10px] text-slate-500 uppercase">{{ sessionTimer.label }}</span>
+                        </div>
+                        <div class="mt-3 space-y-2">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">預定時程</div>
+                            <div class="space-y-1.5">
+                                <div class="flex gap-2 items-center">
+                                    <i class="fa-solid fa-door-open text-emerald-500 w-4 text-center text-xs shrink-0"></i>
+                                    <input type="datetime-local" v-model="scheduleInputs.openAt" @change="scheduleDirty=true" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono focus:border-emerald-500 outline-none">
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <i class="fa-solid fa-lock text-red-500 w-4 text-center text-xs shrink-0"></i>
+                                    <input type="datetime-local" v-model="scheduleInputs.closeAt" @change="scheduleDirty=true" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono focus:border-red-500 outline-none">
+                                </div>
+                                <button @click="saveSchedule" class="w-full py-1.5 rounded-lg text-xs font-bold transition border" :class="scheduleDirty ? 'bg-blue-600 hover:bg-blue-500 border-blue-400 text-white animate-pulse' : 'bg-slate-800 border-slate-600 text-slate-500'">
+                                    <i class="fa-solid fa-check mr-1"></i>{{ scheduleDirty ? '套用時程' : '已同步' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 grid grid-cols-1 gap-6 h-full">
+                    <div class="panel-card rounded-2xl p-6 flex flex-col bg-slate-800">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-sm font-bold text-slate-400 uppercase">課程配置 (Config) 與共用連結</span>
+                            <button @click="syncLinks" :class="linksDirty ? 'bg-emerald-600 text-white animate-pulse' : 'bg-slate-700 text-slate-400'" class="px-4 py-2 rounded-lg text-xs font-bold transition border border-slate-600"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> {{ linksDirty ? '儲存變更' : '已同步' }}</button>
+                        </div>
+                        <div class="flex flex-wrap gap-4 mb-6 border-b border-slate-700 pb-6">
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-2 cursor-pointer bg-slate-900 px-3 py-2 rounded border border-slate-700 hover:border-blue-500 transition select-none">
+                                    <input type="checkbox" :checked="state.config?.enableGroupA" @change="updateConfig('enableGroupA', $event.target.checked)" class="w-4 h-4 accent-blue-500">
+                                    <span class="text-xs font-bold text-slate-300">啟用 Group A (學習)</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-slate-900 px-3 py-2 rounded border border-slate-700 hover:border-amber-500 transition select-none">
+                                    <input type="checkbox" :checked="state.config?.enableGroupB" @change="updateConfig('enableGroupB', $event.target.checked)" class="w-4 h-4 accent-amber-500">
+                                    <span class="text-xs font-bold text-slate-300">啟用 Group B (專案)</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-slate-900 px-3 py-2 rounded border border-slate-700 hover:border-red-500 transition select-none" v-if="state.config?.enableGroupB && state.config?.assignmentType==='group'">
+                                    <input type="checkbox" :checked="state.config?.enableDiscussion !== false" @change="updateConfig('enableDiscussion', $event.target.checked)" class="w-4 h-4 accent-red-500">
+                                    <span class="text-xs font-bold text-slate-300">開放討論板</span>
+                                </label>
+                            </div>
+                            <div class="w-px h-10 bg-slate-700 mx-2"></div>
+                            <div class="flex bg-slate-900 rounded border border-slate-700 p-1" v-if="state.config?.enableGroupB">
+                                <button @click="updateConfig('assignmentType', 'individual')" class="px-3 py-1 rounded text-[10px] font-bold transition" :class="state.config?.assignmentType==='individual'?'bg-slate-700 text-white':'text-slate-500'">個人作業</button>
+                                <button @click="updateConfig('assignmentType', 'group')" class="px-3 py-1 rounded text-[10px] font-bold transition" :class="state.config?.assignmentType==='group'?'bg-amber-700 text-white':'text-slate-500'">分組報告</button>
+                            </div>
+                        </div>
+                        <div class="space-y-4 flex-1 overflow-y-auto">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-book text-blue-400 w-5 text-center"></i><input v-model="localLinks.notebook" @input="linksDirty=true" class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white" placeholder="Notebook URL..."></div>
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-comments text-indigo-400 w-5 text-center"></i><input v-model="localLinks.slido" @input="linksDirty=true" class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white" placeholder="Slido URL..."></div>
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-purple-400 w-5 text-center"></i><input v-model="localLinks.forms" @input="linksDirty=true" class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white" placeholder="Forms URL..."></div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-file-arrow-up text-amber-400 w-5 text-center"></i><input v-model="localLinks.assignment" @input="linksDirty=true" class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white" placeholder="Padlet URL (繳交區)..."></div>
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-images text-pink-400 w-5 text-center"></i><input v-model="localLinks.gallery" @input="linksDirty=true" class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white" placeholder="Gallery URL (展覽區)..."></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card rounded-2xl p-6 bg-slate-800 border-t-4 border-t-emerald-500 shadow-2xl">
+                 <div class="text-sm font-bold text-emerald-300 uppercase border-b border-emerald-500/30 pb-2 mb-4">
+                    <span>2. 任務階段控制 (Phase Control)</span>
+                 </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div :class="{'opacity-40 pointer-events-none': !state.config?.enableGroupA}" class="transition-opacity">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="text-xs font-bold text-blue-400 border-l-2 border-blue-500 pl-2">Group A: 學習核心 (70%)</div>
+                            <button @click="switchPhase('waiting', 'A')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1 rounded transition flex items-center gap-1" :class="state.phaseA==='waiting'?'ring-2 ring-slate-500':''"><i class="fa-solid fa-pause"></i> 暫停 A</button>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button @click="switchPhase('warmup', 'A')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1" :class="{'btn-active-A': state.phaseA==='warmup'}"><i class="fa-solid fa-book-open text-xl"></i><span class="text-[10px] font-bold">閱讀</span></button>
+                            <button @click="switchPhase('interact', 'A')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1" :class="{'btn-active-A': state.phaseA==='interact'}"><i class="fa-solid fa-comments text-xl"></i><span class="text-[10px] font-bold">互動</span></button>
+                            <button @click="switchPhase('quiz', 'A')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1" :class="{'btn-active-A': state.phaseA==='quiz'}"><i class="fa-solid fa-pen-to-square text-xl"></i><span class="text-[10px] font-bold">測驗</span></button>
+                            <button @click="switchPhase('main_open', 'A')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1 border-blue-500/30" :class="{'btn-active-A': state.phaseA==='main_open'}"><i class="fa-solid fa-rocket text-xl"></i><span class="text-[10px] font-bold">全開</span></button>
+                        </div>
+                     </div>
+                     <div :class="{'opacity-40 pointer-events-none': !state.config?.enableGroupB}" class="transition-opacity">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="text-xs font-bold text-amber-400 border-l-2 border-amber-500 pl-2">Group B: 專案實作 (30%)</div>
+                            <button @click="switchPhase('waiting', 'B')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1 rounded transition flex items-center gap-1" :class="state.phaseB==='waiting'?'ring-2 ring-slate-500':''"><i class="fa-solid fa-pause"></i> 暫停 B</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mb-2">
+                            <button @click="switchPhase('submission_open', 'B')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1" :class="{'btn-active-B': state.phaseB==='submission_open'}"><i class="fa-solid fa-file-arrow-up text-xl"></i><span class="text-[10px] font-bold">僅繳交</span></button>
+                            <button @click="switchPhase('gallery_open', 'B')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1" :class="{'btn-active-B': state.phaseB==='gallery_open'}"><i class="fa-solid fa-images text-xl"></i><span class="text-[10px] font-bold">僅展覽</span></button>
+                            <button @click="switchPhase('final_show', 'B')" class="btn-phase p-3 rounded-lg flex flex-col items-center gap-1 border-amber-500/30" :class="{'btn-active-B': state.phaseB==='final_show'}"><i class="fa-solid fa-star text-xl"></i><span class="text-[10px] font-bold">雙開</span></button>
+                        </div>
+                        <button @click="updateConfig('enableDiscussion', state.config?.enableDiscussion === false ? true : false)" class="w-full p-2 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-2 border" :class="state.config?.enableDiscussion === false ? 'bg-red-900/40 border-red-500 text-red-300' : 'bg-slate-900 border-slate-700 text-slate-500 hover:border-red-500 hover:text-red-400'">
+                            <i class="fa-solid fa-comment-slash"></i>
+                            {{ state.config?.enableDiscussion === false ? '討論板已封鎖' : '不開放討論板' }}
+                        </button>
+                     </div>
+                 </div>
+            </div>
+
+            <!-- ── Poster Voting Leaderboard ── -->
+            <div class="panel-card rounded-2xl p-5 bg-slate-800 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-slate-200 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-amber-400"></i> 海報票選排行
+                    </h3>
+                    <span class="text-xs text-slate-400 font-mono">{{ voteCount }} / {{ studentCount }} 已投票</span>
+                </div>
+                <div v-if="Object.keys(posterScores).length === 0" class="text-xs text-slate-600 text-center py-4">尚無票選資料</div>
+                <div v-else class="space-y-2">
+                    <div v-for="z in [...zodiacList].sort((a,b) => (posterScores[b.label]||0) - (posterScores[a.label]||0)).filter(z => posterScores[z.label])"
+                         :key="z.label" class="flex items-center gap-3">
+                        <span class="text-sm w-16 shrink-0">{{ z.icon }} {{ z.label }}</span>
+                        <div class="flex-1 bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-amber-400 h-full rounded-full transition-all duration-500"
+                                 :style="`width:${Math.round((posterScores[z.label]||0)/maxVoteScore*100)}%`"></div>
+                        </div>
+                        <span class="text-amber-400 font-bold text-sm w-8 text-right shrink-0">{{ posterScores[z.label] }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card rounded-2xl overflow-hidden flex flex-col min-h-[500px] bg-slate-800">
+                <div class="p-5 border-b border-slate-600 bg-slate-900 flex justify-between items-center sticky top-0 z-20">
+                    <h3 class="font-bold text-slate-200 text-lg flex items-center gap-3"><i class="fa-solid fa-users"></i> 學生名單監控 <span class="bg-blue-900 text-blue-200 text-sm px-3 py-0.5 rounded-full border border-blue-700">{{ displayedList.length }} 人</span></h3>
+                    <div class="flex gap-2">
+                        <button @click="openGroupLinkSetting" class="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"><i class="fa-solid fa-gear"></i> 設定分組連結</button>
+                        <button @click="syncToSheets" :disabled="isSyncing" class="bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"><i v-if="isSyncing" class="fa-solid fa-circle-notch animate-spin"></i><i v-else class="fa-solid fa-file-export"></i> 匯出至 GAS</button>
+                        <input v-model="searchQuery" placeholder="搜尋姓名或學號..." class="bg-slate-800 border-2 border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:border-blue-500 w-64 outline-none">
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto relative">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-900 text-xs font-bold text-slate-400 uppercase sticky top-0 z-10 shadow-md">
+                            <tr>
+                                <th class="p-4 pl-6">#</th>
+                                <th class="p-4">學生資料</th>
+                                <th class="p-4 text-center">總分</th>
+                                <th class="p-4">Group A (Learning)</th>
+                                <th class="p-4 border-l border-slate-700">Group B (Project)</th>
+                                <th class="p-4 text-right pr-6">連線狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700 text-base font-mono">
+                            <tr v-for="s in displayedList" :key="s.uid" class="hover:bg-slate-700 transition-colors group" :class="getBeaconClass(s)">
+                                <td class="p-4 pl-6 text-slate-500">{{ s.rank }}</td>
+                                <td class="p-4 relative">
+                                    <div class="font-bold text-white text-lg tracking-wide">{{ s.profile?.Name }}</div>
+                                    <div class="text-sm text-slate-400">{{ s.profile?.StudentId }} <span class="text-slate-600">| {{ s.profile?.Zodiac }}</span></div>
+                                    <div class="text-xs mt-2 inline-flex items-center gap-2">
+                                        <span class="px-2 py-1 rounded-full text-[10px] font-bold" :class="s.profile?.Role === 'leader' ? 'bg-amber-500 text-slate-950' : 'bg-slate-700 text-slate-300'">{{ s.profile?.Role === 'leader' ? 'Leader' : 'Member' }}</span>
+                                        <span v-if="s.profile?.leaderRating" class="text-[10px] text-emerald-300">Leader 評分 {{ s.profile.leaderRating }}/5</span>
+                                    </div>
+                                    <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex gap-3 bg-slate-800 p-1 rounded-lg shadow-lg border border-slate-600">
+                                        <button @click="assignLeader(s.uid)" class="text-sky-400 hover:bg-sky-900/50 p-2 rounded transition" title="指定此學生為組長"><i class="fa-solid fa-crown"></i></button>
+                                    <button v-if="s.profile?.Role === 'leader'" @click="revokeLeader(s.uid)" class="text-red-400 hover:bg-red-900/50 p-2 rounded transition" title="撤銷組長"><i class="fa-solid fa-user-slash"></i></button>
+                                        <button v-if="s.auth?.isActive" @click="revokeToken(s.uid, s.profile?.Name)" class="text-amber-400 hover:bg-amber-900/50 p-2 rounded transition" title="強制登出並清除密碼"><i class="fa-solid fa-link-slash"></i></button>
+                                        <button @click="deleteStudent(s.uid, s.profile?.Name)" class="text-red-400 hover:bg-red-900/50 p-2 rounded transition" title="刪除學生"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <span class="font-bold text-xl" :class="calculateScore(s)>=90?'text-emerald-400':'text-slate-200'">{{ calculateScore(s) }}</span>
+                                        <div v-if="isSpeedrun(s)" class="text-[10px] px-2 py-0.5 rounded-full mt-1 font-bold bg-red-600 text-white">SPEEDRUN</div>
+                                    </div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="status-dot" :class="s.tasks?.calibration?.done?'bg-teal-500 shadow-[0_0_5px_#14b8a6]':'bg-slate-800'" title="校準"></div>
+                                        <div class="status-dot" :class="s.tasks?.notebook?.done?'bg-blue-500 shadow-[0_0_5px_#3b82f6]':'bg-slate-800'" title="閱讀"></div>
+                                        <div class="status-dot" :class="s.tasks?.slido?.done?'bg-indigo-500 shadow-[0_0_5px_#6366f1]':'bg-slate-800'" title="互動"></div>
+                                        <div class="status-dot" :class="s.tasks?.forms?.done?'bg-purple-500 shadow-[0_0_5px_#a855f7]':'bg-slate-800'" title="測驗"></div>
+                                        <div class="w-px h-4 bg-slate-600 mx-1"></div>
+                                        <div class="status-dot" :class="s.rating > 0?'bg-white shadow-[0_0_5px_white]':'bg-slate-800'" title="總結(Debrief)"></div>
+                                    </div>
+                                </td>
+                                <td class="p-4 border-l border-slate-700">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <div class="status-dot" :class="s.tasks?.assignment?.done?'bg-amber-500 shadow-[0_0_5px_#f59e0b]':'bg-slate-800'" :title="s.tasks?.assignment?.contributions?.length ? s.tasks.assignment.contributions.join(' | ') : '心得繳交'"></div>
+                                        <div class="status-dot" :class="s.tasks?.gallery?.done?'bg-pink-500 shadow-[0_0_5px_#ec4899]':'bg-slate-800'" title="展覽"></div>
+                                        <span v-if="s.tasks?.assignment?.type === 'group'" class="text-[9px] border border-amber-500/50 text-amber-500 px-1 rounded ml-2">GRP</span>
+                                        <span v-if="s.tasks?.assignment?.contributions?.length" class="text-[9px] text-emerald-400 font-mono ml-1" :title="s.tasks.assignment.contributions.join('\n')">+{{ s.tasks.assignment.contributions.length }}</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 text-right pr-6"><span class="status-dot" :class="getStatusColor(s)"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-if="displayedList.length === 0" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-800/80 backdrop-blur-sm z-0">
+                        <i class="fa-solid fa-box-open text-6xl mb-4 opacity-50"></i>
+                        <div class="text-xl font-bold text-slate-300">目前沒有資料</div>
+                        <div class="text-sm mt-2">請點擊上方【名單工具】匯入學生名單。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+import { createApp, reactive, ref, computed, onMounted, onUnmounted, watch } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref as dbRef, update, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const CONFIG = {
+    FIREBASE: {
+        apiKey: "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
+        authDomain: "cmu-11402-pathophysiology.firebaseapp.com",
+        databaseURL: "https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "cmu-11402-pathophysiology",
+        storageBucket: "cmu-11402-pathophysiology.firebasestorage.app",
+        messagingSenderId: "367793212618",
+        appId: "1:367793212618:web:c11acedc50ce6fc3897833"
+    },
+    GAS_URL: "https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec",
+    GAS_SECRET: "zodiac-2026-cmuh",
+    ZODIAC: [
+        {label:'子鼠', icon:'⚡️', element:'water'}, {label:'丑牛', icon:'🧱', element:'earth'}, {label:'寅虎', icon:'🔥', element:'wood'}, {label:'卯兔', icon:'🧐', element:'wood'},
+        {label:'辰龍', icon:'🌟', element:'earth'}, {label:'巳蛇', icon:'🧠', element:'fire'}, {label:'午馬', icon:'🚀', element:'fire'}, {label:'未羊', icon:'🤝', element:'earth'},
+        {label:'申猴', icon:'💡', element:'air'}, {label:'酉雞', icon:'⏱', element:'air'}, {label:'戌狗', icon:'🛡', element:'earth'}, {label:'亥豬', icon:'📚', element:'water'}
+    ],
+    ZODIAC_PADLETS_A: [
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=347869014",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=347869666",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348306592",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348306612",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348306638",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348310975",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348310996",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311014",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311030",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311050",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311058",
+        "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311072"
+    ],
+    ZODIAC_PADLETS_B: [
+        "https://padlet.com/jnynlin/breakout-room/Vnr04VORyJVD2BdW-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/olbw23ZKy66R4L30-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/nRxeqrl17Od7456P-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/961rqRQbP5Wo2nND-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/kxPM2kBo3OEn4gbV-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/LProvDLe99BgvOMJ-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/J7z0qjZ1AAdLqmWQ-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/Vnr04VORmmrX2BdW-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/BbjnqxL788Eoq93Q-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/mVbpvYkOrrJB2Rkn-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/Vnr04VORmmJX2BdW-oAdpz2yKWAM9b10R",
+        "https://padlet.com/jnynlin/breakout-room/mWng4lAY99JJ2zdJ-oAdpz2yKWAM9b10R"
+    ]
+};
+
+const app = initializeApp(CONFIG.FIREBASE);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+const sanitize = (str) => {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+};
+
+const parseRosterInput = (rawText) => {
+    if (!rawText) return [];
+    const validZodiacs = CONFIG.ZODIAC.map(z => z.label);
+    return rawText.trim().split('\n').map(line => {
+        let parts = line.split(/[\t,]/).map(x => x.trim());
+        if (parts.length < 2) parts = line.split(/\s+/).map(x => x.trim());
+        if (parts.length < 2) return null;
+        const p0 = parts[0].toLowerCase(), p1 = parts[1].toLowerCase();
+        if (p0.includes('編號') || p0.includes('學號') || p1.includes('姓名') ||
+            p0 === 'id' || p0 === 'studentid' || p0 === 'no' || p1 === 'name') return null;
+        
+        let id = parts[0].toUpperCase().replace(/[^A-Z0-9]/g, ''); 
+        if (/^\d+$/.test(id)) id = 'S' + id; 
+        
+        let predefinedZodiac = null;
+        if (parts.length >= 3 && validZodiacs.includes(parts[2])) {
+            predefinedZodiac = parts[2];
+        }
+        return id ? { StudentId: id, Name: sanitize(parts[1]), Zodiac: predefinedZodiac } : null;
+    }).filter(x => x !== null);
+};
+
+const generateSessionId = () => `${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
+
+const SCORE_CONFIG = {
+    BASE: { CALIBRATION: 5, DEBRIEF: 10, ASSIGNMENT: 15, GALLERY: 15 },
+    DURATION_BONUS: {
+        NOTEBOOK: { SCORE: 15, THRESHOLD: 15, PENALTY: 5 },
+        SLIDO:    { SCORE: 15, THRESHOLD: 5,  PENALTY: 5 },
+        FORMS:    { SCORE: 25, THRESHOLD: 20, PENALTY: 10 },
+    },
+    LEADER_BONUS: { MAX_POINTS: 10, POINTS_PER_RATING: 2 }
+};
+
+function useToast() {
+    const toasts = reactive([]);
+    const addToast = (msg, type = 'info', icon = 'fa-solid fa-circle-info') => {
+        const id = Date.now() + Math.random();
+        toasts.push({ id, msg, type, icon });
+        setTimeout(() => { const idx = toasts.findIndex(t => t.id === id); if (idx > -1) toasts.splice(idx, 1); }, 4000);
+    };
+    return { toasts, addToast };
+}
+
+function useAuthAndSession(addToast) {
+    const form = reactive({ sessionId: generateSessionId(), password: '' });
+    const hasJoined = ref(false);
+    const sessionHistory = ref([]);
+    const showHistory = ref(false);
+    const manualSessionId = ref('');
+
+    const login = async () => {
+        try {
+            await signInWithEmailAndPassword(auth, "admin@zodiac.com", form.password);
+        } catch (e) {
+            addToast("登入失敗：密碼錯誤", 'error', 'fa-solid fa-triangle-exclamation');
+        }
+    };
+    const logout = () => signOut(auth);
+    const refreshId = () => form.sessionId = generateSessionId();
+    const switchSession = (id) => {
+        if (!id) return;
+        localStorage.setItem('zodiac_last_session', id);
+        window.location.search = `?id=${id}`;
+    };
+
+    onMounted(() => {
+        const savedHistory = localStorage.getItem('zodiac_history');
+        if (savedHistory) { try { sessionHistory.value = JSON.parse(savedHistory); } catch(e){} }
+
+        const urlId = new URLSearchParams(window.location.search).get('id');
+        if (urlId) {
+            form.sessionId = urlId;
+            localStorage.setItem('zodiac_last_session', urlId);
+        } else {
+            const savedId = localStorage.getItem('zodiac_last_session');
+            if (savedId) form.sessionId = savedId;
+        }
+
+        onAuthStateChanged(auth, (u) => {
+            hasJoined.value = !!u;
+            if (u) {
+                localStorage.setItem('zodiac_last_session', form.sessionId);
+                if (!sessionHistory.value.find(h => h.id === form.sessionId)) {
+                    sessionHistory.value.unshift({ id: form.sessionId, date: new Date().toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }) });
+                    if(sessionHistory.value.length > 10) sessionHistory.value.pop();
+                    localStorage.setItem('zodiac_history', JSON.stringify(sessionHistory.value));
+                }
+                addToast("系統連線成功", 'success', 'fa-solid fa-check-circle');
+            }
+        });
+    });
+
+    return { form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession };
+}
+
+function useClassroom(sessionId, addToast) {
+    const state = reactive({ loginStatus: 'open', phaseA: 'waiting', phaseB: 'waiting', config: {} });
+    const students = ref({});
+    const localLinks = reactive({ notebook:'', slido:'', forms:'', assignment:'', gallery:'' });
+    const linksDirty = ref(false);
+    const scheduleInputs = reactive({ openAt: '', closeAt: '' });
+    const scheduleDirty = ref(false);
+
+    const initListeners = () => {
+        onValue(dbRef(db, `classrooms/${sessionId.value}/status`), (snap) => {
+            const val = snap.val();
+            if (val) {
+                Object.assign(state, val);
+                if (val.links) { Object.assign(localLinks, val.links); linksDirty.value = false; }
+                if (val.scheduledOpenAt  && !scheduleDirty.value) scheduleInputs.openAt  = val.scheduledOpenAt;
+                if (val.scheduledCloseAt && !scheduleDirty.value) scheduleInputs.closeAt = val.scheduledCloseAt;
+            }
+        });
+        onValue(dbRef(db, `classrooms/${sessionId.value}/students`), (snap) => {
+            students.value = snap.val() || {};
+        });
+    };
+
+    const setStatus = (s) => {
+        const updates = { loginStatus: s };
+        if (s === 'open')   { updates.openedAt = Date.now(); updates.closedAt = null; }
+        if (s === 'locked') { updates.closedAt = Date.now(); }
+        update(dbRef(db, `classrooms/${sessionId.value}/status`), updates);
+    };
+
+    const clockNow = ref(Date.now());
+    const _clockTimer = setInterval(() => {
+        const now = Date.now();
+        clockNow.value = now;
+        const openTs = toTs(state.scheduledOpenAt);
+        const closeTs = toTs(state.scheduledCloseAt);
+        if (closeTs && state.loginStatus !== 'locked' && now >= closeTs) {
+            setStatus('locked');
+        } else if (openTs && state.loginStatus !== 'open' && now >= openTs && (!closeTs || now < closeTs)) {
+            setStatus('open');
+        }
+    }, 1000);
+    onUnmounted(() => clearInterval(_clockTimer));
+
+    const saveSchedule = async () => {
+        try {
+            await update(dbRef(db, `classrooms/${sessionId.value}/status`), {
+                scheduledOpenAt:  scheduleInputs.openAt  || null,
+                scheduledCloseAt: scheduleInputs.closeAt || null,
+            });
+            scheduleDirty.value = false;
+            addToast("時程已設定", "success", "fa-solid fa-clock");
+        } catch (e) {
+            addToast("儲存失敗", "error", "fa-solid fa-triangle-exclamation");
+        }
+    };
+
+    const fmtMs = (ms) => {
+        const sec = Math.floor(Math.abs(ms) / 1000);
+        return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+    };    
+    const toTs = (dtStr) => {
+        if (!dtStr) return null;
+        const [date, time = '00:00'] = dtStr.split('T');
+        const [y, mo, d] = date.split('-').map(Number);
+        const [h, mi] = time.split(':').map(Number);
+        return new Date(y, mo - 1, d, h, mi).getTime();
+    };
+
+    const sessionTimer = computed(() => {
+        const now = clockNow.value;
+        const openTs  = toTs(state.scheduledOpenAt);
+        const closeTs = toTs(state.scheduledCloseAt);
+
+        if (closeTs && state.loginStatus === 'open' && closeTs > now) {
+            const rem = closeTs - now;
+            return { display: fmtMs(rem), label: '距關閉', color: rem < 300000 ? 'text-red-400' : 'text-amber-400', icon: 'fa-hourglass-half' };
+        }
+        if (openTs && state.loginStatus !== 'open' && openTs > now) {
+            return { display: fmtMs(openTs - now), label: '距開放', color: 'text-blue-400', icon: 'fa-hourglass-start' };
+        }
+        if (!state.openedAt) return null;
+        const end = state.closedAt || now;
+        return { display: fmtMs(end - state.openedAt), label: state.loginStatus === 'locked' ? '已結束' : '進行中', color: state.loginStatus === 'locked' ? 'text-red-400' : 'text-emerald-400', icon: 'fa-stopwatch' };
+    });    
+    const updateConfig = (key, value) => update(dbRef(db, `classrooms/${sessionId.value}/status/config`), { [key]: value });
+    
+    const switchPhase = async (p, group) => {
+        const updates = {};
+        if (group === 'A') updates.phaseA = p;
+        if (group === 'B') updates.phaseB = p;
+        updates.phaseUpdatedAt = Date.now();
+        await update(dbRef(db, `classrooms/${sessionId.value}/status`), updates);
+        addToast(`Group ${group} 已切換`, 'success');
+    };    
+    const syncLinks = async () => {
+        try {
+            const plainLinks = JSON.parse(JSON.stringify(localLinks)); 
+            await update(dbRef(db, `classrooms/${sessionId.value}/status/links`), plainLinks);
+            addToast("連結已儲存！", "success", "fa-solid fa-cloud-check");
+            linksDirty.value = false;
+        } catch (e) {
+            addToast("儲存失敗，請檢查網路狀態", "error", "fa-solid fa-triangle-exclamation");
+        }
+    };
+
+    return { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule };
+}
+
+function useRoster(sessionId, students, posterScores, addToast) {
+    const now = ref(Date.now());
+    const _nowTimer = setInterval(() => { now.value = Date.now(); }, 5000);
+    onUnmounted(() => clearInterval(_nowTimer));
+    const searchQuery = ref('');
+
+    const allStudents = computed(() => Object.entries(students.value || {}).map(([uid, data]) => ({ uid, ...data })));
+    const displayedList = computed(() => {
+        const q = searchQuery.value.trim().toLowerCase();
+        return allStudents.value
+            .filter(s => (s.profile?.Name || '').toLowerCase().includes(q) || (s.profile?.StudentId || '').toLowerCase().includes(q))
+            .sort((a,b) => (a.profile?.StudentId || '').localeCompare(b.profile?.StudentId || ''))
+            .map((s, index) => ({ ...s, rank: index + 1 }));
+    });
+    const studentCount = computed(() => allStudents.value.length);
+    const activeCount = computed(() => allStudents.value.filter(s => s.auth?.isActive).length);
+
+    const calculateScore = (student) => { 
+        let score = 0; 
+        const t = student.tasks || {}; 
+        const c = SCORE_CONFIG;
+        
+        if (t.calibration?.done) score += c.BASE.CALIBRATION;
+        if (student.rating > 0)    score += c.BASE.DEBRIEF;
+        if (t.assignment?.done)  score += c.BASE.ASSIGNMENT;
+        if (t.gallery?.done)     score += c.BASE.GALLERY;
+        
+        if (t.notebook?.done) {
+            const d = t.notebook.duration || 0;
+            score += (d > 0 && d < c.DURATION_BONUS.NOTEBOOK.THRESHOLD
+                ? c.DURATION_BONUS.NOTEBOOK.PENALTY
+                : c.DURATION_BONUS.NOTEBOOK.SCORE);
+        }
+        if (t.slido?.done) {
+            const d = t.slido.duration || 0;
+            score += (d > 0 && d < c.DURATION_BONUS.SLIDO.THRESHOLD
+                ? c.DURATION_BONUS.SLIDO.PENALTY
+                : c.DURATION_BONUS.SLIDO.SCORE);
+        }
+        if (t.forms?.done) {
+            const d = t.forms.duration || 0;
+            score += (d > 0 && d < c.DURATION_BONUS.FORMS.THRESHOLD
+                ? c.DURATION_BONUS.FORMS.PENALTY
+                : c.DURATION_BONUS.FORMS.SCORE);
+        }
+        
+        if (student.profile?.Role === 'leader') {
+            score += Math.min(c.LEADER_BONUS.MAX_POINTS, (student.profile.leaderRating || 0) * c.LEADER_BONUS.POINTS_PER_RATING);
+        }
+
+        score += posterScores.value[student.profile?.Zodiac] || 0;
+
+        return score;
+    };
+
+    const isSpeedrun = (student) => { 
+        const t = student.tasks || {}; 
+        const c = SCORE_CONFIG;
+        const isNotebookSpd = t.notebook?.done && (t.notebook.duration || 0) > 0 && (t.notebook.duration || 0) < c.DURATION_BONUS.NOTEBOOK.THRESHOLD;
+        const isSlidoSpd    = t.slido?.done    && (t.slido.duration    || 0) > 0 && (t.slido.duration    || 0) < c.DURATION_BONUS.SLIDO.THRESHOLD;
+        const isFormsSpd    = t.forms?.done    && (t.forms.duration    || 0) > 0 && (t.forms.duration    || 0) < c.DURATION_BONUS.FORMS.THRESHOLD;
+        return !!(isNotebookSpd || isSlidoSpd || isFormsSpd);
+    };
+
+    const getStatusColor = (s) => { 
+        if(!s.auth?.isActive) return 'status-offline'; 
+        const diff = now.value - (s.lastSeen || 0);
+        if(s.status === 'offline' || diff > 90000) return 'status-offline'; 
+        if(s.status === 'late' || diff > 30000) return 'status-late';       
+        return 'status-online'; 
+    };
+    const getBeaconClass = s => { const z = CONFIG.ZODIAC.find(x => x.label === s.profile?.Zodiac); return z ? `elm-${z.element}` : ''; };
+
+    const revokeToken = (uid, name) => { 
+        if(confirm(`確定要強制登出 ${name} 嗎？\n(這會同時清空他的 4 位數 PIN 碼，讓他可以重新設定)`)) { 
+            update(dbRef(db, `classrooms/${sessionId.value}/students/${uid}/auth`), { isActive: false, token: null, pin: null }); 
+            update(dbRef(db, `classrooms/${sessionId.value}/students/${uid}`), { status: 'offline' }); 
+            addToast("已強制登出並清空密碼", "success", "fa-solid fa-unlock-keyhole"); 
+        } 
+    };
+    const assignLeader = async (uid) => {
+        await update(dbRef(db, `classrooms/${sessionId.value}/students/${uid}/profile`), { Role: 'leader' });
+        addToast("已指定組長", "success", "fa-solid fa-crown");
+    };
+    const revokeLeader = async (uid) => {
+        await update(dbRef(db, `classrooms/${sessionId.value}/students/${uid}/profile`), { Role: 'member' });
+        addToast("已撤銷組長", "success", "fa-solid fa-user-slash");
+    };
+    const deleteStudent = (uid, name) => { 
+        if(confirm(`危險：確定要永久刪除 ${name} 嗎？`)) { 
+            remove(dbRef(db, `classrooms/${sessionId.value}/students/${uid}`)); 
+            addToast("學生資料已刪除", "success", "fa-solid fa-trash"); 
+        } 
+    };
+
+    return { searchQuery, displayedList, studentCount, activeCount, calculateScore, isSpeedrun, getStatusColor, getBeaconClass, revokeToken, assignLeader, revokeLeader, deleteStudent };
+}
+
+function useImporter(sessionId, students, showImporter, addToast) {
+    const importRaw = ref('');
+    const importMode = ref('append');
+    const parsedPreview = ref([]);
+
+    const parseInput = () => {
+        const data = parseRosterInput(importRaw.value);
+        parsedPreview.value = data.map(s => ({ id: s.StudentId, name: s.Name, preZodiac: s.Zodiac, exists: !!(students.value || {})[s.StudentId] }));
+    };
+    watch(importRaw, parseInput);
+
+    const generateDemoRoster = () => {
+        importRaw.value = CONFIG.ZODIAC.map((z, i) => `S114003${String(i+1).padStart(2,'0')}\t測試${z.label}`).join('\n');
+        addToast("12 筆測試資料已就緒！請點擊【確認加選】", "info", "fa-solid fa-bolt");
+    };
+
+    const executeImport = async () => {
+        if(importMode.value === 'overwrite' && !confirm("警告：這將會【清空】目前所有學生的成績與進度！\n\n確定要重置嗎？")) return;
+        if(importMode.value === 'sync' && !confirm("確認執行 [名單校正]？\n\n系統將會：\n1. 刪除不在名單內的學生 (退選)\n2. 新增缺少的新生 (加選)\n3. 保留既有成績")) return;
+
+        try { localStorage.setItem(`UNDO_${sessionId.value}`, JSON.stringify(students.value || {})); } catch (e) {}
+
+        const updates = {};
+        const inputData = parsedPreview.value; 
+        let localDB = JSON.parse(JSON.stringify(students.value || {}));
+        const groupCounts = Array(12).fill(0);
+
+        if (importMode.value !== 'overwrite') {
+            Object.values(localDB).forEach(student => {
+                if (student.profile?.Zodiac) {
+                    const zIndex = CONFIG.ZODIAC.findIndex(z => z.label === student.profile.Zodiac);
+                    if (zIndex !== -1) groupCounts[zIndex]++;
+                }
+            });
+        }
+
+        if (importMode.value === 'overwrite') {
+            const newStudentsObj = {};
+            inputData.forEach(s => {
+                let zIndex = s.preZodiac ? CONFIG.ZODIAC.findIndex(z => z.label === s.preZodiac) : -1;
+                if (zIndex === -1) zIndex = groupCounts.indexOf(Math.min(...groupCounts));
+                const finalZodiacLabel = CONFIG.ZODIAC[zIndex].label;
+                groupCounts[zIndex]++;
+                newStudentsObj[s.id] = { profile: { StudentId: s.id, Name: s.name, Zodiac: finalZodiacLabel, Role: 'member' }, auth: { isActive: false }, tasks: {} };
+            });
+            updates[`classrooms/${sessionId.value}/students`] = newStudentsObj;
+        } else {
+            if (importMode.value === 'sync') {
+                const inputIds = new Set(inputData.map(s => s.id));
+                Object.keys(localDB).forEach(uid => {
+                    if(!inputIds.has(uid)) updates[`classrooms/${sessionId.value}/students/${uid}`] = null; 
+                });
+            }
+            inputData.forEach(s => {
+                if(importMode.value === 'append' && localDB[s.id]) return;
+                if (!localDB[s.id]) {
+                    let zIndex = s.preZodiac ? CONFIG.ZODIAC.findIndex(z => z.label === s.preZodiac) : -1;
+                    if (zIndex === -1) zIndex = groupCounts.indexOf(Math.min(...groupCounts));
+                    const finalZodiacLabel = CONFIG.ZODIAC[zIndex].label;
+                    groupCounts[zIndex]++;
+                    updates[`classrooms/${sessionId.value}/students/${s.id}`] = { profile: { StudentId: s.id, Name: s.name, Zodiac: finalZodiacLabel, Role: 'member' }, auth: { isActive: false }, tasks: {} };
+                } else if (importMode.value === 'sync') {
+                    if (localDB[s.id].profile.Name !== s.name)
+                        updates[`classrooms/${sessionId.value}/students/${s.id}/profile/Name`] = s.name;
+                    if (s.preZodiac && localDB[s.id].profile.Zodiac !== s.preZodiac)
+                        updates[`classrooms/${sessionId.value}/students/${s.id}/profile/Zodiac`] = s.preZodiac;
+                }
+            });
+        }
+
+        if(Object.keys(updates).length > 0) {
+            await update(dbRef(db), updates);
+            addToast(importMode.value === 'sync' ? "名單校正完成" : "成功匯入資料", "success");
+            showImporter.value = false; importRaw.value = ''; parsedPreview.value = [];
+        } else {
+            addToast("沒有資料需要變更", "info");
+        }
+    };
+
+    const undoLastImport = async () => {
+        const cache = localStorage.getItem(`UNDO_${sessionId.value}`);
+        if (cache && confirm("【緊急救援】\n確定要將名單還原到上一次匯入前的狀態嗎？")) {
+            await set(dbRef(db, `classrooms/${sessionId.value}/students`), JSON.parse(cache));
+            addToast("時光倒流成功！", "success");
+        } else {
+            addToast("找不到可還原的備份", "error");
+        }
+    };
+
+    const exportToCSV = () => {
+        const studentList = Object.values(students.value || {});
+        if (studentList.length === 0) return addToast("沒有學生資料可以匯出", "error");
+        let csvContent = "學號,姓名,生肖分組\n";
+        studentList.sort((a,b) => (a.profile?.StudentId || '').localeCompare(b.profile?.StudentId || '')).forEach(s => {
+            csvContent += `${s.profile?.StudentId || ''},${s.profile?.Name || ''},${s.profile?.Zodiac || ''}\n`;
+        });
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Zodiac_Roster_${sessionId.value}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        addToast("名單與分組已成功匯出！", "success");
+    };
+
+    return { importRaw, importMode, parsedPreview, generateDemoRoster, executeImport, undoLastImport, exportToCSV };
+}
+
+function useGroupLinks(sessionId, showGroupLinkSetting, addToast) {
+    const editingGroupLinks = ref(Array(12).fill(''));
+    const editingAssignmentLinks = ref(Array(12).fill(''));
+    const groupLinkTab = ref('discussion');
+    const groupLinksDirty = ref(false);
+    const zodiacList = CONFIG.ZODIAC;
+
+    const openGroupLinkSetting = async () => {
+        const [snapG, snapA] = await Promise.all([
+            get(dbRef(db, `classrooms/${sessionId.value}/groupLinks`)),
+            get(dbRef(db, `classrooms/${sessionId.value}/assignmentLinks`)),
+        ]);
+        editingGroupLinks.value = (snapG.exists() && Array.isArray(snapG.val())) ? snapG.val() : [...CONFIG.ZODIAC_PADLETS_B];
+        editingAssignmentLinks.value = (snapA.exists() && Array.isArray(snapA.val())) ? snapA.val() : [...CONFIG.ZODIAC_PADLETS_A];
+        groupLinkTab.value = 'discussion';
+        groupLinksDirty.value = false;
+        showGroupLinkSetting.value = true;
+    };    
+    const loadTemplate = (type) => {
+        const templateName = type === 'A' ? '個人作業版' : '分組討論版';
+        const tabName = groupLinkTab.value === 'discussion' ? '討論板' : '繳交';
+        if(confirm(`確定要將【${templateName}】套用至「${tabName}連結」？`)) {
+            const links = type === 'A' ? [...CONFIG.ZODIAC_PADLETS_A] : [...CONFIG.ZODIAC_PADLETS_B];
+            if (groupLinkTab.value === 'discussion') {
+                editingGroupLinks.value = links;
+            } else {
+                editingAssignmentLinks.value = links;
+            }
+            groupLinksDirty.value = true;
+            addToast(`已套用「${templateName}」，記得按儲存廣播！`, "info", "fa-solid fa-circle-info");
+        }
+    };    
+    const saveGroupLinks = async () => {
+        try {
+            await Promise.all([
+                set(dbRef(db, `classrooms/${sessionId.value}/groupLinks`), editingGroupLinks.value),
+                set(dbRef(db, `classrooms/${sessionId.value}/assignmentLinks`), editingAssignmentLinks.value),
+            ]);
+            groupLinksDirty.value = false;
+            addToast("12 組專屬連結已更新！", "success");
+            showGroupLinkSetting.value = false;
+        } catch (e) {
+            addToast("儲存失敗，請檢查網路狀態", "error", "fa-solid fa-triangle-exclamation");
+        }
+    };
+
+    return { editingGroupLinks, editingAssignmentLinks, groupLinkTab, groupLinksDirty, zodiacList, openGroupLinkSetting, saveGroupLinks, loadTemplate };
+}
+
+function usePosterVoting(sessionId) {
+    const allVotes     = ref({});
+    const posterScores = computed(() => {
+        const s = {};
+        Object.values(allVotes.value).forEach(v => {
+            if (v.rank1) s[v.rank1] = (s[v.rank1] || 0) + 3;
+            if (v.rank2) s[v.rank2] = (s[v.rank2] || 0) + 2;
+            if (v.rank3) s[v.rank3] = (s[v.rank3] || 0) + 1;
+        });
+        return s;
+    });
+    const voteCount    = computed(() => Object.keys(allVotes.value).length);
+    const maxVoteScore = computed(() => Math.max(1, ...Object.values(posterScores.value)));
+
+    const initVoteListener = () => {
+        onValue(dbRef(db, `classrooms/${sessionId.value}/posterVotes`), snap => {
+            allVotes.value = snap.val() || {};
+        });
+    };
+    return { posterScores, voteCount, maxVoteScore, initVoteListener };
+}
+
+function useGAS(sessionId, students, posterScores, addToast) {
+    const isSyncing = ref(false);
+    const syncToSheets = async () => {
+        if (!CONFIG.GAS_URL) return addToast("未設定 GAS", "error");
+        isSyncing.value = true;
+        try {
+            const rows = Object.entries(students.value || {}).map(([uid, s]) => ({
+                uid,
+                studentId:            s.profile?.StudentId || '',
+                name:                 s.profile?.Name || '',
+                zodiac:               s.profile?.Zodiac || '',
+                role:                 s.profile?.Role || 'member',
+                calibration:          s.tasks?.calibration?.done ? 1 : 0,
+                calibration_confidence: s.tasks?.calibration?.confidence || 0,
+                
+                notebook:             s.tasks?.notebook?.done ? 1 : 0,
+                notebook_duration:    s.tasks?.notebook?.duration || 0,
+                
+                slido:                s.tasks?.slido?.done ? 1 : 0,
+                slido_duration:       s.tasks?.slido?.duration || 0,
+                
+                forms:                s.tasks?.forms?.done ? 1 : 0,
+                forms_duration:       s.tasks?.forms?.duration || 0,
+                
+                assignment:           s.tasks?.assignment?.done ? 1 : 0,
+                assignment_role:      s.tasks?.assignment?.role || '',
+                contributions:        (s.tasks?.assignment?.contributions || []).join(' | '),
+                
+                gallery:              s.tasks?.gallery?.done ? 1 : 0,
+                rating:               s.rating || 0,
+                feedback:             (() => { try { return JSON.parse(s.feedback || '').content || ''; } catch { return s.feedback || ''; } })(),
+                self_score:           (() => { try { return JSON.parse(s.feedback || '').self_score || 0; } catch { return 0; } })(),
+                reflection:           (() => { try { return JSON.parse(s.feedback || '').reflection || ''; } catch { return ''; } })(),
+                leader_review:        (() => { try { return JSON.parse(s.feedback || '').leaderSelfReview || ''; } catch { return ''; } })(),
+                leader_rating:        s.profile?.leaderRating || 0,
+                poster_score:         posterScores.value[s.profile?.Zodiac] || 0
+            }));
+            
+            const resp = await fetch(CONFIG.GAS_URL, { method: 'POST', body: JSON.stringify({ sessionId: sessionId.value, timestamp: Date.now(), secret: CONFIG.GAS_SECRET, rows }) });
+            if (!resp.ok) throw new Error(`GAS returned ${resp.status}`);
+            addToast("存檔成功，資料已同步至試算表！", "success");
+        } catch (e) { console.error('[GAS sync error]', e); addToast(`存檔失敗：${e.message || e}`, "error"); } finally { isSyncing.value = false; }
+    };
+    return { isSyncing, syncToSheets };
+}
+
+createApp({
+    setup() {
+        const { toasts, addToast } = useToast();
+        const showImporter = ref(false);
+        const showGroupLinkSetting = ref(false);
+        
+        const { form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession } = useAuthAndSession(addToast);
+        const sessionId = computed(() => form.sessionId);
+        const { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule } = useClassroom(sessionId, addToast);
+        const { posterScores, voteCount, maxVoteScore, initVoteListener } = usePosterVoting(sessionId);
+        const { searchQuery, displayedList, studentCount, activeCount, calculateScore, isSpeedrun, getStatusColor, getBeaconClass, revokeToken, assignLeader, revokeLeader, deleteStudent } = useRoster(sessionId, students, posterScores, addToast);
+        const { importRaw, importMode, parsedPreview, generateDemoRoster, executeImport, undoLastImport, exportToCSV } = useImporter(sessionId, students, showImporter, addToast);
+        const { editingGroupLinks, editingAssignmentLinks, groupLinkTab, groupLinksDirty, zodiacList, openGroupLinkSetting, saveGroupLinks, loadTemplate } = useGroupLinks(sessionId, showGroupLinkSetting, addToast);
+        const { isSyncing, syncToSheets } = useGAS(sessionId, students, posterScores, addToast);
+
+        // --- FIXED: GLOBAL PROGRESS ---
+        const globalProgress = computed(() => {
+            if (activeCount.value === 0) return 0;
+            
+            const activeTaskKeys = ['calibration'];
+            if (state.config?.enableGroupA) activeTaskKeys.push('notebook', 'slido', 'forms');
+            if (state.config?.enableGroupB) activeTaskKeys.push('assignment', 'gallery');
+
+            const totalExpected = activeTaskKeys.length;
+            if (totalExpected === 0) return 0;
+
+            const totalDone = displayedList.value.reduce((acc, s) => {
+                const studentCompleted = activeTaskKeys.filter(k => s.tasks?.[k]?.done).length;
+                return acc + studentCompleted;
+            }, 0);
+            
+            return Math.min(100, (totalDone / (activeCount.value * totalExpected)) * 100);
+        });
+
+        const syncGlobalProgress = (value) => {
+            if (!hasJoined.value) return;
+            const rounded = Math.max(0, Math.min(100, Math.round(value || 0)));
+            if (Math.round(state.globalProgress || 0) !== rounded) {
+                update(dbRef(db, `classrooms/${sessionId.value}/status`), { globalProgress: rounded });
+            }
+        };
+        watch(hasJoined, (isLoggedIn) => {
+            if (isLoggedIn) {
+                initListeners();
+                initVoteListener();
+                syncGlobalProgress(globalProgress.value);
+            }
+        });
+        watch(globalProgress, syncGlobalProgress);
+
+        const studentUrl = computed(() => {
+            const url = new URL('index.html', window.location.href);
+            url.searchParams.set('id', form.sessionId);
+            return url.toString();
+        });
+        const copyLink = () => navigator.clipboard.writeText(studentUrl.value).then(()=>addToast("連結已複製", "success"));
+        const qrCodeUrl = computed(() => `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(studentUrl.value)}`);
+        const copySessionId = () => navigator.clipboard.writeText(form.sessionId).then(()=>addToast("教室代碼已複製", "success"));
+
+        return { 
+            form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession,
+            toasts, showImporter, showGroupLinkSetting,
+            state, localLinks, linksDirty, setStatus, switchPhase, updateConfig, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule,
+            searchQuery, displayedList, studentCount, activeCount, globalProgress,
+            calculateScore, isSpeedrun, getStatusColor, getBeaconClass,
+            assignLeader, revokeLeader, revokeToken, deleteStudent,
+            importRaw, importMode, parsedPreview, generateDemoRoster, executeImport, undoLastImport, exportToCSV,
+            showGroupLinkSetting, editingGroupLinks, editingAssignmentLinks, groupLinkTab, groupLinksDirty, zodiacList, openGroupLinkSetting, saveGroupLinks, loadTemplate,
+            isSyncing, syncToSheets,
+            posterScores, voteCount, maxVoteScore,
+            copySessionId, copyLink, qrCodeUrl
+        };
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
