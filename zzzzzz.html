@@ -548,7 +548,8 @@ const SCORE_CONFIG = {
         SLIDO:    { SCORE: 15, THRESHOLD: 5,  PENALTY: 5 },
         FORMS:    { SCORE: 25, THRESHOLD: 20, PENALTY: 10 },
     },
-    LEADER_BONUS: { MAX_POINTS: 10, POINTS_PER_RATING: 2 }
+    LEADER_BONUS:       { MAX_POINTS: 10, POINTS_PER_RATING: 2 },
+    CONTRIBUTION_BONUS: { POINTS_PER_ITEM: 3, MAX_POINTS: 9 }
 };
 
 function useToast() {
@@ -771,6 +772,9 @@ function useRoster(sessionId, students, posterScores, addToast) {
         if (student.profile?.Role === 'leader') {
             score += Math.min(c.LEADER_BONUS.MAX_POINTS, (student.profile.leaderRating || 0) * c.LEADER_BONUS.POINTS_PER_RATING);
         }
+
+        const contribs = t.assignment?.contributions?.length || 0;
+        score += Math.min(c.CONTRIBUTION_BONUS.MAX_POINTS, contribs * c.CONTRIBUTION_BONUS.POINTS_PER_ITEM);
 
         score += posterScores.value[student.profile?.Zodiac] || 0;
 

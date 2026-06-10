@@ -217,7 +217,7 @@
                                 <div v-if="isUnlocked('assignment')" class="flex flex-col gap-2">
                                     <button @click="openLink('assignment')" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border border-slate-600 text-slate-200 active:scale-95"><i class="fa-solid fa-cloud-arrow-up"></i> 前往繳交</button>
                                     <button v-if="myTasks.assignment.started && !myTasks.assignment.done" @click="markDone('assignment')" class="w-full bg-amber-600 text-white px-4 py-3 rounded-xl text-sm font-bold shadow-lg animate-pulse-slow active:scale-95"><i class="fa-solid fa-check-double"></i> 標記已完成</button>
-                                    <div v-if="globalState.config?.assignmentType === 'group'" class="text-xs text-slate-400">組長提交最終海報；組員請勾選貢獻紀錄，系統將自動納入參與紀錄。</div>
+                                    <div v-if="globalState.config?.assignmentType === 'group'" class="text-xs text-slate-400">{{ myProfile.role === 'leader' ? '組長請前往 Padlet 上傳最終海報。' : '組員勾選貢獻即完成，無需上傳檔案。' }}</div>
                                 </div>
                                 <div v-else class="text-[10px] text-slate-500 font-bold border border-slate-700 px-2 py-1 rounded inline-block">🔒 尚未開放繳交</div>
                             </div>
@@ -335,17 +335,11 @@
                 <div class="flex-1 overflow-y-auto px-6 pb-2">
                     <div class="space-y-4 text-sm text-slate-200">
                         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
-                            <div class="font-bold mb-2">您的身分</div>
-                            <div class="text-white">{{ myProfile.role === 'leader' ? '組長' : '組員' }}</div>
-                            <div class="text-slate-500 mt-2" v-if="myProfile.role !== 'leader'">您目前的身份為：組員。請勾選您在本次專案中的具體貢獻，系統將自動納入您的參與紀錄。</div>
-                            <div class="text-slate-500 mt-2" v-else>您目前的身份為：組長。請直接確認送出，系統將記錄您作為組長的最終提交。</div>
+                            <div class="font-bold mb-2">您的身分：{{ myProfile.role === 'leader' ? '👑 組長' : '🧑‍💻 組員' }}</div>
+                            <div class="text-slate-500 text-xs mt-1">{{ myProfile.role === 'leader' ? '請先勾選您的貢獻，確認後將前往 Padlet 上傳最終成果。' : '請勾選您在本次專案中的具體貢獻，確認後系統自動記錄，無需上傳檔案。' }}</div>
                         </div>
-                        <div v-if="myProfile.role === 'leader'" class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
-                            <div class="font-bold mb-2">您是組長，準備提交最終成果</div>
-                            <div class="text-slate-400 text-sm leading-relaxed">組長直接送出最終海報或作品，不需要勾選商品風格。系統會記錄此提交行為。</div>
-                        </div>
-                        <div v-else class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
-                            <div class="font-bold mb-3">請勾選您的協作貢獻</div>
+                        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
+                            <div class="font-bold mb-3">請勾選您的協作貢獻 <span class="text-xs text-emerald-400 font-normal">（每項 +3 分，上限 +9）</span></div>
                             <div class="space-y-3">
                                 <label v-for="option in contributionOptions" :key="option.value" class="flex items-start gap-3 p-3 rounded-2xl border border-slate-700 hover:border-emerald-500 transition cursor-pointer">
                                     <input type="checkbox" :value="option.value" v-model="selectedContributions" class="mt-1 h-4 w-4 accent-emerald-400" />
@@ -360,12 +354,12 @@
                                 <textarea v-model="otherContributionText" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 resize-none h-24" placeholder="如果還有其他貢獻，請簡短說明..."></textarea>
                             </div>
                         </div>
-                        <div class="text-xs uppercase tracking-widest text-slate-500 pb-1">組長為最終海報提交者，組員則記錄自己的參與貢獻。</div>
+                        <div class="text-xs uppercase tracking-widest text-slate-500 pb-1">至少勾選一項貢獻才能送出。</div>
                     </div>
                 </div>
                 <div class="flex-none px-6 py-4 border-t border-slate-800 flex flex-col gap-3 sm:flex-row sm:justify-end">
                     <button @click="cancelSubmitConfirm" class="w-full sm:w-auto px-5 py-3 rounded-2xl border border-slate-600 text-slate-300 hover:bg-slate-800 transition">取消</button>
-                    <button @click="confirmSubmitAssignment" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 transition">{{ myProfile.role === 'leader' ? '確認並前往提交' : '確認並送出貢獻紀錄' }}</button>
+                    <button @click="confirmSubmitAssignment" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 transition">{{ myProfile.role === 'leader' ? '確認並前往提交' : '送出貢獻紀錄' }}</button>
                 </div>
             </div>
         </div>
@@ -722,41 +716,6 @@ function useTasks(sessionId, myUid, globalState, myProfile, addToast, playSFX) {
     
     const confirmSubmitAssignment = () => {
         const taskType = globalState.config?.assignmentType || 'individual';
-        
-        // FIX: Pop-up blocker and race condition fix for leaders
-        if (myProfile.role === 'leader') {
-            const key = pendingLinkKey.value;
-            const popup = window.open('about:blank', '_blank');
-            const start = myTasks.assignment.startTime || Date.now();
-            const now = Date.now();
-
-            // Optimistic local update so task-done UI reflects immediately
-            myTasks.assignment.started = true;
-            myTasks.assignment.done = true;
-            myTasks.assignment.startTime = start;
-            myTasks.assignment.endTime = now;
-
-            update(dbRef(db, `classrooms/${sessionId.value}/students/${myUid.value}/tasks/assignment`), {
-                started: true,
-                done: true,
-                type: taskType,
-                startTime: start,
-                endTime: now,
-                duration: Math.round((now - start) / 1000),
-                role: myProfile.role || 'leader'
-            }).catch(() => console.error("Leader submission sync delayed"));
-
-            submitConfirmVisible.value = false;
-            addToast(`已確認角色：組長，直接送出最終成果。`, 'success');
-            pendingLinkKey.value = '';
-            selectedWorkType.value = '';
-            selectedContributions.value = [];
-            otherContributionText.value = '';
-            
-            // Execute the link open immediately
-            openLink(key, true, popup);
-            return;
-        }
 
         if (selectedContributions.value.length === 0 && !otherContributionText.value.trim()) {
             return addToast("請至少勾選一項貢獻或填寫其他說明", "error");
@@ -764,9 +723,9 @@ function useTasks(sessionId, myUid, globalState, myProfile, addToast, playSFX) {
         if (_submitting.value) return;
         _submitting.value = true;
 
-        // Pre-open popup before async work (popup blocker fix)
-        const memberPopup = window.open('about:blank', '_blank');
+        const isLeader = myProfile.role === 'leader';
         const key = pendingLinkKey.value;
+        const leaderPopup = isLeader ? window.open('about:blank', '_blank') : null;
 
         const contributions = [...selectedContributions.value];
         if (otherContributionText.value.trim()) contributions.push(`其他：${otherContributionText.value.trim()}`);
@@ -776,18 +735,18 @@ function useTasks(sessionId, myUid, globalState, myProfile, addToast, playSFX) {
             started: true, done: true, type: taskType,
             startTime: start, endTime: Date.now(),
             duration: Math.round((Date.now() - start) / 1000),
-            role: 'member', contributions,
+            role: myProfile.role || 'member', contributions,
             contributionSubmittedAt: Date.now()
         }).then(() => {
             submitConfirmVisible.value = false;
-            addToast("已送出貢獻紀錄，感謝您的協作！", 'success');
+            addToast(isLeader ? "貢獻已記錄，請前往上傳最終成果！" : "貢獻紀錄已送出，感謝您的協作！", 'success');
             pendingLinkKey.value = '';
             selectedWorkType.value = '';
             selectedContributions.value = [];
             otherContributionText.value = '';
-            openLink(key, true, memberPopup);
+            if (isLeader) openLink(key, true, leaderPopup);
         }).catch(() => {
-            memberPopup?.close();
+            leaderPopup?.close();
             addToast("送出失敗，請稍後再試", 'error');
         }).finally(() => { _submitting.value = false; });
     };
