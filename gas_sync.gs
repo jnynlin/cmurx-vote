@@ -1,9 +1,11 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.7
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.8
  *
- * Changes from v5.6:
- *   - Add judgeScore action: writes external teacher poster scores to "海報評審" sheet
- *   - Sheet: 組別 | 評審A×4 | 評審B×4 | 評審C×4 (13 cols)
+ * Changes from v5.7:
+ *   - New 20-col "海報評審" sheet: 組別|元素|A×4|B×4|C×4|均分×4|★最終總分|排名
+ *   - AVERAGE + RANK formulas auto-written on sheet creation
+ *   - loginJudge: auto-assign slot (A/B/C) by arrival order, PIN verification
+ *   - Shared constants (JUDGE_COL/NAME_ROW/PIN_ROW) across both handlers
  */
 
 const GAS_SECRET = "zodiac-2026-cmuh"; // must match CONFIG.GAS_SECRET in zzzzzz.html
