@@ -25,6 +25,11 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ── Judge login / slot claim ────────────────────────────────────────
+    if (data.action === 'loginJudge') {
+      return handleLoginJudge(data);
+    }
+
     // ── Judge scoring (external teachers) ──────────────────────────────
     if (data.action === 'judgeScore') {
       return handleJudgeScore(data);
@@ -142,6 +147,68 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// ── Judge login: auto-assign slot by arrival order ────────────────────
+function handleLoginJudge(data) {
+  const name = (data.name || '').trim();
+  const pin  = (data.pin  || '').trim();
+  if (!name || !pin) throw new Error("Missing name or pin");
+
+  const SHEET_NAME  = "海報評審";
+  const JUDGE_SLOTS = ['A', 'B', 'C'];
+  const NAME_ROW    = 14;
+  const PIN_ROW     = 15;
+  const COL_START   = { A: 2, B: 6, C: 10 };
+
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName(SHEET_NAME);
+
+  // If sheet doesn't exist yet, create it (handleJudgeScore will fill headers on first score submit)
+  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+
+  // ── Check if this name+PIN already has a slot (returning judge) ────
+  for (const slot of JUDGE_SLOTS) {
+    const col         = COL_START[slot];
+    const storedName  = (sheet.getRange(NAME_ROW, col).getValue() || '').toString().replace(/^✍ /, '').trim();
+    const storedPin   = (sheet.getRange(PIN_ROW,  col).getValue() || '').toString().trim();
+    if (storedName === name && storedPin === pin) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'ok', slot, returning: true,
+        message: `歡迎回來，${name}`
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // ── Name matches but PIN wrong → reject ───────────────────────────
+  for (const slot of JUDGE_SLOTS) {
+    const col        = COL_START[slot];
+    const storedName = (sheet.getRange(NAME_ROW, col).getValue() || '').toString().replace(/^✍ /, '').trim();
+    if (storedName === name) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'error', message: 'PIN 碼錯誤，請重新輸入'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // ── Claim next empty slot ─────────────────────────────────────────
+  for (const slot of JUDGE_SLOTS) {
+    const col        = COL_START[slot];
+    const storedName = (sheet.getRange(NAME_ROW, col).getValue() || '').toString().trim();
+    if (!storedName) {
+      sheet.getRange(NAME_ROW, col).setValue(`✍ ${name}`);
+      sheet.getRange(PIN_ROW,  col).setValue(pin);
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'ok', slot, returning: false,
+        message: `已登錄，${name}`
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // ── All 3 slots taken ─────────────────────────────────────────────
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'error', message: '三位評審名額已滿，請洽主辦單位'
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 // ── External judge poster scoring ─────────────────────────────────────
