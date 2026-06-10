@@ -1,9 +1,10 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.5
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.6
  *
- * Changes from v5.4:
- *   - Add reflection (學習反思) and leader_review (組長領導心得) columns (19→21)
- *   - Debrief is now final (no re-edit from student portal)
+ * Changes from v5.5:
+ *   - Add poster_score (海報票選分) column 22
+ *   - Add contribution bonus to score (+3/item, max +9)
+ *   - poster_score added to total score
  */
 
 const GAS_SECRET = "zodiac-2026-cmuh"; // must match CONFIG.GAS_SECRET in zzzzzz.html
@@ -45,8 +46,9 @@ function doPost(e) {
       "Group B: 展覽完成",
       "心得內容 (Feedback)",       "課末自評分 (1-5)",          "學習反思",
       "組長領導心得",               "暖身信心 (1-5)",
-      "異常標記 (Speedrun)",       "最後連線時間"
-    ]; // 21 欄
+      "異常標記 (Speedrun)",       "最後連線時間",
+      "海報票選分"
+    ]; // 22 欄
 
     // 永遠明確寫入第 1 列標題（避免 appendRow 因 lastRow 偏移導致標題消失）
     sheet.getRange(1, 1, 1, headers.length).setValues([headers])
@@ -83,6 +85,11 @@ function doPost(e) {
         score += Math.min(10, (Number(r.leader_rating) || 0) * 2);
       }
 
+      const contribCount = r.contributions ? r.contributions.split(' | ').filter(Boolean).length : 0;
+      score += Math.min(9, contribCount * 3);
+
+      score += Number(r.poster_score) || 0;
+
       const now = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy/MM/dd HH:mm:ss");
 
       return [
@@ -106,7 +113,8 @@ function doPost(e) {
         r.leader_review || "",                                                                    // 18 組長領導心得
         r.calibration_confidence || "",                                                           // 19 暖身信心
         tags.join(", "),                                                                          // 20 異常標記
-        now                                                                                       // 21 最後連線時間
+        now,                                                                                      // 21 最後連線時間
+        Number(r.poster_score) || 0                                                               // 22 海報票選分
       ];
     });
 
