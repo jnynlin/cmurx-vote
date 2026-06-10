@@ -146,8 +146,9 @@ function doPost(e) {
 
 // ── External judge poster scoring ─────────────────────────────────────
 function handleJudgeScore(data) {
-  const judge = data.judge;   // 'A', 'B', or 'C'
-  const rows  = data.rows;    // [{zodiac, content, design, creativity, total}, ...]
+  const judge     = data.judge;      // 'A', 'B', or 'C'
+  const judgeName = data.judgeName || '';
+  const rows      = data.rows;       // [{zodiac, content, design, creativity, total}, ...]
   if (!judge || !rows || !rows.length) throw new Error("Missing judge or rows");
 
   const SHEET_NAME = "海報評審";
@@ -171,6 +172,8 @@ function handleJudgeScore(data) {
     // Pre-fill zodiac rows in correct order
     const zodiacRows = ZODIAC_ORDER.map(z => [z, 0,0,0,0, 0,0,0,0, 0,0,0,0]);
     sheet.getRange(2, 1, zodiacRows.length, 13).setValues(zodiacRows);
+    // Row 14: signature row label
+    sheet.getRange(14, 1).setValue('評審簽名').setFontWeight('bold').setFontColor('#94a3b8');
   }
 
   // Build lookup: zodiac label → row number (2-based)
@@ -189,9 +192,13 @@ function handleJudgeScore(data) {
     ]]);
   });
 
-  // Timestamp in cell N1
+  // Write judge name into row 14 (below 12 zodiac rows + 1 header)
+  const nameRowStart = { A: 2, B: 6, C: 10 };
+  sheet.getRange(14, nameRowStart[judge]).setValue(judgeName ? `✍ ${judgeName}` : '');
+
+  // Timestamp
   const now = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy/MM/dd HH:mm:ss");
-  sheet.getRange(1, 14).setValue(`評審${judge} 最後送出: ${now}`);
+  sheet.getRange(1, 14).setValue(`評審${judge}${judgeName ? ' (' + judgeName + ')' : ''} 最後送出: ${now}`);
 
   return ContentService.createTextOutput(JSON.stringify({
     status: 'success',

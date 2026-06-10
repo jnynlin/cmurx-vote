@@ -12,24 +12,48 @@
   .fade-in{animation:fadeIn .35s ease both;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
-  /* ── Judge Select ── */
-  .judge-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .judge-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:48px 40px;max-width:480px;width:100%;text-align:center;}
-  .judge-card h1{font-size:24px;font-weight:800;color:#f8fafc;margin-bottom:8px;}
-  .judge-card p{color:#64748b;font-size:13px;margin-bottom:36px;}
-  .judge-btn{display:block;width:100%;background:#1e293b;border:2px solid #334155;border-radius:14px;padding:18px 24px;margin-bottom:12px;cursor:pointer;transition:all .2s;text-align:left;}
-  .judge-btn:hover{border-color:#60a5fa;background:#1e3a5f;}
-  .judge-btn .jname{font-size:18px;font-weight:700;color:#f8fafc;}
-  .judge-btn .jdesc{font-size:12px;color:#64748b;margin-top:2px;}
-  .judge-btn .jicon{font-size:28px;float:right;margin-top:-4px;}
+  /* ── Centered screens ── */
+  .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .panel{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:48px 40px;max-width:480px;width:100%;}
+  @media(max-width:480px){.panel{padding:32px 24px;}}
+
+  /* ── Select screen ── */
+  .panel h1{font-size:24px;font-weight:800;color:#f8fafc;margin-bottom:6px;text-align:center;}
+  .panel .subtitle{color:#64748b;font-size:13px;margin-bottom:32px;text-align:center;}
+  .judge-btn{display:block;width:100%;background:#0f172a;border:2px solid #334155;border-radius:14px;padding:16px 20px;margin-bottom:10px;cursor:pointer;transition:all .2s;text-align:left;}
+  .judge-btn:hover{border-color:#60a5fa;background:#0c1a2e;}
+  .judge-btn .jname{font-size:16px;font-weight:700;color:#f8fafc;}
+  .judge-btn .jdesc{font-size:11px;color:#64748b;margin-top:2px;}
+  .judge-btn .jicon{font-size:26px;float:right;}
+
+  /* ── Sign-in screen ── */
+  .signin-header{text-align:center;margin-bottom:32px;}
+  .judge-badge{display:inline-flex;align-items:center;gap:8px;background:#1e3a5f;border:2px solid #3b82f6;border-radius:24px;padding:8px 20px;font-size:15px;font-weight:700;color:#60a5fa;margin-bottom:16px;}
+  .signin-header h2{font-size:20px;font-weight:800;color:#f8fafc;margin-bottom:6px;}
+  .signin-header p{font-size:12px;color:#64748b;}
+  .field-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .name-input{width:100%;background:#0f172a;border:2px solid #334155;border-radius:12px;padding:14px 16px;font-size:16px;color:#f8fafc;outline:none;transition:border-color .2s;font-family:inherit;}
+  .name-input:focus{border-color:#3b82f6;}
+  .name-input::placeholder{color:#475569;}
+  .start-btn{width:100%;background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:20px;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .start-btn:hover:not(:disabled){background:#2563eb;}
+  .start-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
+  .signin-note{font-size:11px;color:#475569;text-align:center;margin-top:14px;line-height:1.6;}
+
+  /* ── Signature preview ── */
+  .sig-preview{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:12px 16px;margin-top:16px;display:flex;align-items:center;gap-10px;gap:10px;}
+  .sig-preview .sig-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;}
+  .sig-preview .sig-name{font-size:15px;font-weight:700;color:#f8fafc;font-style:italic;}
+  .sig-preview .sig-id{font-size:10px;color:#60a5fa;margin-top:2px;}
 
   /* ── Main Layout ── */
   .app{max-width:900px;margin:0 auto;padding:24px 16px 80px;}
-  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
   .top-bar h2{font-size:18px;font-weight:800;color:#f8fafc;}
-  .judge-tag{display:inline-flex;align-items:center;gap:8px;background:#1e3a5f;border:1px solid #3b82f6;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:#60a5fa;}
   .progress-tag{font-size:12px;color:#64748b;}
-  .progress-bar{height:4px;background:#1e293b;border-radius:2px;margin-bottom:28px;overflow:hidden;}
+  .judge-tag{display:inline-flex;align-items:center;gap:8px;background:#1e3a5f;border:1px solid #3b82f6;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:#60a5fa;}
+  .judge-tag .judge-realname{color:#f8fafc;margin-left:4px;}
+  .progress-bar{height:4px;background:#1e293b;border-radius:2px;margin-bottom:24px;overflow:hidden;}
   .progress-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;transition:width .4s ease;}
 
   /* ── Group Card ── */
@@ -37,41 +61,43 @@
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;}}
   .group-card{background:#1e293b;border:2px solid #334155;border-radius:16px;padding:20px;transition:border-color .2s;}
   .group-card.scored{border-color:#22c55e;}
-  .group-card.scored .card-header .status-dot{background:#22c55e;}
-  .card-header{display:flex;align-items:center;gap-10px;gap:10px;margin-bottom:14px;}
+  .group-card.scored .status-dot{background:#22c55e;}
+  .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
   .zodiac-icon{width:44px;height:44px;border-radius:12px;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
   .zodiac-name{font-weight:700;font-size:15px;color:#f8fafc;}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;margin-left:auto;flex-shrink:0;}
-  .padlet-btn{display:flex;align-items:center;gap:6px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:7px 12px;font-size:11px;color:#94a3b8;cursor:pointer;text-decoration:none;margin-bottom:14px;transition:all .2s;}
-  .padlet-btn:hover{border-color:#f59e0b;color:#fbbf24;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;margin-left:auto;flex-shrink:0;transition:background .3s;}
 
   /* ── Stars ── */
   .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
   .criteria-label{font-size:11px;color:#94a3b8;flex-shrink:0;width:68px;}
   .stars{display:flex;gap:3px;}
-  .star{font-size:20px;cursor:pointer;color:#334155;transition:color .1s,transform .1s;line-height:1;}
+  .star{font-size:20px;cursor:pointer;color:#334155;transition:color .1s,transform .1s;line-height:1;user-select:none;}
   .star:hover,.star.active{color:#f59e0b;}
   .star:hover{transform:scale(1.2);}
   .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
 
-  /* ── Submit ── */
-  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:50;}
-  .submit-info{font-size:13px;color:#64748b;}
+  /* ── Submit bar ── */
+  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:50;}
+  .submit-info{font-size:13px;color:#64748b;line-height:1.5;}
   .submit-info strong{color:#f8fafc;}
-  .submit-btn{background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;}
+  .submit-btn{background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
   .submit-btn:hover:not(:disabled){background:#2563eb;}
   .submit-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
   .submit-btn.done{background:#059669;}
 
   /* ── Result ── */
-  .result-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .result-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:48px 40px;max-width:520px;width:100%;text-align:center;}
+  .result-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:40px;max-width:560px;width:100%;text-align:center;}
   .result-card h2{font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:12px;}
-  .result-card p{color:#94a3b8;font-size:14px;line-height:1.8;}
-  .result-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:24px;text-align:left;}
-  .result-table th{color:#64748b;padding:6px 8px;border-bottom:1px solid #334155;}
-  .result-table td{padding:6px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0;}
-  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;z-index:999;animation:fadeIn .2s ease;}
+  .sig-box{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px 20px;margin:20px 0;text-align:left;}
+  .sig-box .sb-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .sig-box .sb-name{font-size:20px;font-weight:800;color:#f8fafc;font-style:italic;}
+  .sig-box .sb-meta{font-size:11px;color:#64748b;margin-top:4px;}
+  .result-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px;text-align:left;}
+  .result-table th{color:#64748b;padding:6px 8px;border-bottom:1px solid #334155;font-size:10px;text-transform:uppercase;}
+  .result-table td{padding:7px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0;}
+
+  /* ── Toast ── */
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;z-index:999;animation:fadeIn .2s ease;white-space:nowrap;}
   .toast.success{border-color:#22c55e;color:#4ade80;}
   .toast.error{border-color:#ef4444;color:#f87171;}
 </style>
@@ -79,18 +105,18 @@
 <body>
 <div id="app">
 
-  <!-- ── Toast ── -->
+  <!-- Toast -->
   <div v-if="toast.msg" :class="['toast', toast.type]">
     <i :class="toast.icon"></i> {{ toast.msg }}
   </div>
 
-  <!-- ── Judge Select ── -->
-  <div v-if="phase==='select'" class="judge-screen fade-in">
-    <div class="judge-card">
-      <div style="font-size:36px;margin-bottom:12px;">🏆</div>
+  <!-- ── 1. Judge Select (fallback when no ?judge= param) ── -->
+  <div v-if="phase==='select'" class="center-screen fade-in">
+    <div class="panel">
+      <div style="font-size:36px;text-align:center;margin-bottom:16px;">🏆</div>
       <h1>海報評審系統</h1>
-      <p>Zodiac Ops · 請選擇您的評審身份</p>
-      <button v-for="j in JUDGES" :key="j.id" class="judge-btn" @click="selectJudge(j)">
+      <p class="subtitle">Zodiac Ops · 請選擇您的評審編號</p>
+      <button v-for="j in JUDGES" :key="j.id" class="judge-btn" @click="goSignIn(j)">
         <span class="jicon">{{ j.icon }}</span>
         <div class="jname">{{ j.name }}</div>
         <div class="jdesc">{{ j.desc }}</div>
@@ -98,7 +124,45 @@
     </div>
   </div>
 
-  <!-- ── Scoring ── -->
+  <!-- ── 2. Sign-in (name entry) ── -->
+  <div v-if="phase==='signin'" class="center-screen fade-in">
+    <div class="panel">
+      <div class="signin-header">
+        <div style="font-size:32px;margin-bottom:12px;">✍️</div>
+        <div class="judge-badge">
+          <i class="fa-solid fa-user-tie"></i>
+          {{ currentJudge.name }}
+        </div>
+        <h2>評審簽名登入</h2>
+        <p>Poster Judging System · Zodiac Ops 2026</p>
+      </div>
+
+      <div class="field-label">評審姓名 Judge Name</div>
+      <input v-model.trim="judgeName"
+             class="name-input"
+             placeholder="請輸入您的姓名（中英文均可）"
+             maxlength="40"
+             @keyup.enter="startJudging" />
+
+      <div v-if="judgeName" class="sig-preview">
+        <div>
+          <div class="sig-label">簽名預覽 Signature</div>
+          <div class="sig-name">{{ judgeName }}</div>
+          <div class="sig-id">{{ currentJudge.name }} · Zodiac Ops Poster Review 2026</div>
+        </div>
+      </div>
+
+      <button class="start-btn" :disabled="!judgeName" @click="startJudging">
+        <i class="fa-solid fa-pen-nib"></i> 確認簽名，開始評審
+      </button>
+      <div class="signin-note">
+        您的姓名將記錄於評分紀錄中作為正式簽署依據<br>
+        Your name will be recorded as the official reviewer signature.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. Scoring ── -->
   <div v-if="phase==='scoring'" class="fade-in">
     <div class="app">
       <div class="top-bar">
@@ -106,14 +170,20 @@
           <h2><i class="fa-solid fa-medal" style="color:#f59e0b;margin-right:8px;"></i>海報評審</h2>
           <div class="progress-tag">{{ scoredCount }} / {{ ZODIAC.length }} 組已完成評分</div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="judge-tag"><i class="fa-solid fa-user-tie"></i>{{ currentJudge.name }}</div>
-          <button @click="changeJudge" style="background:none;border:1px solid #334155;border-radius:8px;padding:6px 10px;color:#64748b;cursor:pointer;font-size:11px;">切換</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="judge-tag">
+            <i class="fa-solid fa-user-tie"></i>
+            {{ currentJudge.name }}
+            <span class="judge-realname">· {{ judgeName }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="progress-bar"><div class="progress-fill" :style="`width:${scoredCount/ZODIAC.length*100}%`"></div></div>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="`width:${scoredCount/ZODIAC.length*100}%`"></div>
+      </div>
 
+      <!-- Gallery link banner -->
       <a :href="GALLERY_URL" target="_blank"
          style="display:flex;align-items:center;justify-content:space-between;background:#1c1917;border:1px solid #f59e0b;border-radius:12px;padding:12px 18px;margin-bottom:20px;text-decoration:none;color:#fbbf24;font-size:13px;font-weight:600;transition:background .2s;"
          onmouseover="this.style.background='#292524'" onmouseout="this.style.background='#1c1917'">
@@ -121,6 +191,7 @@
         <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
       </a>
 
+      <!-- Scoring grid -->
       <div class="group-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label"
              :class="['group-card', isScored(i) ? 'scored' : '']">
@@ -138,11 +209,7 @@
             <div class="stars">
               <span v-for="n in 5" :key="n"
                     :class="['star', scores[i][c.key] >= n ? 'active' : '']"
-                    @click="setScore(i, c.key, n)"
-                    @mouseover="hovered={card:i,crit:c.key,val:n}"
-                    @mouseleave="hovered=null">
-                ★
-              </span>
+                    @click="setScore(i, c.key, n)">★</span>
             </div>
             <div style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
               {{ scores[i][c.key] || '–' }}
@@ -152,11 +219,12 @@
       </div>
     </div>
 
+    <!-- Submit bar -->
     <div class="submit-bar">
       <div class="submit-info">
-        已評 <strong>{{ scoredCount }}</strong> / {{ ZODIAC.length }} 組 ·
-        <span v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;">還有 {{ ZODIAC.length - scoredCount }} 組未完成</span>
-        <span v-else style="color:#4ade80;">全部完成，可以送出！</span>
+        <div>已評 <strong>{{ scoredCount }}</strong> / {{ ZODIAC.length }} 組</div>
+        <div v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;font-size:11px;">還有 {{ ZODIAC.length - scoredCount }} 組未完成</div>
+        <div v-else style="color:#4ade80;font-size:11px;">全部完成，可以送出！</div>
       </div>
       <button :disabled="scoredCount < ZODIAC.length || submitting"
               :class="['submit-btn', submitted ? 'done' : '']"
@@ -167,12 +235,24 @@
     </div>
   </div>
 
-  <!-- ── Result ── -->
-  <div v-if="phase==='result'" class="result-screen fade-in">
+  <!-- ── 4. Result ── -->
+  <div v-if="phase==='result'" class="center-screen fade-in">
     <div class="result-card">
       <div style="font-size:48px;margin-bottom:16px;">✅</div>
-      <h2>評分已送出</h2>
-      <p>感謝 <strong style="color:#f8fafc;">{{ currentJudge.name }}</strong> 完成全部評分！<br>結果已同步至 Google Sheets。</p>
+      <h2>評分已正式送出</h2>
+
+      <div class="sig-box">
+        <div class="sb-label">官方評審簽名 Official Reviewer Signature</div>
+        <div class="sb-name">{{ judgeName }}</div>
+        <div class="sb-meta">
+          {{ currentJudge.name }} · Zodiac Ops Poster Review 2026<br>
+          {{ submitTime }}
+        </div>
+      </div>
+
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:4px;">評分結果已同步至 Google Sheets。</p>
+      <p style="color:#64748b;font-size:11px;">Score records have been saved with your signature.</p>
+
       <table class="result-table">
         <tr><th>組別</th><th>內容</th><th>視覺</th><th>創意</th><th>總分</th></tr>
         <tr v-for="(z, i) in ZODIAC" :key="z.label">
@@ -183,9 +263,6 @@
           <td><strong style="color:#f59e0b;">{{ scores[i].total }}</strong></td>
         </tr>
       </table>
-      <button @click="changeJudge" style="margin-top:28px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 24px;color:#94a3b8;cursor:pointer;font-size:13px;font-weight:600;">
-        <i class="fa-solid fa-rotate-left"></i> 切換評審繼續
-      </button>
     </div>
   </div>
 
@@ -197,26 +274,25 @@ const { createApp, reactive, ref, computed } = Vue;
 // ── Config ────────────────────────────────────────────────────────────
 const GAS_URL    = "https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec";
 const GAS_SECRET = "zodiac-2026-cmuh";
-
-const ZODIAC = [
-  {label:'子鼠', icon:'⚡️'}, {label:'丑牛', icon:'🧱'}, {label:'寅虎', icon:'🔥'}, {label:'卯兔', icon:'🧐'},
-  {label:'辰龍', icon:'🌟'}, {label:'巳蛇', icon:'🧠'}, {label:'午馬', icon:'🚀'}, {label:'未羊', icon:'🤝'},
-  {label:'申猴', icon:'💡'}, {label:'酉雞', icon:'⏱'},  {label:'戌狗', icon:'🛡'}, {label:'亥豬', icon:'📚'}
-];
-
 const GALLERY_URL = "https://padlet.com/jnynlin/cmurx";
 
+const ZODIAC = [
+  {label:'子鼠',icon:'⚡️'},{label:'丑牛',icon:'🧱'},{label:'寅虎',icon:'🔥'},{label:'卯兔',icon:'🧐'},
+  {label:'辰龍',icon:'🌟'},{label:'巳蛇',icon:'🧠'},{label:'午馬',icon:'🚀'},{label:'未羊',icon:'🤝'},
+  {label:'申猴',icon:'💡'},{label:'酉雞',icon:'⏱'}, {label:'戌狗',icon:'🛡'},{label:'亥豬',icon:'📚'}
+];
+
 const CRITERIA = [
-  { key: 'content',    label: '內容完整性' },
-  { key: 'design',     label: '視覺設計'   },
-  { key: 'creativity', label: '創意與深度' },
-  { key: 'total',      label: '整體總分'   },
+  {key:'content',    label:'內容完整性'},
+  {key:'design',     label:'視覺設計'  },
+  {key:'creativity', label:'創意與深度'},
+  {key:'total',      label:'整體總分'  },
 ];
 
 const JUDGES = [
-  { id: 'A', name: '評審 A', desc: '外部評審一', icon: '👨‍🏫' },
-  { id: 'B', name: '評審 B', desc: '外部評審二', icon: '👩‍🏫' },
-  { id: 'C', name: '評審 C', desc: '外部評審三', icon: '🧑‍🏫' },
+  {id:'A', name:'評審 A', desc:'外部評審一', icon:'👨‍🏫'},
+  {id:'B', name:'評審 B', desc:'外部評審二', icon:'👩‍🏫'},
+  {id:'C', name:'評審 C', desc:'外部評審三', icon:'🧑‍🏫'},
 ];
 
 // ── App ───────────────────────────────────────────────────────────────
@@ -224,70 +300,86 @@ createApp({
   setup() {
     const phase        = ref('select');
     const currentJudge = ref(null);
+    const judgeName    = ref('');
     const submitting   = ref(false);
     const submitted    = ref(false);
-    const hovered      = ref(null);
-    const toast        = reactive({ msg: '', type: 'success', icon: '' });
+    const submitTime   = ref('');
+    const toast        = reactive({msg:'', type:'success', icon:''});
 
-    const makeScores = () => ZODIAC.map(() => ({ content: 0, design: 0, creativity: 0, total: 0 }));
-    const scores = reactive(makeScores());
+    const scores = reactive(ZODIAC.map(() => ({content:0, design:0, creativity:0, total:0})));
 
     const LS_KEY = id => `poster_judge_${id}`;
 
-    const selectJudge = (j) => {
+    // ── On mount: check ?judge= URL param ────────────────────────────
+    const urlParam = new URLSearchParams(window.location.search).get('judge')?.toUpperCase();
+    const paramJudge = urlParam ? JUDGES.find(j => j.id === urlParam) : null;
+    if (paramJudge) {
+      currentJudge.value = paramJudge;
+      phase.value = 'signin';
+    }
+
+    // ── Navigation ───────────────────────────────────────────────────
+    const goSignIn = (j) => {
       currentJudge.value = j;
+      judgeName.value = '';
+      phase.value = 'signin';
+    };
+
+    const startJudging = () => {
+      if (!judgeName.value) return;
       // restore saved progress
-      const saved = localStorage.getItem(LS_KEY(j.id));
+      const saved = localStorage.getItem(LS_KEY(currentJudge.value.id));
       if (saved) {
         try {
-          const parsed = JSON.parse(saved);
-          parsed.forEach((s, i) => { if (scores[i]) Object.assign(scores[i], s); });
+          JSON.parse(saved).forEach((s, i) => { if (scores[i]) Object.assign(scores[i], s); });
         } catch(e) {}
       } else {
-        scores.forEach(s => { s.content = 0; s.design = 0; s.creativity = 0; s.total = 0; });
+        scores.forEach(s => { s.content=0; s.design=0; s.creativity=0; s.total=0; });
       }
       submitted.value = false;
       phase.value = 'scoring';
     };
 
-    const changeJudge = () => {
-      phase.value = 'select';
-      currentJudge.value = null;
-    };
-
+    // ── Scoring ──────────────────────────────────────────────────────
     const setScore = (i, key, val) => {
       scores[i][key] = val;
-      // auto-save to localStorage
       localStorage.setItem(LS_KEY(currentJudge.value.id), JSON.stringify(scores.map(s => ({...s}))));
     };
 
-    const isScored = (i) => CRITERIA.every(c => scores[i][c.key] > 0);
-
+    const isScored    = (i) => CRITERIA.every(c => scores[i][c.key] > 0);
     const scoredCount = computed(() => scores.filter((_, i) => isScored(i)).length);
 
-    const showToast = (msg, type = 'success', icon = 'fa-solid fa-circle-check') => {
-      toast.msg = msg; toast.type = type; toast.icon = icon;
-      setTimeout(() => { toast.msg = ''; }, 3500);
+    // ── Submit ───────────────────────────────────────────────────────
+    const showToast = (msg, type='success', icon='fa-solid fa-circle-check') => {
+      toast.msg=msg; toast.type=type; toast.icon=icon;
+      setTimeout(() => { toast.msg=''; }, 3500);
     };
 
     const submitScores = async () => {
       if (submitting.value || submitted.value) return;
       submitting.value = true;
       try {
+        const now = new Date();
+        const ts  = now.toLocaleString('zh-TW', {timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
         const rows = ZODIAC.map((z, i) => ({
-          zodiac:     z.label,
-          content:    scores[i].content,
-          design:     scores[i].design,
-          creativity: scores[i].creativity,
-          total:      scores[i].total,
+          zodiac: z.label, content: scores[i].content, design: scores[i].design,
+          creativity: scores[i].creativity, total: scores[i].total,
         }));
         const resp = await fetch(GAS_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'judgeScore', judge: currentJudge.value.id, secret: GAS_SECRET, rows })
+          body: JSON.stringify({
+            action: 'judgeScore',
+            judge:      currentJudge.value.id,
+            judgeName:  judgeName.value,
+            secret:     GAS_SECRET,
+            rows,
+            timestamp:  now.toISOString(),
+          })
         });
         const json = await resp.json();
         if (!resp.ok || json.status === 'error') throw new Error(json.message || 'GAS error');
-        submitted.value = true;
+        submitted.value  = true;
+        submitTime.value = ts;
         localStorage.removeItem(LS_KEY(currentJudge.value.id));
         setTimeout(() => { phase.value = 'result'; }, 800);
       } catch(e) {
@@ -297,9 +389,12 @@ createApp({
       }
     };
 
-    return { ZODIAC, GALLERY_URL, CRITERIA, JUDGES, phase, currentJudge, scores,
-             scoredCount, submitting, submitted, hovered, toast,
-             selectJudge, changeJudge, setScore, isScored, submitScores };
+    return {
+      ZODIAC, GALLERY_URL, CRITERIA, JUDGES,
+      phase, currentJudge, judgeName, scores,
+      scoredCount, submitting, submitted, submitTime, toast,
+      goSignIn, startJudging, setScore, isScored, submitScores,
+    };
   }
 }).mount('#app');
 </script>
