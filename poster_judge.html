@@ -17,14 +17,8 @@
   .panel{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:48px 40px;max-width:480px;width:100%;}
   @media(max-width:480px){.panel{padding:32px 24px;}}
 
-  /* ── Select screen ── */
+  /* ── Sign-in screen title ── */
   .panel h1{font-size:24px;font-weight:800;color:#f8fafc;margin-bottom:6px;text-align:center;}
-  .panel .subtitle{color:#64748b;font-size:13px;margin-bottom:32px;text-align:center;}
-  .judge-btn{display:block;width:100%;background:#0f172a;border:2px solid #334155;border-radius:14px;padding:16px 20px;margin-bottom:10px;cursor:pointer;transition:all .2s;text-align:left;}
-  .judge-btn:hover{border-color:#60a5fa;background:#0c1a2e;}
-  .judge-btn .jname{font-size:16px;font-weight:700;color:#f8fafc;}
-  .judge-btn .jdesc{font-size:11px;color:#64748b;margin-top:2px;}
-  .judge-btn .jicon{font-size:26px;float:right;}
 
   /* ── Sign-in screen ── */
   .signin-header{text-align:center;margin-bottom:32px;}
@@ -110,29 +104,11 @@
     <i :class="toast.icon"></i> {{ toast.msg }}
   </div>
 
-  <!-- ── 1. Judge Select (fallback when no ?judge= param) ── -->
-  <div v-if="phase==='select'" class="center-screen fade-in">
-    <div class="panel">
-      <div style="font-size:36px;text-align:center;margin-bottom:16px;">🏆</div>
-      <h1>海報評審系統</h1>
-      <p class="subtitle">Zodiac Ops · 請選擇您的評審編號</p>
-      <button v-for="j in JUDGES" :key="j.id" class="judge-btn" @click="goSignIn(j)">
-        <span class="jicon">{{ j.icon }}</span>
-        <div class="jname">{{ j.name }}</div>
-        <div class="jdesc">{{ j.desc }}</div>
-      </button>
-    </div>
-  </div>
-
-  <!-- ── 2. Sign-in (name entry) ── -->
+  <!-- ── Sign-in (name entry) ── -->
   <div v-if="phase==='signin'" class="center-screen fade-in">
     <div class="panel">
       <div class="signin-header">
         <div style="font-size:32px;margin-bottom:12px;">✍️</div>
-        <div class="judge-badge">
-          <i class="fa-solid fa-user-tie"></i>
-          {{ currentJudge.name }}
-        </div>
         <h2>評審簽名登入</h2>
         <p>Poster Judging System · Zodiac Ops 2026</p>
       </div>
@@ -173,8 +149,7 @@
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div class="judge-tag">
             <i class="fa-solid fa-user-tie"></i>
-            {{ currentJudge.name }}
-            <span class="judge-realname">· {{ judgeName }}</span>
+            <span class="judge-realname">{{ judgeName }}</span>
           </div>
         </div>
       </div>
@@ -245,7 +220,7 @@
         <div class="sb-label">官方評審簽名 Official Reviewer Signature</div>
         <div class="sb-name">{{ judgeName }}</div>
         <div class="sb-meta">
-          {{ currentJudge.name }} · Zodiac Ops Poster Review 2026<br>
+          Zodiac Ops Poster Review 2026<br>
           {{ submitTime }}
         </div>
       </div>
@@ -310,20 +285,13 @@ createApp({
 
     const LS_KEY = id => `poster_judge_${id}`;
 
-    // ── On mount: check ?judge= URL param ────────────────────────────
-    const urlParam = new URLSearchParams(window.location.search).get('judge')?.toUpperCase();
-    const paramJudge = urlParam ? JUDGES.find(j => j.id === urlParam) : null;
-    if (paramJudge) {
-      currentJudge.value = paramJudge;
-      phase.value = 'signin';
-    }
+    // ── On mount: resolve judge from ?judge= param, always go to signin ─
+    const urlParam   = new URLSearchParams(window.location.search).get('judge')?.toUpperCase();
+    const paramJudge = JUDGES.find(j => j.id === urlParam) || JUDGES[0];
+    currentJudge.value = paramJudge;
+    phase.value = 'signin';
 
-    // ── Navigation ───────────────────────────────────────────────────
-    const goSignIn = (j) => {
-      currentJudge.value = j;
-      judgeName.value = '';
-      phase.value = 'signin';
-    };
+    const goSignIn = () => {}; // unused, kept for safety
 
     const startJudging = () => {
       if (!judgeName.value) return;
