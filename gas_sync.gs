@@ -332,7 +332,7 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
 
     '<p style="color:#e2e8f0;font-size:14px;line-height:1.9;margin-bottom:24px;">' +
     '親愛的 <strong style="color:#f8fafc;">' + honorific + '</strong>，<br>' +
-    '感謝您撥冗完成本次 Zodiac Ops 課程海報評審。<br>' +
+    '感謝您撥冗完成本次藥學系 Pathophysiology 課程海報評審。<br>' +
     '以下為您的完整評分紀錄，請確認無誤。' +
     '</p>' +
 
