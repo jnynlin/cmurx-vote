@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海報票選分布分析報告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ── Header ── */
+  .report-header { text-align: center; margin-bottom: 48px; }
+  .report-header .badge { display: inline-block; background: #1e40af; color: #93c5fd; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; margin-bottom: 16px; }
+  .report-header h1 { font-size: 28px; font-weight: 800; color: #f8fafc; margin-bottom: 8px; }
+  .report-header .subtitle { color: #94a3b8; font-size: 14px; }
+  .report-header .meta { margin-top: 12px; display: flex; justify-content: center; gap: 24px; font-size: 12px; color: #64748b; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 48px; }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #60a5fa; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; }
+
+  /* ── Stat cards ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 640px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 16px; text-align: center; }
+  .stat-card .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-card .value { font-size: 32px; font-weight: 800; line-height: 1; }
+  .stat-card .unit  { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  .c-blue   { color: #60a5fa; }
+  .c-green  { color: #34d399; }
+  .c-amber  { color: #fbbf24; }
+  .c-purple { color: #a78bfa; }
+
+  /* ── Math box ── */
+  .math-box { background: #0f172a; border: 1px solid #1e293b; border-left: 3px solid #3b82f6; border-radius: 8px; padding: 16px 20px; font-family: 'Courier New', monospace; font-size: 13px; color: #93c5fd; line-height: 2; margin-bottom: 16px; white-space: pre-wrap; }
+
+  /* ── Chart containers ── */
+  .chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .chart-card h3 { font-size: 14px; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
+  .chart-card .chart-note { font-size: 11px; color: #64748b; margin-bottom: 20px; }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* ── Two-column ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Range table ── */
+  .range-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .range-table th { background: #0f172a; color: #64748b; font-weight: 600; text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .range-table td { padding: 10px 12px; border-bottom: 1px solid #1e293b; }
+  .range-table tr:last-child td { border-bottom: none; }
+  .badge-pill { display: inline-block; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .pill-green  { background: #064e3b; color: #34d399; }
+  .pill-blue   { background: #1e3a8a; color: #93c5fd; }
+  .pill-amber  { background: #451a03; color: #fbbf24; }
+  .pill-red    { background: #450a0a; color: #f87171; }
+
+  /* ── Warning box ── */
+  .warn-box { background: #1c1917; border: 1px solid #78350f; border-left: 3px solid #f59e0b; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .warn-box .warn-title { font-size: 13px; font-weight: 700; color: #fbbf24; margin-bottom: 8px; display: flex; align-items: center; gap-8px; gap: 8px; }
+  .warn-box p { font-size: 13px; color: #a8a29e; line-height: 1.6; }
+
+  /* ── Code ── */
+  .code-block { background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 16px 20px; font-family: 'Courier New', monospace; font-size: 12px; color: #86efac; line-height: 1.8; overflow-x: auto; }
+  .code-comment { color: #475569; }
+  .code-keyword { color: #f472b6; }
+  .code-number  { color: #fb923c; }
+  .code-string  { color: #fbbf24; }
+
+  /* ── Footer ── */
+  .footer { margin-top: 64px; border-top: 1px solid #1e293b; padding-top: 24px; text-align: center; font-size: 12px; color: #475569; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="report-header">
+    <div class="badge">Analysis Report</div>
+    <h1>海報票選分數分布分析</h1>
+    <div class="subtitle">Poster Voting Score Distribution — Zodiac Ops Classroom System</div>
+    <div class="meta">
+      <span>學生人數：257 人</span>
+      <span>生肖分組：12 組</span>
+      <span>計分規則：第1名 3分 · 第2名 2分 · 第3名 1分</span>
+    </div>
+  </div>
+
+  <!-- 1. Key Numbers -->
+  <div class="section">
+    <div class="section-title">01 · Key Numbers</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">全班投出總分</div><div class="value c-blue">1,542</div><div class="unit">pts &nbsp;(257 × 6)</div></div>
+      <div class="stat-card"><div class="label">每組期望均分</div><div class="value c-green">128.5</div><div class="unit">pts &nbsp;(1542 ÷ 12)</div></div>
+      <div class="stat-card"><div class="label">理論標準差</div><div class="value c-amber">±15</div><div class="unit">pts &nbsp;(均勻投票)</div></div>
+      <div class="stat-card"><div class="label">每組人數</div><div class="value c-purple">21–22</div><div class="unit">人 &nbsp;(257 ÷ 12)</div></div>
+    </div>
+  </div>
+
+  <!-- 2. Math -->
+  <div class="section">
+    <div class="section-title">02 · 推導過程</div>
+    <div class="math-box">每人投票結構：3 + 2 + 1 = 6 pts / 人
+全班投出：257 × 6 = 1,542 pts
+
+每組期望 (均勻隨機模型)：
+  E[組X得分] = (257 - 21.4) × 6/11
+             = 235.6 × 0.5455
+             ≈ 128.5 pts
+
+單人貢獻變異數：
+  P(3分) = 1/11,  P(2分) = 1/11,  P(1分) = 1/11,  P(0) = 8/11
+  Var = E[X²] - E[X]² = 14/11 - (6/11)² = 118/121 ≈ 0.976
+
+全組變異數：
+  Var_total ≈ 235.6 × 0.976 ≈ 229.9
+  SD ≈ √229.9 ≈ 15.2 pts</div>
+
+    <div class="chart-card">
+      <h3>理論分布（常態近似，均勻隨機投票）</h3>
+      <div class="chart-note">X 軸：組別得分；Y 軸：相對機率密度。均值 128.5，SD ±15。</div>
+      <div class="chart-wrap"><canvas id="normalCurve"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 3. Score range table -->
+  <div class="section">
+    <div class="section-title">03 · 分數區間預測</div>
+    <div class="two-col">
+      <div class="chart-card" style="padding-bottom: 16px;">
+        <h3>統計區間（理論）</h3>
+        <div class="chart-note">均勻隨機投票假設下</div>
+        <table class="range-table">
+          <tr><th>區間</th><th>分數範圍</th><th>涵蓋比例</th></tr>
+          <tr><td>±1 SD</td><td>114 – 144 pts</td><td><span class="badge-pill pill-blue">68%</span></td></tr>
+          <tr><td>±2 SD</td><td>99 – 158 pts</td><td><span class="badge-pill pill-green">95%</span></td></tr>
+          <tr><td>±3 SD</td><td>83 – 174 pts</td><td><span class="badge-pill pill-green">99.7%</span></td></tr>
+          <tr><td>極端值</td><td>~60 – ~210 pts</td><td><span class="badge-pill pill-amber">理論邊界</span></td></tr>
+        </table>
+      </div>
+      <div class="chart-card" style="padding-bottom: 16px;">
+        <h3>課堂實際預估（非均勻）</h3>
+        <div class="chart-note">海報品質影響投票集中度</div>
+        <table class="range-table">
+          <tr><th>排名</th><th>預估得分</th><th>類型</th></tr>
+          <tr><td>前 2 名</td><td>180 – 250 pts</td><td><span class="badge-pill pill-green">高品質</span></td></tr>
+          <tr><td>3–5 名</td><td>140 – 180 pts</td><td><span class="badge-pill pill-blue">中上</span></td></tr>
+          <tr><td>6–9 名</td><td>90 – 140 pts</td><td><span class="badge-pill pill-amber">中段</span></td></tr>
+          <tr><td>後 3 名</td><td>40 – 90 pts</td><td><span class="badge-pill pill-red">末段</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Simulated group scores -->
+  <div class="section">
+    <div class="section-title">04 · 模擬：12 生肖組別得分（加入真實集中度）</div>
+    <div class="chart-card">
+      <h3>模擬結果 — 各組海報票選分</h3>
+      <div class="chart-note">假設投票有偏好集中（Zipf 分布），接近真實課堂情境。橘色虛線 = 期望均值 128.5 pts。</div>
+      <div class="chart-wrap"><canvas id="groupBar"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 5. Score weight -->
+  <div class="section">
+    <div class="section-title">05 · 評分權重分析</div>
+    <div class="two-col">
+      <div class="chart-card">
+        <h3>現行評分構成（組長，不含海報）</h3>
+        <div class="chart-note">各項目佔最高可得分比例</div>
+        <div class="chart-wrap" style="height:240px;"><canvas id="scoreDonut"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>加入海報後的權重對比</h3>
+        <div class="chart-note">海報均分 128.5 pts vs. 其他項目合計最高 119 pts</div>
+        <div class="chart-wrap" style="height:240px;"><canvas id="weightBar"></canvas></div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-title">⚠ 海報分佔總分比例過高</div>
+      <p>海報票選期望均分 <strong style="color:#fbbf24">128.5 pts</strong> vs. 所有課堂任務合計最高 <strong style="color:#fbbf24">119 pts</strong>（組長），意味著海報票選約佔最終總分的 <strong style="color:#fbbf24">52%</strong>。若設計目標為「加分項目」而非主導因素，建議設定上限。</p>
+    </div>
+  </div>
+
+  <!-- 6. Recommendation -->
+  <div class="section">
+    <div class="section-title">06 · 建議：設定上限</div>
+    <p style="font-size:13px; color:#94a3b8; margin-bottom:16px; line-height:1.8;">在 <code style="background:#0f172a; padding:2px 6px; border-radius:4px; color:#86efac;">calculateScore()</code>（zzzzzz.html）與 <code style="background:#0f172a; padding:2px 6px; border-radius:4px; color:#86efac;">gas_sync.gs</code> 兩處同步修改：</p>
+    <div class="code-block">
+<span class="code-comment">// zzzzzz.html — calculateScore() 內</span>
+<span class="code-keyword">const</span> CAP = <span class="code-number">30</span>;  <span class="code-comment">// 上限 30 pts ≈ 總分 20%（建議值）</span>
+score += Math.min(CAP, posterScores.value[student.profile?.Zodiac] || <span class="code-number">0</span>);
+
+<span class="code-comment">// gas_sync.gs — outputRows score 計算</span>
+score += Math.min(<span class="code-number">30</span>, Number(r.poster_score) || <span class="code-number">0</span>);
+    </div>
+
+    <div class="chart-card" style="margin-top: 20px;">
+      <h3>不同上限設定下的總分影響</h3>
+      <div class="chart-note">各種 CAP 值對「前段組 vs 末段組」個人得分差距的影響（以 100 基準分為例）</div>
+      <div class="chart-wrap" style="height:260px;"><canvas id="capChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Zodiac Ops — Poster Voting Analysis · Generated 2026-06-10 · 257 students · 12 groups
+  </div>
+</div>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────────────────
+const ZODIAC = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+const COLORS  = ['#60a5fa','#34d399','#fbbf24','#f87171','#a78bfa','#fb923c',
+                 '#38bdf8','#4ade80','#e879f9','#f472b6','#94a3b8','#22d3ee'];
+
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = '#1e293b';
+Chart.defaults.font.family = "'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif";
+
+// ── 1. Normal curve ───────────────────────────────────────────────────
+(function() {
+  const mu = 128.5, sd = 15.2;
+  const xs = [], ys = [];
+  for (let x = 60; x <= 200; x += 1) {
+    const z = (x - mu) / sd;
+    xs.push(x);
+    ys.push(Math.exp(-0.5 * z * z) / (sd * Math.sqrt(2 * Math.PI)));
+  }
+  // shade regions
+  const ds1 = xs.map((x, i) => (Math.abs(x - mu) <= sd  ? ys[i] : null));
+  const ds2 = xs.map((x, i) => (Math.abs(x - mu) <= 2*sd && Math.abs(x - mu) > sd ? ys[i] : null));
+
+  new Chart(document.getElementById('normalCurve'), {
+    type: 'line',
+    data: {
+      labels: xs,
+      datasets: [
+        { label: '±2 SD (95%)', data: ds2, fill: true, backgroundColor: 'rgba(99,102,241,0.15)', borderColor: 'transparent', pointRadius: 0, tension: 0.4 },
+        { label: '±1 SD (68%)', data: ds1, fill: true, backgroundColor: 'rgba(96,165,250,0.25)', borderColor: 'transparent', pointRadius: 0, tension: 0.4 },
+        { label: '機率密度', data: ys, borderColor: '#60a5fa', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 11 }, boxWidth: 12 } },
+        annotation: {} },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12, callback: v => (v % 10 === 0 ? v : '') },
+             title: { display: true, text: '得分 (pts)', font: { size: 11 } } },
+        y: { ticks: { display: false }, grid: { display: false },
+             title: { display: true, text: '機率密度', font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── 2. Group bar (simulated Zipf-like) ───────────────────────────────
+(function() {
+  const MEAN = 128.5, TOTAL = 1542;
+  // simulate skewed distribution (Zipf-like) that sums to TOTAL
+  const raw = ZODIAC.map((_, i) => Math.pow(1 / (i + 1), 0.55));
+  const sum = raw.reduce((a, b) => a + b, 0);
+  const scores = raw.map(v => Math.round(v / sum * TOTAL));
+  // shuffle so position ≠ ranking
+  const shuffled = [...scores];
+  [0,1,2,3,4,5,6,7,8,9,10,11].forEach((_, i) => {
+    const j = [3,7,0,10,1,5,9,2,6,11,4,8][i];
+    shuffled[i] = scores[j];
+  });
+
+  new Chart(document.getElementById('groupBar'), {
+    type: 'bar',
+    data: {
+      labels: ZODIAC,
+      datasets: [{
+        label: '模擬得分',
+        data: shuffled,
+        backgroundColor: COLORS,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw} pts` } }
+      },
+      scales: {
+        y: {
+          min: 0, max: 260,
+          grid: { color: '#1e293b' },
+          ticks: { callback: v => v + ' pts' }
+        },
+        x: { grid: { display: false } }
+      }
+    },
+    plugins: [{
+      id: 'meanLine',
+      afterDraw(chart) {
+        const { ctx, scales: { y } } = chart;
+        const yPx = y.getPixelForValue(MEAN);
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(chart.chartArea.left, yPx);
+        ctx.lineTo(chart.chartArea.right, yPx);
+        ctx.stroke();
+        ctx.fillStyle = '#f97316';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('均值 128.5', chart.chartArea.right - 70, yPx - 5);
+        ctx.restore();
+      }
+    }]
+  });
+})();
+
+// ── 3. Score donut ────────────────────────────────────────────────────
+new Chart(document.getElementById('scoreDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['校準(5)', '反思(10)', '作業(15)', '展覽(15)', '閱讀(15)', '互動(15)', '測驗(25)', '貢獻最多(9)', '組長加分(10)'],
+    datasets: [{ data: [5,10,15,15,15,15,25,9,10],
+      backgroundColor: ['#60a5fa','#34d399','#fbbf24','#f87171','#a78bfa','#fb923c','#38bdf8','#4ade80','#e879f9'],
+      borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '62%',
+    plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } } }
+  }
+});
+
+// ── 4. Weight bar ─────────────────────────────────────────────────────
+new Chart(document.getElementById('weightBar'), {
+  type: 'bar',
+  data: {
+    labels: ['其他課堂任務\n(組長)', '海報票選\n(均分)', '海報票選\n(最高預估)'],
+    datasets: [{
+      data: [119, 128.5, 210],
+      backgroundColor: ['#60a5fa', '#f97316', '#f87171'],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.raw} pts` } } },
+    scales: {
+      x: { max: 260, grid: { color: '#1e293b' }, ticks: { callback: v => v + ' pts' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ── 5. Cap chart ──────────────────────────────────────────────────────
+(function() {
+  const caps = [10, 20, 30, 50, 100, 'No cap'];
+  const topScore    = caps.map(c => 100 + Math.min(c === 'No cap' ? 999 : c, 210));
+  const midScore    = caps.map(c => 100 + Math.min(c === 'No cap' ? 999 : c, 128));
+  const bottomScore = caps.map(c => 100 + Math.min(c === 'No cap' ? 999 : c, 50));
+
+  new Chart(document.getElementById('capChart'), {
+    type: 'line',
+    data: {
+      labels: caps,
+      datasets: [
+        { label: '前段組 (≈210 pts)', data: topScore, borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.1)', fill: true, tension: 0.3, pointRadius: 5 },
+        { label: '均值組 (≈128 pts)', data: midScore, borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)', fill: true, tension: 0.3, pointRadius: 5 },
+        { label: '末段組 (≈50 pts)',  data: bottomScore, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', fill: true, tension: 0.3, pointRadius: 5 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { font: { size: 11 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` 總分 ${ctx.raw} pts` } }
+      },
+      scales: {
+        y: { grid: { color: '#1e293b' }, ticks: { callback: v => v + ' pts' } },
+        x: { grid: { display: false }, title: { display: true, text: '海報分上限設定', font: { size: 11 } } }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
