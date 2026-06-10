@@ -159,6 +159,7 @@ const ZODIAC_ELEM   = {'子鼠':'水','丑牛':'土','寅虎':'木','卯兔':'�
 const JUDGE_COL     = { A: 3, B: 7, C: 11 };  // start col of each judge's 4-col block
 const NAME_ROW      = 15;
 const PIN_ROW       = 16;
+const EMAIL_ROW     = 17;
 
 function getOrCreateJudgeSheet_() {
   var ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -196,17 +197,19 @@ function getOrCreateJudgeSheet_() {
   // Highlight final score + rank columns
   sheet.getRange(2,19,12,2).setBackground("#1a2e1a").setFontColor("#4ade80").setFontWeight("bold");
 
-  // Signature / PIN row labels
-  sheet.getRange(NAME_ROW,1).setValue("評審簽名").setFontWeight("bold").setFontColor("#94a3b8");
-  sheet.getRange(PIN_ROW, 1).setValue("識別碼").setFontWeight("bold").setFontColor("#334155");
+  // Signature / PIN / Email row labels
+  sheet.getRange(NAME_ROW,  1).setValue("評審簽名").setFontWeight("bold").setFontColor("#94a3b8");
+  sheet.getRange(PIN_ROW,   1).setValue("識別碼").setFontWeight("bold").setFontColor("#334155");
+  sheet.getRange(EMAIL_ROW, 1).setValue("電子郵件").setFontWeight("bold").setFontColor("#334155");
 
   return sheet;
 }
 
 // ── Judge login: auto-assign slot by arrival order ────────────────────
 function handleLoginJudge(data) {
-  var name  = (data.name || '').trim();
-  var pin   = (data.pin  || '').trim();
+  var name  = (data.name  || '').trim();
+  var pin   = (data.pin   || '').trim();
+  var email = (data.email || '').trim();
   if (!name || !pin) throw new Error("Missing name or pin");
 
   var sheet = getOrCreateJudgeSheet_();
@@ -242,8 +245,9 @@ function handleLoginJudge(data) {
     col        = JUDGE_COL[slot];
     storedName = (sheet.getRange(NAME_ROW, col).getValue()||'').toString().trim();
     if (!storedName) {
-      sheet.getRange(NAME_ROW, col).setValue('✍ ' + name);
-      sheet.getRange(PIN_ROW,  col).setValue(pin);
+      sheet.getRange(NAME_ROW,  col).setValue('✍ ' + name);
+      sheet.getRange(PIN_ROW,   col).setValue(pin);
+      if (email) sheet.getRange(EMAIL_ROW, col).setValue(email);
       return ContentService.createTextOutput(JSON.stringify({status:'ok', slot:slot, returning:false}))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -255,9 +259,10 @@ function handleLoginJudge(data) {
 
 // ── External judge poster scoring ─────────────────────────────────────
 function handleJudgeScore(data) {
-  const judge     = data.judge;
-  const judgeName = data.judgeName || '';
-  const rows      = data.rows;
+  var judge      = data.judge;
+  var judgeName  = data.judgeName  || '';
+  var judgeEmail = data.judgeEmail || '';
+  var rows       = data.rows;
   if (!judge || !rows || !rows.length) throw new Error("Missing judge or rows");
   if (!JUDGE_COL[judge]) throw new Error("Invalid judge id: " + judge);
 
@@ -279,11 +284,82 @@ function handleJudgeScore(data) {
 
   if (judgeName) sheet.getRange(NAME_ROW, col).setValue('✍ ' + judgeName);
 
+  // Update email if provided; fallback to stored email
+  if (judgeEmail) sheet.getRange(EMAIL_ROW, col).setValue(judgeEmail);
+  var emailToSend = judgeEmail || (sheet.getRange(EMAIL_ROW, col).getValue() || '').toString().trim();
+
   var now = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy/MM/dd HH:mm:ss");
   sheet.getRange(1, 21).setValue('最後送出: ' + now);
 
+  if (emailToSend) {
+    try { sendConfirmationEmail_(emailToSend, judgeName, rows, now); } catch(e) {}
+  }
+
   return ContentService.createTextOutput(JSON.stringify({
     status: 'success',
-    message: `評審 ${judge} 已成功送出 ${rows.length} 組評分`
+    message: '評審 ' + judge + ' 已成功送出 ' + rows.length + ' 組評分',
+    emailSent: !!emailToSend
   })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── Confirmation email ────────────────────────────────────────────────
+function sendConfirmationEmail_(email, name, rows, timestamp) {
+  var honorific = name.match(/教授|老師|博士|主任|院長|所長|醫師|醫生|副教授/) ? name : name + '老師';
+  var subject   = '【Zodiac Ops 海報評審】評分確認 — ' + honorific;
+
+  var tableRows = '';
+  rows.forEach(function(r) {
+    tableRows +=
+      '<tr>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;color:#f8fafc;">' + r.zodiac + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;color:#94a3b8;">' + (r.element || '') + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;color:#e2e8f0;">' + r.content + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;color:#e2e8f0;">' + r.design + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;color:#e2e8f0;">' + r.creativity + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;font-weight:700;color:#f59e0b;">' + r.total + '</td>' +
+      '</tr>';
+  });
+
+  var html =
+    '<div style="font-family:Segoe UI,sans-serif;background:#0f172a;padding:32px 16px;">' +
+    '<div style="max-width:580px;margin:0 auto;background:#1e293b;border-radius:16px;padding:32px;border:1px solid #334155;">' +
+
+    '<div style="text-align:center;margin-bottom:28px;">' +
+    '<div style="font-size:40px;margin-bottom:10px;">🏆</div>' +
+    '<h2 style="color:#f8fafc;font-size:20px;margin:0 0 6px;">海報評審確認信</h2>' +
+    '<p style="color:#64748b;font-size:12px;margin:0;">Zodiac Ops Poster Review 2026</p>' +
+    '</div>' +
+
+    '<p style="color:#e2e8f0;font-size:14px;line-height:1.9;margin-bottom:24px;">' +
+    '親愛的 <strong style="color:#f8fafc;">' + honorific + '</strong>，<br>' +
+    '感謝您撥冗完成本次 Zodiac Ops 課程海報評審。<br>' +
+    '以下為您的完整評分紀錄，請確認無誤。' +
+    '</p>' +
+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px;background:#0f172a;border-radius:10px;overflow:hidden;">' +
+    '<thead>' +
+    '<tr style="background:#0f172a;">' +
+    '<th style="padding:10px 12px;text-align:left;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">組別</th>' +
+    '<th style="padding:10px 12px;text-align:left;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">元素</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">內容</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">視覺</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">創意</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#f59e0b;font-weight:600;border-bottom:2px solid #1e293b;">總分</th>' +
+    '</tr>' +
+    '</thead>' +
+    '<tbody>' + tableRows + '</tbody>' +
+    '</table>' +
+
+    '<div style="background:#172032;border-left:3px solid #3b82f6;border-radius:8px;padding:14px 16px;margin-bottom:24px;font-size:12px;color:#94a3b8;line-height:1.7;">' +
+    '如需修改評分，請以原姓名及識別碼重新登入系統。<br>' +
+    '評分資料已同步至主辦單位 Google Sheets。' +
+    '</div>' +
+
+    '<p style="color:#475569;font-size:11px;text-align:center;margin:0;line-height:1.8;">' +
+    '送出時間：' + timestamp + '（台灣時間）<br>' +
+    'Zodiac Ops · China Medical University Hospital · 2026' +
+    '</p>' +
+    '</div></div>';
+
+  MailApp.sendEmail({ to: email, subject: subject, htmlBody: html });
 }

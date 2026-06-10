@@ -133,6 +133,14 @@
       </div>
 
       <div class="field">
+        <div class="field-label"><i class="fa-solid fa-envelope"></i> 電子郵件 <span style="color:#475569;font-weight:400;text-transform:none;letter-spacing:0;">（選填，用於接收評分確認信）</span></div>
+        <input v-model.trim="form.email" class="field-input"
+               type="email" inputmode="email"
+               placeholder="your@email.com（可略過）"
+               autocomplete="email" />
+      </div>
+
+      <div class="field">
         <div class="field-label"><i class="fa-solid fa-grid-2"></i> 個人識別碼（4位數字）</div>
         <div class="pin-boxes">
           <input v-for="i in 4" :key="i"
@@ -243,6 +251,7 @@
         <div class="sb-meta">
           Zodiac Ops Poster Review 2026<br>
           {{ submitTime }}<br>
+          <span v-if="form.email" style="color:#4ade80;"><i class="fa-solid fa-envelope"></i> 確認信已寄至 {{ form.email }}</span><br v-if="form.email">
           <span style="color:#60a5fa;">可憑原識別碼重新登入修改評分</span>
         </div>
       </div>
@@ -303,7 +312,7 @@ createApp({
     const pinRefs    = ref([null,null,null,null]);
     const toast      = reactive({msg:'', type:'success', icon:''});
 
-    const form      = reactive({name:''});
+    const form      = reactive({name:'', email:''});
     const pinDigits = reactive(['','','','']);
     const pinStr    = computed(() => pinDigits.join(''));
     const scores    = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
@@ -345,7 +354,7 @@ createApp({
       try {
         const resp = await fetch(GAS_URL, {
           method:'POST',
-          body: JSON.stringify({action:'loginJudge', secret:GAS_SECRET, name:form.name, pin:pinStr.value})
+          body: JSON.stringify({action:'loginJudge', secret:GAS_SECRET, name:form.name, pin:pinStr.value, email:form.email})
         });
         const json = await resp.json();
         if (json.status === 'error') { showToast(json.message,'error','fa-solid fa-triangle-exclamation'); return; }
@@ -371,7 +380,7 @@ createApp({
     };
 
     const backToSignIn = () => {
-      form.name = ''; pinDigits.forEach((_,i) => { pinDigits[i]=''; });
+      form.name = ''; form.email = ''; pinDigits.forEach((_,i) => { pinDigits[i]=''; });
       phase.value = 'signin';
     };
 
@@ -398,7 +407,7 @@ createApp({
         }));
         const resp = await fetch(GAS_URL, {
           method:'POST',
-          body: JSON.stringify({action:'judgeScore', judge:judgeSlot.value, judgeName:judgeName.value, secret:GAS_SECRET, rows, timestamp:now.toISOString()})
+          body: JSON.stringify({action:'judgeScore', judge:judgeSlot.value, judgeName:judgeName.value, judgeEmail:form.email, secret:GAS_SECRET, rows, timestamp:now.toISOString()})
         });
         const json = await resp.json();
         if (!resp.ok || json.status==='error') throw new Error(json.message||'GAS error');
