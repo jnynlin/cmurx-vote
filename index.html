@@ -262,7 +262,8 @@
                                 </select>
                             </div>
                             <button @click="submitPosterVotes"
-                                    class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 py-3 rounded-xl font-bold mt-2 transition active:scale-95 flex items-center justify-center gap-2">
+                                    :disabled="isVotingSubmitting"
+                                    class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 py-3 rounded-xl font-bold mt-2 transition active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <i class="fa-solid fa-check-to-slot"></i> 送出票選
                             </button>
                         </div>
@@ -511,14 +512,17 @@ function useTasks(sessionId, myUid, globalState, myProfile, addToast, playSFX) {
     const isEditing = ref(false);
 
     // ── Poster voting ──
-    const posterVotes   = reactive({ rank1: '', rank2: '', rank3: '' });
-    const voteSubmitted = ref(false);
+    const posterVotes    = reactive({ rank1: '', rank2: '', rank3: '' });
+    const voteSubmitted  = ref(false);
+    const _votingSubmitting = ref(false);
 
     const submitPosterVotes = async () => {
         const votes = [posterVotes.rank1, posterVotes.rank2, posterVotes.rank3];
         if (votes.some(v => !v))              return addToast("請填完三個名次", "error", "fa-solid fa-triangle-exclamation");
         if (new Set(votes).size !== 3)        return addToast("三個名次不能重複", "error", "fa-solid fa-triangle-exclamation");
         if (votes.includes(myProfile.zodiac?.label)) return addToast("不能投給自己的組", "error", "fa-solid fa-ban");
+        if (_votingSubmitting.value) return;
+        _votingSubmitting.value = true;
         try {
             await set(dbRef(db, `classrooms/${sessionId.value}/posterVotes/${myUid.value}`), {
                 rank1: posterVotes.rank1, rank2: posterVotes.rank2, rank3: posterVotes.rank3,
@@ -528,6 +532,8 @@ function useTasks(sessionId, myUid, globalState, myProfile, addToast, playSFX) {
             addToast("票選完成！", "success", "fa-solid fa-trophy");
         } catch (e) {
             addToast("送出失敗，請重試", "error", "fa-solid fa-triangle-exclamation");
+        } finally {
+            _votingSubmitting.value = false;
         }
     };
 
@@ -756,7 +762,7 @@ function useTasks(sessionId, myUid, globalState, myProfile, addToast, playSFX) {
         pendingLinkKey.value = '';
     };
     
-    return { myTasks, tempCalibration, tempDebrief, initTaskSync, markDone, isUnlocked, isEditing, canDebrief, assignmentMeta, submitCalibration, submitDebrief, openLink, submitConfirmVisible, contributionOptions, selectedContributions, otherContributionText, confirmSubmitAssignment, cancelSubmitConfirm, isSubmitting: _submitting, posterVotes, voteSubmitted, submitPosterVotes };
+    return { myTasks, tempCalibration, tempDebrief, initTaskSync, markDone, isUnlocked, isEditing, canDebrief, assignmentMeta, submitCalibration, submitDebrief, openLink, submitConfirmVisible, contributionOptions, selectedContributions, otherContributionText, confirmSubmitAssignment, cancelSubmitConfirm, isSubmitting: _submitting, posterVotes, voteSubmitted, submitPosterVotes, isVotingSubmitting: _votingSubmitting };
 }
 
 function useIdentity(sessionId, addToast, changeView, playSFX) {
@@ -853,7 +859,7 @@ createApp({
         const { loading, claimingUser, myProfile: idP, executeClaim, attemptAutoLogin, searchStudent, logout } = useIdentity(sRef, addToast, (v)=>viewState.value=v, playSFX);
         watch(idP, (nP) => { if(nP) Object.assign(myProfile, nP); });
         
-        const { myTasks, tempCalibration, tempDebrief, initTaskSync, markDone, isUnlocked, isEditing, canDebrief, assignmentMeta, submitCalibration, submitDebrief, openLink, submitConfirmVisible, contributionOptions, selectedContributions, otherContributionText, confirmSubmitAssignment, cancelSubmitConfirm, isSubmitting, posterVotes, voteSubmitted, submitPosterVotes } = useTasks(sRef, uRef, globalState, myProfile, addToast, playSFX);
+        const { myTasks, tempCalibration, tempDebrief, initTaskSync, markDone, isUnlocked, isEditing, canDebrief, assignmentMeta, submitCalibration, submitDebrief, openLink, submitConfirmVisible, contributionOptions, selectedContributions, otherContributionText, confirmSubmitAssignment, cancelSubmitConfirm, isSubmitting, posterVotes, voteSubmitted, submitPosterVotes, isVotingSubmitting } = useTasks(sRef, uRef, globalState, myProfile, addToast, playSFX);
         
         onMounted(() => {
             const pid = new URLSearchParams(window.location.search).get('id'); if(pid) form.sessionId = pid;
@@ -882,7 +888,7 @@ createApp({
         const getBeaconClass = (l) => { if (!isGroupRevealed.value) return 'theme-secret'; const z = CONFIG.ZODIAC.find(x => x.label === l); return z ? `theme-${z.element}` : 'theme-earth'; };
         const getCurrentIcon = () => { if (!isGroupRevealed.value) return '❓'; return myProfile.zodiac?.icon || '👤'; };
         
-        return { form, viewState, loading, toasts, searchQuery, isOnline, claimingUser, myProfile: computed(()=>myProfile), globalState, enterRoom, handleSearch: ()=>searchStudent(searchQuery.value), executeAtomicClaim, logout, myTasks, mainTasks: CONFIG.TASKS_META, assignmentMeta, tempCalibration, tempDebrief, getTaskClass, isUnlocked, isEditing, canDebrief, submitCalibration, submitDebrief, openLink, markDone, getZodiacIcon, getBeaconClass, isGroupRevealed, getCurrentIcon, globalProgress: computed(()=>globalState.globalProgress), submitConfirmVisible, contributionOptions, selectedContributions, otherContributionText, confirmSubmitAssignment, cancelSubmitConfirm, isSubmitting, zodiacList: CONFIG.ZODIAC, posterVotes, voteSubmitted, submitPosterVotes };
+        return { form, viewState, loading, toasts, searchQuery, isOnline, claimingUser, myProfile: computed(()=>myProfile), globalState, enterRoom, handleSearch: ()=>searchStudent(searchQuery.value), executeAtomicClaim, logout, myTasks, mainTasks: CONFIG.TASKS_META, assignmentMeta, tempCalibration, tempDebrief, getTaskClass, isUnlocked, isEditing, canDebrief, submitCalibration, submitDebrief, openLink, markDone, getZodiacIcon, getBeaconClass, isGroupRevealed, getCurrentIcon, globalProgress: computed(()=>globalState.globalProgress), submitConfirmVisible, contributionOptions, selectedContributions, otherContributionText, confirmSubmitAssignment, cancelSubmitConfirm, isSubmitting, zodiacList: CONFIG.ZODIAC, posterVotes, voteSubmitted, submitPosterVotes, isVotingSubmitting };
     }
 }).mount('#app');
 </script>
