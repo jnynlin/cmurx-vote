@@ -114,6 +114,13 @@
 
       <div class="progress-bar"><div class="progress-fill" :style="`width:${scoredCount/ZODIAC.length*100}%`"></div></div>
 
+      <a :href="GALLERY_URL" target="_blank"
+         style="display:flex;align-items:center;justify-content:space-between;background:#1c1917;border:1px solid #f59e0b;border-radius:12px;padding:12px 18px;margin-bottom:20px;text-decoration:none;color:#fbbf24;font-size:13px;font-weight:600;transition:background .2s;"
+         onmouseover="this.style.background='#292524'" onmouseout="this.style.background='#1c1917'">
+        <span><i class="fa-solid fa-images" style="margin-right:8px;"></i>查看海報展覽 Gallery</span>
+        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
+      </a>
+
       <div class="group-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label"
              :class="['group-card', isScored(i) ? 'scored' : '']">
@@ -125,11 +132,6 @@
             </div>
             <div class="status-dot"></div>
           </div>
-
-          <a :href="PADLETS[i]" target="_blank" class="padlet-btn">
-            <i class="fa-solid fa-images"></i> 查看海報
-            <i class="fa-solid fa-arrow-up-right-from-square" style="margin-left:auto;font-size:9px;"></i>
-          </a>
 
           <div v-for="c in CRITERIA" :key="c.key" class="criteria-row">
             <div class="criteria-label">{{ c.label }}</div>
@@ -202,20 +204,7 @@ const ZODIAC = [
   {label:'申猴', icon:'💡'}, {label:'酉雞', icon:'⏱'},  {label:'戌狗', icon:'🛡'}, {label:'亥豬', icon:'📚'}
 ];
 
-const PADLETS = [
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=347869014",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=347869666",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348306592",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348306612",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348306638",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348310975",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348310996",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311014",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311030",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311050",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311058",
-  "https://padlet.com/jnynlin/submission-request/1OL2bZeKmZGjvaK3?section=348311072"
-];
+const GALLERY_URL = "https://padlet.com/jnynlin/gallery-11-jun-2026-xkjn1wxrdw1nb54m";
 
 const CRITERIA = [
   { key: 'content',    label: '內容完整性' },
@@ -308,7 +297,7 @@ createApp({
       }
     };
 
-    return { ZODIAC, PADLETS, CRITERIA, JUDGES, phase, currentJudge, scores,
+    return { ZODIAC, GALLERY_URL, CRITERIA, JUDGES, phase, currentJudge, scores,
              scoredCount, submitting, submitted, hovered, toast,
              selectJudge, changeJudge, setScore, isScored, submitScores };
   }
