@@ -88,7 +88,10 @@
   .progress-pct{position:absolute;right:0;top:-18px;font-size:11px;font-weight:700;color:#60a5fa;font-family:monospace;}
 
   /* ── Tab bar ── */
-  .tabbar{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;position:sticky;top:8px;z-index:30;box-shadow:0 4px 16px rgba(0,0,0,.35);}
+  /* gallery link + tabs pinned together at top → Padlet always one tap away, any tab, any scroll */
+  .sticky-head{position:sticky;top:0;z-index:40;background:var(--bg);padding:8px 0 14px;margin-bottom:6px;}
+  .sticky-head .gallery-link{margin-bottom:8px;}
+  .tabbar{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:5px;box-shadow:0 4px 16px rgba(0,0,0,.35);}
   .tabbar button{flex:1;border:none;background:transparent;color:var(--muted);padding:10px 8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;transition:all .15s;}
   .tabbar button.active{background:var(--primary);color:#fff;}
   .tabbar button:not(.active):hover{color:var(--text);background:rgba(255,255,255,.04);}
@@ -245,7 +248,7 @@
   /* ── Print ── */
   @media print{
     body{background:#fff;color:#000;}
-    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-link,.saved-flash,.tabbar{display:none!important;}
+    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-link,.saved-flash,.tabbar,.sticky-head{display:none!important;}
     .result-card{border:none;padding:0;max-width:100%;}
     .sig-box{border:1px solid #ccc;background:#f9f9f9;}
     .sb-name,.result-table td,.result-table th{color:#000;}
@@ -388,18 +391,24 @@
         </div>
       </div>
 
-      <!-- Tab bar -->
-      <div class="tabbar">
-        <button :class="{active:activeTab==='info'}" @click="activeTab='info'">
-          <i class="fa-solid fa-circle-info ticon"></i><span class="tlabel">說明</span>
-        </button>
-        <button :class="{active:activeTab==='score'}" @click="activeTab='score'">
-          <i class="fa-solid fa-star-half-stroke ticon"></i><span class="tlabel">評分</span>
-          <span v-if="scoredCount<ZODIAC.length" class="dot"></span>
-        </button>
-        <button :class="{active:activeTab==='votes'}" @click="openVotesTab">
-          <i class="fa-solid fa-chart-simple ticon"></i><span class="tlabel">學生票選參考</span>
-        </button>
+      <!-- Always-visible gallery link + tab bar (pinned together) -->
+      <div class="sticky-head">
+        <a :href="GALLERY_URL" target="cmurxPosterGallery" rel="noopener noreferrer" class="gallery-link">
+          <span><i class="fa-solid fa-images" style="margin-right:8px;"></i>查看海報展覽 Gallery</span>
+          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
+        </a>
+        <div class="tabbar">
+          <button :class="{active:activeTab==='info'}" @click="activeTab='info'">
+            <i class="fa-solid fa-circle-info ticon"></i><span class="tlabel">說明</span>
+          </button>
+          <button :class="{active:activeTab==='score'}" @click="activeTab='score'">
+            <i class="fa-solid fa-star-half-stroke ticon"></i><span class="tlabel">評分</span>
+            <span v-if="scoredCount<ZODIAC.length" class="dot"></span>
+          </button>
+          <button :class="{active:activeTab==='votes'}" @click="openVotesTab">
+            <i class="fa-solid fa-chart-simple ticon"></i><span class="tlabel">學生票選參考</span>
+          </button>
+        </div>
       </div>
 
       <!-- ===== 評分 tab ===== -->
@@ -458,10 +467,6 @@
 
       <!-- ===== 說明 tab ===== -->
       <div v-show="activeTab==='info'">
-        <a :href="GALLERY_URL" target="cmurxPosterGallery" rel="noopener noreferrer" class="gallery-link">
-          <span><i class="fa-solid fa-images" style="margin-right:8px;"></i>查看海報展覽 Gallery</span>
-          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
-        </a>
         <div class="rubric-bar" style="margin-bottom:14px;">
           <span class="rubric-title">評分基準</span>
           <span class="rubric-item"><b>1</b>待加強</span>
