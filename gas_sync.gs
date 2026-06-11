@@ -1,5 +1,10 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.10
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.11
+ *
+ * Changes from v5.10:
+ *   - Judge rubric renamed to match poster structure (data keys unchanged):
+ *     content→選題需求, design→病生理深度, creativity→視覺表達, total→整體印象
+ *     (header labels only; scoring/weighting logic identical)
  *
  * Changes from v5.9:
  *   - Averages now IGNORE judges who haven't submitted (0-cells excluded)
@@ -179,10 +184,10 @@ function getOrCreateJudgeSheet_() {
   // Always refresh headers (idempotent — safe to run on existing sheets)
   var headers = [
     "組別","元素",
-    "評審A_內容","評審A_視覺","評審A_創意","評審A_整體印象",
-    "評審B_內容","評審B_視覺","評審B_創意","評審B_整體印象",
-    "評審C_內容","評審C_視覺","評審C_創意","評審C_整體印象",
-    "均分_內容","均分_視覺","均分_創意","均分_整體印象",
+    "評審A_選題需求","評審A_病生理深度","評審A_視覺表達","評審A_整體印象",
+    "評審B_選題需求","評審B_病生理深度","評審B_視覺表達","評審B_整體印象",
+    "評審C_選題需求","評審C_病生理深度","評審C_視覺表達","評審C_整體印象",
+    "均分_選題需求","均分_病生理深度","均分_視覺表達","均分_整體印象",
     "★ 最終總分 (50%面向+50%印象)","排名"
   ];
   sheet.getRange(1,1,1,headers.length).setValues([headers])
@@ -371,9 +376,9 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
     '<tr style="background:#0f172a;">' +
     '<th style="padding:10px 12px;text-align:left;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">組別</th>' +
     '<th style="padding:10px 12px;text-align:left;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">元素</th>' +
-    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">內容</th>' +
-    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">視覺</th>' +
-    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">創意</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">選題需求</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">病生理深度</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">視覺表達</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#f59e0b;font-weight:600;border-bottom:2px solid #1e293b;">整體印象</th>' +
     '</tr>' +
     '</thead>' +

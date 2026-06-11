@@ -259,7 +259,7 @@
           </div>
         </div>
       </div>
-      <div class="modal-legend">內容 · 視覺 · 創意 · <span style="color:#f59e0b;">整體印象</span> · <span style="color:#60a5fa;">加權分</span></div>
+      <div class="modal-legend">選題 · 病生理 · 視覺 · <span style="color:#f59e0b;">整體印象</span> · <span style="color:#60a5fa;">加權分</span></div>
       <div class="modal-actions">
         <button class="btn-back" @click="showSummary=false"><i class="fa-solid fa-arrow-left"></i> 返回修改</button>
         <button class="btn-confirm" @click="confirmSubmit"><i class="fa-solid fa-paper-plane"></i> 確認送出</button>
@@ -374,7 +374,7 @@
       <!-- Scoring model note -->
       <div class="model-note">
         <i class="fa-solid fa-circle-info" style="color:#60a5fa;"></i>
-        <span>每組評 4 項：前三項為評分面向，<b>整體印象</b>為您綜合感受的 1–5 分。
+        <span>每組評 4 項：<b>選題需求 · 病生理深度 · 視覺表達</b>為三個面向，<b>整體印象</b>為您綜合感受的 1–5 分。
         排名 = <b>前三項平均 × 50% + 整體印象 × 50%</b>（右上角數字即該組加權分）。</span>
       </div>
 
@@ -424,7 +424,7 @@
                  isModified(i, c.key) ? 'modified' : '',
                  scores[i][c.key] === 0 ? 'unscored' : '']"
                tabindex="0" @keydown="onCritKey(i, c.key, $event)">
-            <div class="criteria-label">{{ c.label }}<span v-if="c.key==='total'" class="total-tag" title="綜合整體感受給的1-5分，與前三項面向平均各佔50%計入排名">綜合</span></div>
+            <div class="criteria-label" :title="c.desc">{{ c.label }}<span v-if="c.key==='total'" class="total-tag" title="綜合整體感受給的1-5分，與前三項面向平均各佔50%計入排名">綜合</span></div>
             <div class="stars">
               <span v-for="n in 5" :key="n"
                     :class="['star', starClass(i, c.key, n)]"
@@ -483,7 +483,7 @@
       </div>
       <p style="color:#94a3b8;font-size:13px;">評分結果已同步至 Google Sheets。</p>
       <table class="result-table">
-        <tr><th>組別</th><th>內容</th><th>視覺</th><th>創意</th><th>整體印象</th><th>加權</th></tr>
+        <tr><th>組別</th><th>選題</th><th>病生理</th><th>視覺</th><th>整體印象</th><th>加權</th></tr>
         <tr v-for="(z, i) in ZODIAC" :key="z.label">
           <td>{{ z.icon }} {{ z.label }}</td>
           <td>{{ scores[i].content }}</td>
@@ -546,10 +546,10 @@ const ZODIAC = [
   {label:'戌狗',icon:'🛡', element:'土'},{label:'亥豬',icon:'📚',element:'水'},
 ];
 const CRITERIA = [
-  {key:'content',    label:'內容完整性'},
-  {key:'design',     label:'視覺設計'  },
-  {key:'creativity', label:'創意與深度'},
-  {key:'total',      label:'整體印象'  },
+  {key:'content',    label:'選題需求',  desc:'選題與未滿足醫療需求洞察：是否切中真實需求、選題理由清楚有說服力'},
+  {key:'design',     label:'病生理深度', desc:'研究內容正確性、病生理機轉理解深度、證據是否充分'},
+  {key:'creativity', label:'視覺表達',  desc:'海報排版、圖表、清晰度與易讀性'},
+  {key:'total',      label:'整體印象',  desc:'綜合整體感受 1–5（與前三項平均各佔 50%，決定排名）'},
 ];
 const HONORIFIC_TITLES = ['教授','老師','博士','主任','院長','所長','醫師','醫生','副教授'];
 
@@ -778,7 +778,7 @@ createApp({
 
     const copyResult = async () => {
       const lines = ZODIAC.map((z,i) =>
-        `${z.label}：內容${scores[i].content} 視覺${scores[i].design} 創意${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(2)}`
+        `${z.label}：選題${scores[i].content} 病生理${scores[i].design} 視覺${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(2)}`
       );
       const text = `${withHonorific(judgeName.value)} 評分紀錄\n${todayStr}\n\n${lines.join('\n')}`;
       try {
