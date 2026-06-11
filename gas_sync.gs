@@ -1,5 +1,10 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.11
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.12
+ *
+ * Changes from v5.11:
+ *   - FIX: PIN stored as TEXT (number format '@'). Sheets was coercing the
+ *     PIN string to a number → leading zeros dropped (0000→"0", 0123→"123"),
+ *     which also broke returning-judge re-login (stored "0" ≠ entered "0000").
  *
  * Changes from v5.10:
  *   - Judge rubric renamed to match poster structure (data keys unchanged):
@@ -224,6 +229,10 @@ function getOrCreateJudgeSheet_() {
   sheet.getRange(PIN_ROW,   1).setValue("識別碼").setFontWeight("bold").setFontColor("#334155");
   sheet.getRange(EMAIL_ROW, 1).setValue("電子郵件").setFontWeight("bold").setFontColor("#334155");
 
+  // Force PIN cells to TEXT format so leading-zero PINs (e.g. 0000/0123) are
+  // NOT coerced to numbers (which dropped the leading 0 → showed "0" and broke re-login).
+  [3,7,11].forEach(function(c){ sheet.getRange(PIN_ROW, c).setNumberFormat('@'); });
+
   return sheet;
 }
 
@@ -268,7 +277,7 @@ function handleLoginJudge(data) {
     storedName = (sheet.getRange(NAME_ROW, col).getValue()||'').toString().trim();
     if (!storedName) {
       sheet.getRange(NAME_ROW,  col).setValue('✍ ' + name);
-      sheet.getRange(PIN_ROW,   col).setValue(pin);
+      sheet.getRange(PIN_ROW,   col).setNumberFormat('@').setValue(String(pin));
       if (email) sheet.getRange(EMAIL_ROW, col).setValue(email);
       return ContentService.createTextOutput(JSON.stringify({status:'ok', slot:slot, returning:false}))
         .setMimeType(ContentService.MimeType.JSON);
