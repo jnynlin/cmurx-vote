@@ -4,7 +4,8 @@
  * Changes from v5.11:
  *   - FIX: PIN stored as TEXT (number format '@'). Sheets was coercing the
  *     PIN string to a number → leading zeros dropped (0000→"0", 0123→"123"),
- *     which also broke returning-judge re-login (stored "0" ≠ entered "0000").
+  *     which also broke returning-judge re-login (stored "0" ≠ entered "0000").
+ *   - Add resetJudge(slotOrName): editor utility to clear one judge slot.
  *
  * Changes from v5.10:
  *   - Judge rubric renamed to match poster structure (data keys unchanged):
@@ -407,4 +408,28 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
     '</div></div>';
 
   MailApp.sendEmail({ to: email, subject: subject, htmlBody: html });
+}
+
+// ── Teacher utility: reset one judge slot (run in Apps Script editor) ──
+// Clears that judge's name / PIN / email + their 4 score columns so they
+// can re-register. Accepts a slot letter OR the judge's name:
+//   resetJudge('A')        resetJudge('王大明')
+function resetJudge(slotOrName) {
+  var sheet = getOrCreateJudgeSheet_();
+  var key = (slotOrName || '').toString().trim();
+  var col = null, label = key;
+  if (JUDGE_COL[key.toUpperCase()]) {
+    col = JUDGE_COL[key.toUpperCase()]; label = '評審' + key.toUpperCase();
+  } else {
+    ['A','B','C'].forEach(function(s){
+      var nm = (sheet.getRange(NAME_ROW, JUDGE_COL[s]).getValue() || '').toString().replace(/^✍ /,'').trim();
+      if (nm && nm === key) { col = JUDGE_COL[s]; label = key + '(slot ' + s + ')'; }
+    });
+  }
+  if (!col) { Logger.log('找不到「' + key + '」。用法：resetJudge("A") 或 resetJudge("王大明")'); return; }
+  sheet.getRange(NAME_ROW,  col).clearContent();
+  sheet.getRange(PIN_ROW,   col).clearContent();
+  sheet.getRange(EMAIL_ROW, col).clearContent();
+  sheet.getRange(2, col, 12, 4).clearContent();   // 12 zodiac rows × 4 score cols
+  Logger.log('✅ 已重置 ' + label + '：name/PIN/email 與評分已清除，該名額可重新登記。');
 }
