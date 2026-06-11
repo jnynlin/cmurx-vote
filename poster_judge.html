@@ -121,7 +121,7 @@
   .group-card.incomplete .status-dot{background:#1d4ed8;animation:dot-pulse 2s ease-in-out infinite;}
   @keyframes dot-pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
   .remain-badge{font-size:10px;font-weight:700;color:#60a5fa;background:var(--primary-soft);border-radius:6px;padding:2px 7px;margin-left:4px;}
-  .criteria-row.unscored .stars .star:not(.active){color:#3b5a8f;}
+  .criteria-row.unscored .numbtn{border-color:#3b5a8f;}
   .criteria-row.unscored .criteria-label{color:#60a5fa;}
   @keyframes star-pop{from{transform:scale(1.4)}to{transform:scale(1)}}
 
@@ -151,15 +151,14 @@
   .criteria-row:focus{background:var(--surface2);box-shadow:0 0 0 2px var(--primary);}
   .criteria-row:nth-child(odd){background:rgba(255,255,255,.015);}
   .criteria-label{font-size:12px;color:#cbd5e1;flex-shrink:0;width:74px;font-weight:600;}
-  .stars{display:flex;gap:5px;}
-  .star{font-size:22px;cursor:pointer;color:#475569;transition:color .1s,transform .1s;line-height:1;user-select:none;padding:3px;}
-  .star:hover,.star.active{color:var(--accent);}
-  .star:hover{transform:scale(1.18);}
-  .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
-  .star.active.s-base{color:var(--accent);}
-  .star.active.s-added{color:var(--ok-l);text-shadow:0 0 10px rgba(74,222,128,.7);animation:star-pop .25s ease;}
-  .star.active.s-removed{color:var(--danger);opacity:.6;text-decoration:line-through;}
-  @media(max-width:480px){.star{font-size:30px;padding:7px 4px;}.criteria-label{font-size:11px;width:66px;}}
+  /* 1–5 square number buttons (single-select; re-click clears to 0) */
+  .stars{display:flex;gap:6px;}
+  .numbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;transition:all .12s;line-height:1;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;}
+  .numbtn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
+  .numbtn.active{background:var(--accent);border-color:var(--accent);color:#1a1206;box-shadow:0 0 10px rgba(245,158,11,.4);}
+  .numbtn.active.up{background:var(--ok);border-color:var(--ok);color:#06281a;box-shadow:0 0 10px rgba(34,197,94,.5);}
+  .numbtn.active.down{background:var(--danger);border-color:var(--danger);color:#2a0a0a;box-shadow:0 0 10px rgba(239,68,68,.5);}
+  @media(max-width:480px){.numbtn{width:38px;height:38px;font-size:16px;}.criteria-label{font-size:11px;width:66px;}}
   .kb-hint{font-size:9px;color:var(--border);font-family:monospace;margin-left:4px;}
   .criteria-row:focus .kb-hint{color:var(--faint);}
   .criteria-row.is-total{margin-top:8px;border-top:2px solid var(--border);padding-top:10px;border-bottom:none;background:rgba(245,158,11,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
@@ -400,9 +399,9 @@
           <div class="progress-bar"><div class="progress-fill" :style="`width:${progressPct}%`"></div></div>
         </div>
         <div v-if="originalScores" class="star-legend">
-          <span><i class="fa-solid fa-star" style="color:var(--accent);"></i> 原評分</span>
-          <span><i class="fa-solid fa-star" style="color:var(--ok-l);"></i> 新增</span>
-          <span><i class="fa-solid fa-star" style="color:var(--danger);"></i> 移除</span>
+          <span>修改後標示：</span>
+          <span style="color:var(--ok-l);font-weight:700;">綠＝分數升高</span>
+          <span style="color:var(--danger);font-weight:700;">紅＝分數降低</span>
         </div>
 
         <div class="group-grid">
@@ -429,7 +428,7 @@
                  tabindex="0" @keydown="onCritKey(i, c.key, $event)">
               <div class="criteria-label" :title="c.desc">{{ c.label }}</div>
               <div class="stars">
-                <span v-for="n in 5" :key="n" :class="['star', starClass(i, c.key, n)]" @click="setScore(i, c.key, n)">★</span>
+                <button v-for="n in 5" :key="n" type="button" :class="['numbtn', numClass(i, c.key, n)]" @click="setScore(i, c.key, n)">{{ n }}</button>
               </div>
               <div style="display:flex;align-items:center;gap:2px;">
                 <template v-if="isModified(i, c.key)">
@@ -681,12 +680,13 @@ createApp({
     const progressPct   = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
     const isModified    = (i, key) => originalScores.value && originalScores.value[i][key] !== scores[i][key];
     const remainCount   = i => CRITERIA.filter(c => scores[i][c.key] === 0).length;
-    const starClass = (i, key, n) => {
-      const cur = scores[i][key];
+    // Single-select number button: only the chosen value is active.
+    // On a modified row, the active button is tinted by change direction (up=green/down=red).
+    const numClass = (i, key, n) => {
+      if (scores[i][key] !== n) return '';
       const orig = originalScores.value ? originalScores.value[i][key] : null;
-      if (orig === null || orig === cur) return cur >= n ? 'active s-base' : '';
-      if (cur > orig) { if (n <= orig) return 'active s-base'; if (n <= cur) return 'active s-added'; return ''; }
-      else            { if (n <= cur)  return 'active s-base'; if (n <= orig) return 'active s-removed'; return ''; }
+      if (orig !== null && orig !== n) return n > orig ? 'active up' : 'active down';
+      return 'active';
     };
     const modifiedCount = computed(() => {
       if (!originalScores.value) return 0;
@@ -853,7 +853,7 @@ createApp({
       pinDigits, pinReject, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
-      withHonorific, groupSubtotal, groupWeighted, isModified, modifiedCount, originalScores, remainCount, starClass,
+      withHonorific, groupSubtotal, groupWeighted, isModified, modifiedCount, originalScores, remainCount, numClass,
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
