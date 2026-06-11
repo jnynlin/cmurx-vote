@@ -382,7 +382,8 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
 
     '<div style="background:#172032;border-left:3px solid #3b82f6;border-radius:8px;padding:14px 16px;margin-bottom:24px;font-size:12px;color:#94a3b8;line-height:1.7;">' +
     '如需修改評分，請以原姓名及識別碼重新登入系統。<br>' +
-    '評分資料已同步至主辦單位 Google Sheets。' +
+    '評分資料已同步至主辦單位 Google Sheets。<br>' +
+    '亦歡迎您於 Padlet 海報下方留言，給予同學鼓勵與回饋。' +
     '</div>' +
 
     '<p style="color:#475569;font-size:11px;text-align:center;margin:0;line-height:1.8;">' +
