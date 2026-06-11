@@ -186,11 +186,11 @@ function getOrCreateJudgeSheet_() {
 
   // Avg + rank formulas — always refresh (cols 15-20)
   for (var r = 2; r <= 13; r++) {
-    sheet.getRange(r,15).setFormula('=IFERROR(AVERAGE(C'+r+',G'+r+',K'+r+'),"")');
-    sheet.getRange(r,16).setFormula('=IFERROR(AVERAGE(D'+r+',H'+r+',L'+r+'),"")');
-    sheet.getRange(r,17).setFormula('=IFERROR(AVERAGE(E'+r+',I'+r+',M'+r+'),"")');
-    sheet.getRange(r,18).setFormula('=IFERROR(AVERAGE(E'+r+',I'+r+',M'+r+'),"")');
-    sheet.getRange(r,19).setFormula('=IFERROR(AVERAGE(F'+r+',J'+r+',N'+r+'),"")');
+    sheet.getRange(r,15).setFormula('=IFERROR(ROUND(AVERAGE(C'+r+',G'+r+',K'+r+'),1),"")');
+    sheet.getRange(r,16).setFormula('=IFERROR(ROUND(AVERAGE(D'+r+',H'+r+',L'+r+'),1),"")');
+    sheet.getRange(r,17).setFormula('=IFERROR(ROUND(AVERAGE(E'+r+',I'+r+',M'+r+'),1),"")');
+    sheet.getRange(r,18).setFormula('=IFERROR(ROUND(AVERAGE(E'+r+',I'+r+',M'+r+'),1),"")');
+    sheet.getRange(r,19).setFormula('=IFERROR(ROUND(AVERAGE(F'+r+',J'+r+',N'+r+'),1),"")');
     sheet.getRange(r,20).setFormula('=IFERROR(RANK(S'+r+',S$2:S$13,0),"")');
   }
 
