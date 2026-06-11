@@ -834,7 +834,9 @@ createApp({
         if (!resp.ok||json.status==='error') throw new Error(json.message||'GAS error');
         submitted.value=true; submitTime.value=ts;
         localStorage.removeItem(LS_SCORES(judgeSlot.value));
-        try { confetti({particleCount:140, spread:80, origin:{y:0.55}, colors:['#3b82f6','#06b6d4','#f59e0b','#4ade80','#f8fafc']}); } catch(e){}
+        // Monochrome blue + silver — on-brand, restrained (result screen already shows green ✅)
+        try { confetti({particleCount:110, spread:70, startVelocity:38, origin:{y:0.55}, ticks:160,
+              colors:['#3b82f6','#60a5fa','#06b6d4','#cbd5e1','#e2e8f0','#94a3b8']}); } catch(e){}
         setTimeout(()=>{phase.value='result';}, 900);
       } catch(e) { showToast('送出失敗：'+e.message,'error','fa-solid fa-triangle-exclamation'); }
       finally { submitting.value=false; }
