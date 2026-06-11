@@ -96,10 +96,6 @@
   .criteria-row.unscored .stars .star:not(.active){color:#3b5a8f;}
   .criteria-row.unscored .criteria-label{color:#60a5fa;}
 
-  /* ── Re-score star colours ── */
-  .star.s-base   {color:#f59e0b;text-shadow:0 0 8px rgba(245,158,11,.5);}   /* unchanged base */
-  .star.s-added  {color:#4ade80;text-shadow:0 0 10px rgba(74,222,128,.6);animation:star-pop .25s ease;}  /* newly added */
-  .star.s-removed{color:#ef4444;opacity:.55;text-decoration:line-through;}  /* removed */
   @keyframes star-pop{from{transform:scale(1.4)}to{transform:scale(1)}}
 
   /* ── Group cards ── */
@@ -128,6 +124,10 @@
   .star:hover,.star.active{color:#f59e0b;}
   .star:hover{transform:scale(1.18);}
   .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
+  /* Re-score colours — MUST come after .star.active to win equal specificity */
+  .star.active.s-base   {color:#f59e0b;}                                                           /* unchanged base */
+  .star.active.s-added  {color:#4ade80;text-shadow:0 0 10px rgba(74,222,128,.7);animation:star-pop .25s ease;}  /* newly added */
+  .star.active.s-removed{color:#ef4444;opacity:.6;text-decoration:line-through;}                   /* removed */
   @media(max-width:480px){.star{font-size:30px;padding:7px 4px;}.criteria-label{font-size:11px;width:64px;}}
   .kb-hint{font-size:9px;color:#334155;font-family:monospace;margin-left:4px;}
   .criteria-row:focus .kb-hint{color:#475569;}
