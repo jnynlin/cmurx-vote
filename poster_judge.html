@@ -156,7 +156,9 @@
   .card-subtotal{margin-left:auto;background:var(--surface2);border-radius:8px;padding:3px 9px;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0;}
   .card-subtotal.zero{color:var(--border);background:transparent;}
   .status-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s;}
-  .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;border-bottom:1px solid var(--surface2);padding:2px 4px 6px;transition:background .1s;outline:none;}
+  .criteria-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;border-bottom:1px solid var(--surface2);padding:2px 4px 6px;transition:background .1s;outline:none;}
+  .stars{flex-shrink:0;}
+  .row-val{margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:3px;min-width:64px;flex-shrink:0;}
   .criteria-row:focus{background:var(--surface2);box-shadow:0 0 0 2px var(--primary);}
   .criteria-row:nth-child(odd){background:rgba(255,255,255,.015);}
   .criteria-label{font-size:12px;color:#cbd5e1;flex-shrink:0;width:74px;font-weight:600;}
@@ -211,10 +213,12 @@
   @media(max-width:400px){.summary-grid{grid-template-columns:1fr;}}
   .summary-row{background:var(--surface2);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;}
   .sr-zodiac{font-weight:700;font-size:12px;color:var(--text);flex:1;min-width:0;}
-  .sr-scores{display:flex;gap:4px;align-items:center;}
-  .sr-score{background:var(--surface);border-radius:5px;padding:2px 6px;font-size:11px;font-weight:700;color:var(--muted);}
-  .sr-score.total{color:#b45309;background:#fef3c7;}
-  .sr-score.avg{color:var(--primary);background:var(--primary-soft);}
+  .sr-scores{display:flex;gap:5px;align-items:center;flex-shrink:0;}
+  .sr-score{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 0;font-size:11px;font-weight:700;color:var(--muted);width:22px;text-align:center;}
+  .sr-score.total{color:#b45309;background:#fef3c7;border-color:#fde68a;}
+  .sr-score.avg{color:#fff;background:var(--grad-btn);border:none;width:34px;font-size:12px;font-weight:800;}
+  .sr-sep{width:1px;height:18px;background:var(--border);margin:0 1px;}
+  .sr-arrow{color:var(--faint);font-size:11px;font-weight:700;}
   .modal-legend{font-size:10px;color:var(--faint);margin-bottom:16px;text-align:center;}
   .modal-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .modal-actions button{flex:1;min-width:120px;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;}
@@ -285,8 +289,10 @@
             <span class="sr-score">{{ scores[i].content }}</span>
             <span class="sr-score">{{ scores[i].design }}</span>
             <span class="sr-score">{{ scores[i].creativity }}</span>
+            <span class="sr-sep"></span>
             <span class="sr-score total">{{ scores[i].total }}</span>
-            <span class="sr-score avg">{{ groupWeighted(i).toFixed(2) }}</span>
+            <span class="sr-arrow">=</span>
+            <span class="sr-score avg">{{ groupWeighted(i).toFixed(1) }}</span>
           </div>
         </div>
       </div>
@@ -440,7 +446,7 @@
               </div>
               <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']"
                    title="此組加權分 = 前三項平均×50% + 整體印象×50%（決定排名）">
-                {{ isScored(i) ? groupWeighted(i).toFixed(2) : '–' }}
+                {{ isScored(i) ? groupWeighted(i).toFixed(1) : '–' }}
               </div>
             </div>
             <div v-for="c in CRITERIA" :key="c.key"
@@ -450,16 +456,15 @@
               <div class="stars">
                 <button v-for="n in 5" :key="n" type="button" :class="['numbtn', numClass(i, c.key, n)]" @click="setScore(i, c.key, n)">{{ n }}</button>
               </div>
-              <div style="display:flex;align-items:center;gap:2px;">
+              <div class="row-val">
                 <template v-if="isModified(i, c.key)">
                   <span class="old-val">{{ originalScores[i][c.key] }}</span>
                   <span class="arrow-val">→</span>
                 </template>
                 <div :class="['new-val', isModified(i,c.key)?'new-val-highlight':'']"
-                     style="font-size:12px;font-weight:700;color:var(--accent);width:20px;text-align:right;">
+                     style="font-size:13px;font-weight:800;color:var(--accent);width:16px;text-align:right;">
                   {{ scores[i][c.key] || '–' }}
                 </div>
-                <span class="kb-hint">1-5</span>
               </div>
             </div>
           </div>
@@ -572,7 +577,7 @@
           <td>{{ scores[i].design }}</td>
           <td>{{ scores[i].creativity }}</td>
           <td style="color:var(--accent);">{{ scores[i].total }}</td>
-          <td><strong style="color:var(--primary);">{{ groupWeighted(i).toFixed(2) }}</strong></td>
+          <td><strong style="color:var(--primary);">{{ groupWeighted(i).toFixed(1) }}</strong></td>
         </tr>
       </table>
       <div class="result-actions">
@@ -871,7 +876,7 @@ createApp({
 
     const copyResult = async () => {
       const lines = ZODIAC.map((z,i) =>
-        `${z.label}：選題${scores[i].content} 病生理${scores[i].design} 視覺${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(2)}`);
+        `${z.label}：選題${scores[i].content} 病生理${scores[i].design} 視覺${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(1)}`);
       const text = `${withHonorific(judgeName.value)} 評分紀錄\n${todayStr}\n\n${lines.join('\n')}`;
       try { await navigator.clipboard.writeText(text); showToast('評分已複製到剪貼簿','success','fa-solid fa-check'); }
       catch(e) { showToast('複製失敗，請手動截圖','error'); }
