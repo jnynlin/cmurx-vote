@@ -96,6 +96,12 @@
   .criteria-row.unscored .stars .star:not(.active){color:#1e3a5f;}
   .criteria-row.unscored .criteria-label{color:#60a5fa;}
 
+  /* ── Re-score star colours ── */
+  .star.s-base   {color:#f59e0b;text-shadow:0 0 8px rgba(245,158,11,.5);}   /* unchanged base */
+  .star.s-added  {color:#4ade80;text-shadow:0 0 10px rgba(74,222,128,.6);animation:star-pop .25s ease;}  /* newly added */
+  .star.s-removed{color:#ef4444;opacity:.55;text-decoration:line-through;}  /* removed */
+  @keyframes star-pop{from{transform:scale(1.4)}to{transform:scale(1)}}
+
   /* ── Group cards ── */
   .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;}}
@@ -357,7 +363,7 @@
             <div class="criteria-label">{{ c.label }}</div>
             <div class="stars">
               <span v-for="n in 5" :key="n"
-                    :class="['star', scores[i][c.key]>=n?'active':'']"
+                    :class="['star', starClass(i, c.key, n)]"
                     @click="setScore(i, c.key, n)">★</span>
             </div>
             <div style="display:flex;align-items:center;gap:2px;">
@@ -518,6 +524,24 @@ createApp({
     const progressPct   = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
     const isModified    = (i, key) => originalScores.value && originalScores.value[i][key] !== scores[i][key];
     const remainCount   = i => CRITERIA.filter(c => scores[i][c.key] === 0).length;
+
+    // Star colour class: when re-scoring, distinguish base / added / removed
+    const starClass = (i, key, n) => {
+      const cur = scores[i][key];
+      const orig = originalScores.value ? originalScores.value[i][key] : null;
+      // No comparison (first-time judge) → simple active/inactive
+      if (orig === null || orig === cur) return cur >= n ? 'active s-base' : '';
+      // Modified: classify each star
+      if (cur > orig) {            // score raised
+        if (n <= orig) return 'active s-base';      // unchanged base
+        if (n <= cur)  return 'active s-added';     // newly added (green)
+        return '';
+      } else {                     // score lowered
+        if (n <= cur)  return 'active s-base';      // remaining base
+        if (n <= orig) return 'active s-removed';   // removed (red strike)
+        return '';
+      }
+    };
     const modifiedCount = computed(() => {
       if (!originalScores.value) return 0;
       return ZODIAC.reduce((sum, _, i) => sum + CRITERIA.filter(c => isModified(i, c.key)).length, 0);
@@ -672,7 +696,7 @@ createApp({
       pinDigits, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
-      withHonorific, groupSubtotal, groupAvg, isModified, modifiedCount, originalScores, remainCount,
+      withHonorific, groupSubtotal, groupAvg, isModified, modifiedCount, originalScores, remainCount, starClass,
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
