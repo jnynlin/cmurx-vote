@@ -103,14 +103,20 @@
   @keyframes star-pop{from{transform:scale(1.4)}to{transform:scale(1)}}
 
   /* ── Group cards ── */
-  .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media(max-width:620px){.group-grid{grid-template-columns:1fr;}}
-  .group-card{background:#1e293b;border:2px solid #334155;border-radius:16px;padding:20px;transition:border-color .2s;}
+  .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+  @media(max-width:620px){.group-grid{grid-template-columns:1fr;gap:18px;}}
+  .group-card{background:#1e293b;border:2px solid #334155;border-radius:16px;padding:20px;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
+  .group-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--elem-color,#475569);}
+  .group-card:focus-within{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25);}
   .group-card.scored{border-color:#22c55e;}
   .group-card.scored .status-dot{background:#22c55e;}
+  /* element colour accents */
+  .elem-水{--elem-color:#38bdf8;}.elem-火{--elem-color:#f87171;}.elem-木{--elem-color:#4ade80;}
+  .elem-土{--elem-color:#d4a574;}.elem-氣{--elem-color:#c084fc;}
   .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .group-num{width:30px;height:30px;border-radius:8px;background:var(--elem-color,#475569);color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
   .zodiac-icon{width:44px;height:44px;border-radius:12px;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-  .zodiac-name{font-weight:700;font-size:15px;color:#f8fafc;}
+  .zodiac-name{font-weight:800;font-size:17px;color:#f8fafc;}
   .card-subtotal{margin-left:auto;background:#0f172a;border-radius:8px;padding:3px 9px;font-size:13px;font-weight:800;color:#f59e0b;flex-shrink:0;}
   .card-subtotal.zero{color:#334155;background:transparent;}
   .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;transition:background .3s;}
@@ -354,8 +360,9 @@
 
       <div class="group-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label" :id="'card-'+i"
-             :class="['group-card', isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
+             :class="['group-card', 'elem-'+z.element, isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
           <div class="card-header">
+            <div class="group-num">{{ i+1 }}</div>
             <div class="zodiac-icon">{{ z.icon }}</div>
             <div>
               <div class="zodiac-name">
@@ -367,7 +374,7 @@
                   未評分
                 </span>
               </div>
-              <div style="font-size:11px;color:#64748b;">{{ z.element }} · 第 {{ i+1 }} 組</div>
+              <div style="font-size:11px;color:#64748b;">{{ z.element }}行 · 第 {{ i+1 }} 組</div>
             </div>
             <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']">
               {{ groupSubtotal(i) > 0 ? groupSubtotal(i) : '–' }}
