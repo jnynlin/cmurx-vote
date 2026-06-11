@@ -6,7 +6,7 @@
 <title>海報評審系統 — Zodiac Ops</title>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Caveat:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Great+Vibes&display=swap">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
@@ -47,9 +47,9 @@
   .sig-preview::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.06) 0%,rgba(6,182,212,.04) 100%);pointer-events:none;}
   .sig-preview .sp-label{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
   .sig-preview .sp-label::after{content:'';flex:1;height:1px;background:#1e293b;}
-  .sig-name{font-family:'Dancing Script','Caveat',cursive;font-size:38px;font-weight:700;color:#f8fafc;line-height:1.1;margin-bottom:12px;animation:sigAppear .6s cubic-bezier(.16,1,.3,1) both;}
+  .sig-name{font-family:'Ma Shan Zheng','Great Vibes',cursive;font-size:42px;font-weight:400;color:#f1f5f9;line-height:1.15;margin-bottom:14px;letter-spacing:4px;text-shadow:0 0 32px rgba(148,163,184,.18);animation:sigAppear .7s cubic-bezier(.16,1,.3,1) both;}
   @keyframes sigAppear{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
-  .sig-underline{height:1px;background:linear-gradient(90deg,#3b82f6,transparent);margin-bottom:12px;}
+  .sig-underline{height:1px;background:linear-gradient(90deg,transparent,#60a5fa 30%,#06b6d4 70%,transparent);margin-bottom:14px;opacity:.6;}
   .sig-meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
   .sig-meta .sm-role{font-size:11px;color:#60a5fa;font-weight:600;letter-spacing:.5px;}
   .sig-meta .sm-date{font-size:10px;color:#475569;font-family:monospace;}
@@ -170,7 +170,7 @@
 
       <div v-if="form.name && pinStr.length === 4" class="sig-preview fade-in">
         <div class="sp-label"><i class="fa-solid fa-pen-nib" style="color:#3b82f6;"></i> 簽名預覽 Signature Preview</div>
-        <div class="sig-name">{{ withHonorific(form.name) }}</div>
+        <div class="sig-name">{{ form.name }}</div>
         <div class="sig-underline"></div>
         <div class="sig-meta">
           <span class="sm-role">藥學系 Pathophysiology · 海報評審</span>
