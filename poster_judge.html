@@ -81,6 +81,12 @@
   /* ── Offline bar ── */
   .offline-bar{background:#450a0a;border-top:1px solid #7f1d1d;padding:8px 24px;text-align:center;font-size:12px;color:#f87171;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;}
 
+  /* ── Modified score indicator ── */
+  .criteria-row.modified{border-left:3px solid #f59e0b;padding-left:8px;background:rgba(245,158,11,.04);border-radius:0 6px 6px 0;}
+  .old-val{font-size:10px;color:#64748b;text-decoration:line-through;margin-right:3px;}
+  .arrow-val{font-size:10px;color:#f59e0b;margin-right:2px;}
+  .modified-badge{display:inline-flex;align-items:center;gap:5px;background:#451a03;border:1px solid #f59e0b;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#fbbf24;}
+
   /* ── Group cards ── */
   .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;}}
@@ -296,7 +302,12 @@
           <h2><i class="fa-solid fa-medal" style="color:#f59e0b;margin-right:8px;"></i>海報評審</h2>
           <div class="progress-tag">{{ scoredCount }} / {{ ZODIAC.length }} 組已完成評分</div>
         </div>
-        <div class="judge-chip"><i class="fa-solid fa-user-tie"></i>{{ withHonorific(judgeName) }}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div class="judge-chip"><i class="fa-solid fa-user-tie"></i>{{ withHonorific(judgeName) }}</div>
+          <div v-if="modifiedCount > 0" class="modified-badge">
+            <i class="fa-solid fa-pen"></i> 已修改 {{ modifiedCount }} 項
+          </div>
+        </div>
       </div>
       <div class="progress-wrap">
         <div class="progress-pct">{{ progressPct }}%</div>
@@ -322,15 +333,19 @@
             </div>
           </div>
           <div v-for="c in CRITERIA" :key="c.key"
-               class="criteria-row" tabindex="0"
-               @keydown="onCritKey(i, c.key, $event)">
+               :class="['criteria-row', isModified(i, c.key) ? 'modified' : '']"
+               tabindex="0" @keydown="onCritKey(i, c.key, $event)">
             <div class="criteria-label">{{ c.label }}</div>
             <div class="stars">
               <span v-for="n in 5" :key="n"
                     :class="['star', scores[i][c.key]>=n?'active':'']"
                     @click="setScore(i, c.key, n)">★</span>
             </div>
-            <div style="display:flex;align-items:center;">
+            <div style="display:flex;align-items:center;gap:2px;">
+              <template v-if="isModified(i, c.key)">
+                <span class="old-val">{{ originalScores[i][c.key] }}</span>
+                <span class="arrow-val">→</span>
+              </template>
               <div style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
                 {{ scores[i][c.key] || '–' }}
               </div>
@@ -461,6 +476,7 @@ createApp({
     const showSummary   = ref(false);
     const showSavedFlash= ref(false);
     const returnMode    = ref(false);
+    const originalScores= ref(null);  // snapshot on returning login
     const returnName    = ref('');
     const nameInput     = ref(null);
     const pinRefs       = ref([null,null,null,null]);
@@ -479,7 +495,12 @@ createApp({
       setTimeout(()=>{toast.msg='';}, 4000);
     };
 
-    const progressPct = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
+    const progressPct   = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
+    const isModified    = (i, key) => originalScores.value && originalScores.value[i][key] !== scores[i][key];
+    const modifiedCount = computed(() => {
+      if (!originalScores.value) return 0;
+      return ZODIAC.reduce((sum, _, i) => sum + CRITERIA.filter(c => isModified(i, c.key)).length, 0);
+    });
     const groupSubtotal = i => { const s=scores[i]; return s.content+s.design+s.creativity+s.total; };
     const groupAvg = i => {
       const s = scores[i];
@@ -541,6 +562,8 @@ createApp({
         const saved = localStorage.getItem(LS_SCORES(json.slot));
         if (saved) { try{JSON.parse(saved).forEach((s,i)=>{if(scores[i])Object.assign(scores[i],s);});}catch(e){} }
         else { scores.forEach(s=>{s.content=0;s.design=0;s.creativity=0;s.total=0;}); }
+        // Snapshot for change-tracking (returning judges only)
+        originalScores.value = json.returning ? scores.map(s=>({...s})) : null;
         submitted.value=false; phase.value='scoring';
         showToast(json.returning?`歡迎回來，${withHonorific(name)}`:`歡迎，${withHonorific(name)}！`,
                   json.returning?'info':'success', json.returning?'fa-solid fa-handshake':'fa-solid fa-star');
@@ -628,7 +651,8 @@ createApp({
       pinDigits, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
-      withHonorific, groupSubtotal, groupAvg, focusPin, onPinInput, onPinKey, onCritKey,
+      withHonorific, groupSubtotal, groupAvg, isModified, modifiedCount, originalScores,
+      focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
     };
