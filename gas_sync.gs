@@ -223,7 +223,7 @@ function handleLoginJudge(data) {
     storedName = (sheet.getRange(NAME_ROW, col).getValue()||'').toString().replace(/^✍ /,'').trim();
     storedPin  = (sheet.getRange(PIN_ROW,  col).getValue()||'').toString().trim();
     if (storedName === name && storedPin === pin) {
-      return ContentService.createTextOutput(JSON.stringify({status:'ok', slot:slot, returning:true}))
+      return ContentService.createTextOutput(JSON.stringify({status:'ok', slot:slot, returning:true, scores:readJudgeScores_(sheet, col)}))
         .setMimeType(ContentService.MimeType.JSON);
     }
   }
@@ -255,6 +255,19 @@ function handleLoginJudge(data) {
 
   return ContentService.createTextOutput(JSON.stringify({status:'error', message:'三位評審名額已滿，請洽主辦單位'}))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── Read a judge's existing scores from sheet (12 rows × 4 cols) ───────
+function readJudgeScores_(sheet, col) {
+  var block = sheet.getRange(2, col, 12, 4).getValues(); // rows 2-13, content/design/creativity/total
+  return block.map(function(r) {
+    return {
+      content:    Number(r[0]) || 0,
+      design:     Number(r[1]) || 0,
+      creativity: Number(r[2]) || 0,
+      total:      Number(r[3]) || 0
+    };
+  });
 }
 
 // ── External judge poster scoring ─────────────────────────────────────

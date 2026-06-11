@@ -35,7 +35,7 @@ function loginJudge(sheet, name, pin) {
     storedName = (sheet.get(NAME_ROW, col)||'').toString().replace(/^✍ /,'').trim();
     storedPin  = (sheet.get(PIN_ROW,  col)||'').toString().trim();
     if (storedName === name && storedPin === pin)
-      return { status: 'ok', slot: slot, returning: true };
+      return { status: 'ok', slot: slot, returning: true, scores: readJudgeScores(sheet, col) };
   }
 
   // Wrong PIN
@@ -60,6 +60,19 @@ function loginJudge(sheet, name, pin) {
   }
 
   return { status: 'error', message: '三位評審名額已滿，請洽主辦單位' };
+}
+
+function readJudgeScores(sheet, col) {
+  var out = [];
+  for (var r = 2; r <= 13; r++) {
+    out.push({
+      content:    Number(sheet.get(r, col))     || 0,
+      design:     Number(sheet.get(r, col + 1)) || 0,
+      creativity: Number(sheet.get(r, col + 2)) || 0,
+      total:      Number(sheet.get(r, col + 3)) || 0
+    });
+  }
+  return out;
 }
 
 function submitScores(sheet, judge, judgeName, rows) {
@@ -260,6 +273,27 @@ test('T21 — all 12 zodiac rows written correctly', function() {
     assert(sheet.get(rowNum, 3) === 4, z + ' content not written');
     assert(sheet.get(rowNum, 6) === 4, z + ' total not written');
   });
+});
+
+test('T22 — returning judge gets submitted scores back (revise bug fix)', function() {
+  // Judge A already submitted (4,3,5,4) in T21. Re-login should return those scores.
+  var r = loginJudge(sheet, '王大明', '1234');
+  assertEqual(r.status, 'ok');
+  assertEqual(r.returning, true);
+  assert(Array.isArray(r.scores), 'scores array must be returned on revise');
+  assertEqual(r.scores.length, 12, 'should return all 12 groups');
+  assertEqual(r.scores[0].content, 4, 'content restored');
+  assertEqual(r.scores[0].design, 3, 'design restored');
+  assertEqual(r.scores[0].creativity, 5, 'creativity restored');
+  assertEqual(r.scores[0].total, 4, 'total restored');
+});
+
+test('T23 — new judge login returns no scores (returning=false)', function() {
+  // Fill B and C already taken; use fresh sheet to test new judge has empty scores
+  var s2 = makeSheet();
+  var r = loginJudge(s2, '新評審', '7777');
+  assertEqual(r.returning, false);
+  assert(r.scores === undefined, 'new judge should not get scores array');
 });
 
 // ── Summary ───────────────────────────────────────────────────────────

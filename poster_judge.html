@@ -604,11 +604,18 @@ createApp({
         judgeName.value=name; judgeSlot.value=json.slot;
         if (!returnMode.value) form.name=name;
         localStorage.setItem(LS_SESSION, JSON.stringify({name,slot:json.slot,email:form.email}));
-        const saved = localStorage.getItem(LS_SCORES(json.slot));
-        if (saved) { try{JSON.parse(saved).forEach((s,i)=>{if(scores[i])Object.assign(scores[i],s);});}catch(e){} }
-        else { scores.forEach(s=>{s.content=0;s.design=0;s.creativity=0;s.total=0;}); }
-        // Snapshot for change-tracking (returning judges only)
-        originalScores.value = json.returning ? scores.map(s=>({...s})) : null;
+        // Restore scores: GAS sheet is authoritative for returning judges (works across devices);
+        // localStorage is only a same-device draft fallback.
+        scores.forEach(s=>{s.content=0;s.design=0;s.creativity=0;s.total=0;});
+        if (json.returning && Array.isArray(json.scores)) {
+          json.scores.forEach((s,i)=>{ if(scores[i]) Object.assign(scores[i],s); });
+          // Snapshot server scores BEFORE applying any local draft → change-tracking baseline
+          originalScores.value = scores.map(s=>({...s}));
+        } else {
+          const saved = localStorage.getItem(LS_SCORES(json.slot));
+          if (saved) { try{JSON.parse(saved).forEach((s,i)=>{if(scores[i])Object.assign(scores[i],s);});}catch(e){} }
+          originalScores.value = null;
+        }
         submitted.value=false; phase.value='scoring';
         showToast(json.returning?`歡迎回來，${withHonorific(name)}`:`歡迎，${withHonorific(name)}！`,
                   json.returning?'info':'success', json.returning?'fa-solid fa-handshake':'fa-solid fa-star');
