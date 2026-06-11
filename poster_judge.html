@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>海報評審系統 — Zodiac Ops</title>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Great+Vibes&display=swap">
 <style>
@@ -15,7 +16,6 @@
   @keyframes pulse-border{0%,100%{border-color:#f59e0b}50%{border-color:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.2)}}
   .incomplete-flash{animation:pulse-border .8s ease 3;}
 
-  /* ── Panels ── */
   .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
   .panel{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:44px 40px;max-width:460px;width:100%;}
   @media(max-width:480px){.panel{padding:32px 22px;border-radius:16px;}}
@@ -35,8 +35,6 @@
   .field-input{width:100%;background:#0f172a;border:2px solid #334155;border-radius:12px;padding:13px 16px;font-size:15px;color:#f8fafc;outline:none;transition:border-color .2s;font-family:inherit;}
   .field-input:focus{border-color:#3b82f6;}
   .field-input::placeholder{color:#475569;}
-
-  /* ── 4-box PIN ── */
   .pin-boxes{display:flex;gap:10px;justify-content:center;margin-top:4px;}
   .pin-box{width:56px;height:60px;background:#0f172a;border:2px solid #334155;border-radius:12px;font-size:24px;font-weight:800;color:#f8fafc;text-align:center;outline:none;transition:border-color .2s;caret-color:transparent;}
   .pin-box:focus{border-color:#3b82f6;}
@@ -50,32 +48,37 @@
   .action-btn.primary:hover:not(:disabled){background:#2563eb;}
   .action-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
 
-  /* ── Signature preview ── */
+  /* ── Signature ── */
   .sig-preview{background:#0a0f1a;border:1px solid #334155;border-radius:14px;padding:20px 22px;margin-top:18px;position:relative;overflow:hidden;}
-  .sig-preview::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.06) 0%,rgba(6,182,212,.04) 100%);pointer-events:none;}
-  .sig-preview .sp-label{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
-  .sig-preview .sp-label::after{content:'';flex:1;height:1px;background:#1e293b;}
+  .sig-preview::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(6,182,212,.04));pointer-events:none;}
+  .sp-label{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+  .sp-label::after{content:'';flex:1;height:1px;background:#1e293b;}
   .sig-name{font-family:'Ma Shan Zheng','Great Vibes',cursive;font-size:42px;font-weight:400;color:#f1f5f9;line-height:1.15;margin-bottom:14px;letter-spacing:4px;text-shadow:0 0 32px rgba(148,163,184,.18);display:inline-block;transform:skewX(-8deg);transform-origin:left bottom;animation:sigAppear .7s cubic-bezier(.16,1,.3,1) both;}
   @keyframes sigAppear{from{opacity:0;transform:translateY(6px) skewX(-8deg) scale(.97)}to{opacity:1;transform:translateY(0) skewX(-8deg) scale(1)}}
   .sig-underline{height:1px;background:linear-gradient(90deg,transparent,#60a5fa 30%,#06b6d4 70%,transparent);margin-bottom:14px;opacity:.6;}
   .sig-meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
-  .sig-meta .sm-role{font-size:11px;color:#60a5fa;font-weight:600;letter-spacing:.5px;}
-  .sig-meta .sm-date{font-size:10px;color:#475569;font-family:monospace;}
+  .sm-role{font-size:11px;color:#60a5fa;font-weight:600;letter-spacing:.5px;}
+  .sm-date{font-size:10px;color:#475569;font-family:monospace;}
 
-  /* ── Scoring ── */
+  /* ── Scoring layout ── */
   .app{max-width:900px;margin:0 auto;padding:24px 16px 88px;}
   .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
   .top-bar h2{font-size:18px;font-weight:800;color:#f8fafc;}
   .progress-tag{font-size:12px;color:#64748b;margin-top:2px;}
   .judge-chip{display:inline-flex;align-items:center;gap:7px;background:#1e3a5f;border:1px solid #3b82f6;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:#f8fafc;}
-  .progress-bar{height:4px;background:#1e293b;border-radius:2px;margin-bottom:22px;overflow:hidden;}
+  .progress-wrap{position:relative;margin-bottom:22px;}
+  .progress-bar{height:4px;background:#1e293b;border-radius:2px;overflow:hidden;}
   .progress-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;transition:width .4s ease;}
+  .progress-pct{position:absolute;right:0;top:-18px;font-size:11px;font-weight:700;color:#60a5fa;font-family:monospace;}
+
+  /* ── Auto-save indicator ── */
+  .saved-flash{position:fixed;bottom:80px;right:16px;background:#064e3b;border:1px solid #22c55e;border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:600;z-index:60;display:flex;align-items:center;gap:6px;animation:fadeIn .2s ease;}
 
   /* ── Sticky gallery ── */
   .gallery-sticky{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;background:#1c1917;border:1px solid #f59e0b;border-radius:12px;padding:11px 16px;margin-bottom:20px;text-decoration:none;color:#fbbf24;font-size:13px;font-weight:600;transition:background .2s;box-shadow:0 4px 16px rgba(0,0,0,.4);}
   .gallery-sticky:hover{background:#292524;}
 
-  /* ── Offline warning ── */
+  /* ── Offline bar ── */
   .offline-bar{background:#450a0a;border-top:1px solid #7f1d1d;padding:8px 24px;text-align:center;font-size:12px;color:#f87171;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;}
 
   /* ── Group cards ── */
@@ -87,8 +90,11 @@
   .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
   .zodiac-icon{width:44px;height:44px;border-radius:12px;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
   .zodiac-name{font-weight:700;font-size:15px;color:#f8fafc;}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;margin-left:auto;flex-shrink:0;transition:background .3s;}
-  .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .card-subtotal{margin-left:auto;background:#0f172a;border-radius:8px;padding:3px 9px;font-size:13px;font-weight:800;color:#f59e0b;flex-shrink:0;}
+  .card-subtotal.zero{color:#334155;background:transparent;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;transition:background .3s;}
+  .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-radius:6px;padding:2px 4px;transition:background .1s;outline:none;}
+  .criteria-row:focus{background:#0f172a;box-shadow:0 0 0 2px #3b82f6;}
   .criteria-label{font-size:11px;color:#94a3b8;flex-shrink:0;width:68px;}
   .stars{display:flex;gap:3px;}
   .star{font-size:20px;cursor:pointer;color:#334155;transition:color .1s,transform .1s;line-height:1;user-select:none;padding:2px;}
@@ -96,11 +102,14 @@
   .star:hover{transform:scale(1.15);}
   .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
   @media(max-width:480px){.star{font-size:28px;padding:6px 3px;}.criteria-label{font-size:10px;width:60px;}}
+  .kb-hint{font-size:9px;color:#334155;font-family:monospace;margin-left:4px;}
+  .criteria-row:focus .kb-hint{color:#475569;}
 
   /* ── Submit bar ── */
-  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:50;}
-  .submit-info{font-size:13px;color:#64748b;line-height:1.5;}
+  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
+  .submit-info{font-size:13px;color:#64748b;line-height:1.5;min-width:0;}
   .submit-info strong{color:#f8fafc;}
+  .submit-right{display:flex;gap:8px;align-items:center;flex-shrink:0;}
   .submit-btn{background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
   .submit-btn:hover:not(:disabled){background:#2563eb;}
   .submit-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
@@ -110,30 +119,32 @@
 
   /* ── Summary modal ── */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
-  .modal-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:28px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;}
+  .modal-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:28px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;}
   .modal-card h3{font-size:17px;font-weight:800;color:#f8fafc;margin-bottom:4px;}
-  .modal-card .modal-sub{font-size:12px;color:#64748b;margin-bottom:20px;}
-  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .modal-sub{font-size:12px;color:#64748b;margin-bottom:20px;}
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
   @media(max-width:400px){.summary-grid{grid-template-columns:1fr;}}
-  .summary-row{background:#0f172a;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap-10px;gap:10px;}
-  .summary-row .sr-zodiac{font-weight:700;font-size:13px;color:#f8fafc;flex:1;}
-  .summary-row .sr-scores{display:flex;gap:6px;}
-  .summary-row .sr-score{background:#1e293b;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:700;}
-  .summary-row .sr-score.total{color:#f59e0b;background:#292524;}
+  .summary-row{background:#0f172a;border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;}
+  .sr-zodiac{font-weight:700;font-size:12px;color:#f8fafc;flex:1;min-width:0;}
+  .sr-scores{display:flex;gap:4px;align-items:center;}
+  .sr-score{background:#1e293b;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:700;color:#94a3b8;}
+  .sr-score.total{color:#f59e0b;background:#292524;}
+  .sr-score.avg{color:#60a5fa;background:#1e3a5f;}
+  .modal-legend{font-size:10px;color:#475569;margin-bottom:16px;text-align:center;}
   .modal-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .modal-actions button{flex:1;min-width:120px;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;}
   .btn-confirm{background:#3b82f6;color:#fff;}
   .btn-confirm:hover{background:#2563eb;}
-  .btn-back{background:#1e293b;border:1px solid #334155 !important;color:#94a3b8;}
-  .btn-back:hover{border-color:#60a5fa !important;color:#60a5fa;}
+  .btn-back{background:#0f172a;border:1px solid #334155;color:#94a3b8;}
+  .btn-back:hover{border-color:#60a5fa;color:#60a5fa;}
 
   /* ── Result ── */
   .result-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:40px;max-width:560px;width:100%;text-align:center;}
   .result-card h2{font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:16px;}
   .sig-box{background:#0f172a;border:1px solid #334155;border-left:3px solid #3b82f6;border-radius:12px;padding:16px 20px;margin:16px 0;text-align:left;}
-  .sig-box .sb-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .sig-box .sb-name{font-size:22px;font-weight:800;color:#f8fafc;}
-  .sig-box .sb-meta{font-size:11px;color:#64748b;margin-top:6px;line-height:1.7;}
+  .sb-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .sb-name{font-size:22px;font-weight:800;color:#f8fafc;}
+  .sb-meta{font-size:11px;color:#64748b;margin-top:6px;line-height:1.7;}
   .result-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px;text-align:left;}
   .result-table th{color:#64748b;padding:6px 8px;border-bottom:1px solid #334155;font-size:10px;text-transform:uppercase;}
   .result-table td{padding:7px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0;}
@@ -155,57 +166,51 @@
   /* ── Print ── */
   @media print{
     body{background:#fff;color:#000;}
-    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-sticky,.offline-bar{display:none!important;}
+    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-sticky,.offline-bar,.saved-flash{display:none!important;}
     .result-card{border:none;padding:0;max-width:100%;}
-    .sig-box{border:1px solid #ccc;background:#f9f9f9;color:#000;}
-    .sig-box .sb-name{color:#000;}
-    .result-table td,.result-table th{color:#000;border-color:#ccc;}
+    .sig-box{border:1px solid #ccc;background:#f9f9f9;}
+    .sb-name,.result-table td,.result-table th{color:#000;}
+    .result-table td,.result-table th{border-color:#ccc;}
   }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Loading -->
   <div v-if="loading" class="loading-overlay">
-    <i class="fa-solid fa-spinner spin"></i>
-    <p>{{ loadingMsg }}</p>
+    <i class="fa-solid fa-spinner spin"></i><p>{{ loadingMsg }}</p>
   </div>
-
-  <!-- Toast -->
   <div v-if="toast.msg" :class="['toast', toast.type]">
     <i :class="toast.icon"></i> {{ toast.msg }}
+  </div>
+  <div v-if="showSavedFlash" class="saved-flash">
+    <i class="fa-solid fa-check"></i> 已儲存
   </div>
 
   <!-- ── Summary modal ── -->
   <div v-if="showSummary" class="modal-overlay fade-in" @click.self="showSummary=false">
     <div class="modal-card">
       <h3><i class="fa-solid fa-list-check" style="color:#60a5fa;margin-right:8px;"></i>送出前確認</h3>
-      <div class="modal-sub">請確認以下 {{ ZODIAC.length }} 組評分無誤，再正式送出。</div>
+      <div class="modal-sub">確認 {{ ZODIAC.length }} 組評分無誤後再送出。</div>
       <div class="summary-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label" class="summary-row">
-          <div>
+          <div style="flex:1;min-width:0;">
             <div class="sr-zodiac">{{ z.icon }} {{ z.label }}</div>
-            <div style="font-size:10px;color:#64748b;">{{ z.element }}</div>
+            <div style="font-size:9px;color:#64748b;">{{ z.element }}</div>
           </div>
           <div class="sr-scores">
             <span class="sr-score">{{ scores[i].content }}</span>
             <span class="sr-score">{{ scores[i].design }}</span>
             <span class="sr-score">{{ scores[i].creativity }}</span>
             <span class="sr-score total">{{ scores[i].total }}</span>
+            <span class="sr-score avg">{{ groupAvg(i) }}</span>
           </div>
         </div>
       </div>
-      <div style="font-size:11px;color:#475569;margin-bottom:16px;text-align:center;">
-        內容 · 視覺 · 創意 · <span style="color:#f59e0b;font-weight:700;">總分</span>
-      </div>
+      <div class="modal-legend">內容 · 視覺 · 創意 · <span style="color:#f59e0b;">總分</span> · <span style="color:#60a5fa;">均</span></div>
       <div class="modal-actions">
-        <button class="btn-back" @click="showSummary=false">
-          <i class="fa-solid fa-arrow-left"></i> 返回修改
-        </button>
-        <button class="btn-confirm" @click="confirmSubmit">
-          <i class="fa-solid fa-paper-plane"></i> 確認送出
-        </button>
+        <button class="btn-back" @click="showSummary=false"><i class="fa-solid fa-arrow-left"></i> 返回修改</button>
+        <button class="btn-confirm" @click="confirmSubmit"><i class="fa-solid fa-paper-plane"></i> 確認送出</button>
       </div>
     </div>
   </div>
@@ -219,7 +224,6 @@
         <p>藥學系 Pathophysiology · Poster Review 2026<br>請登入以開始評審</p>
       </div>
 
-      <!-- Return mode: PIN only -->
       <template v-if="returnMode">
         <div class="return-banner">
           <div style="font-size:28px;">👤</div>
@@ -231,29 +235,23 @@
         <div class="field">
           <div class="field-label"><i class="fa-solid fa-grid-2"></i> 識別碼</div>
           <div class="pin-boxes">
-            <input v-for="i in 4" :key="i"
-                   :class="['pin-box', pinDigits[i-1] ? 'filled' : '']"
-                   type="tel" inputmode="numeric" maxlength="1"
-                   autocomplete="off"
-                   :value="pinDigits[i-1]"
-                   @input="onPinInput(i-1, $event)"
-                   @keydown="onPinKey(i-1, $event)"
-                   :ref="el => { if(el) pinRefs[i-1] = el }" />
+            <input v-for="i in 4" :key="i" :class="['pin-box', pinDigits[i-1]?'filled':'']"
+                   type="tel" inputmode="numeric" maxlength="1" autocomplete="off"
+                   :value="pinDigits[i-1]" @input="onPinInput(i-1,$event)" @keydown="onPinKey(i-1,$event)"
+                   :ref="el=>{if(el)pinRefs[i-1]=el}" />
           </div>
         </div>
-        <button class="action-btn primary" :disabled="pinStr.length !== 4" @click="signIn">
+        <button class="action-btn primary" :disabled="pinStr.length!==4" @click="signIn">
           <i class="fa-solid fa-unlock"></i> 進入評審
         </button>
         <div class="not-me" @click="clearReturn">非我本人，重新登入</div>
       </template>
 
-      <!-- Normal mode: name + email + PIN -->
       <template v-else>
         <div class="field">
           <div class="field-label"><i class="fa-solid fa-user"></i> 評審姓名</div>
-          <input v-model.trim="form.name" class="field-input"
-                 placeholder="請輸入您的姓名" maxlength="30" autocomplete="name"
-                 @keyup.enter="focusPin(0)" ref="nameInput" />
+          <input v-model.trim="form.name" class="field-input" placeholder="請輸入您的姓名"
+                 maxlength="30" autocomplete="name" @keyup.enter="focusPin(0)" ref="nameInput" />
         </div>
         <div class="field">
           <div class="field-label"><i class="fa-solid fa-envelope"></i> 電子郵件 <span style="color:#475569;font-weight:400;text-transform:none;letter-spacing:0;">（選填）</span></div>
@@ -263,19 +261,15 @@
         <div class="field">
           <div class="field-label"><i class="fa-solid fa-grid-2"></i> 個人識別碼（4位數字）</div>
           <div class="pin-boxes">
-            <input v-for="i in 4" :key="i"
-                   :class="['pin-box', pinDigits[i-1] ? 'filled' : '']"
-                   type="tel" inputmode="numeric" maxlength="1"
-                   autocomplete="off"
-                   :value="pinDigits[i-1]"
-                   @input="onPinInput(i-1, $event)"
-                   @keydown="onPinKey(i-1, $event)"
-                   :ref="el => { if(el) pinRefs[i-1] = el }" />
+            <input v-for="i in 4" :key="i" :class="['pin-box', pinDigits[i-1]?'filled':'']"
+                   type="tel" inputmode="numeric" maxlength="1" autocomplete="off"
+                   :value="pinDigits[i-1]" @input="onPinInput(i-1,$event)" @keydown="onPinKey(i-1,$event)"
+                   :ref="el=>{if(el)pinRefs[i-1]=el}" />
           </div>
           <div class="pin-hint">設定 4 位數字，日後憑此識別碼重新登入修改評分</div>
           <div class="pin-notice"><strong>提示：</strong>此為本系統識別碼，非帳號密碼。瀏覽器若出現「儲存密碼」提示，請選擇「略過」。</div>
         </div>
-        <div v-if="form.name && pinStr.length === 4" class="sig-preview fade-in">
+        <div v-if="form.name && pinStr.length===4" class="sig-preview fade-in">
           <div class="sp-label"><i class="fa-solid fa-pen-nib" style="color:#3b82f6;"></i> 簽名預覽 Signature Preview</div>
           <div class="sig-name">{{ form.name }}</div>
           <div class="sig-underline"></div>
@@ -284,7 +278,7 @@
             <span class="sm-date">{{ todayStr }}</span>
           </div>
         </div>
-        <button class="action-btn primary" :disabled="!form.name || pinStr.length !== 4" @click="signIn">
+        <button class="action-btn primary" :disabled="!form.name||pinStr.length!==4" @click="signIn">
           <i class="fa-solid fa-pen-nib"></i> 確認簽名，進入評審
         </button>
       </template>
@@ -293,9 +287,8 @@
 
   <!-- ── Scoring ── -->
   <div v-if="phase==='scoring'" class="fade-in">
-    <!-- Offline bar -->
     <div v-if="!isOnline" class="offline-bar">
-      <i class="fa-solid fa-wifi-slash"></i> 目前無網路連線，評分進度已儲存本機，請恢復網路後再送出
+      <i class="fa-solid fa-wifi-slash"></i> 目前無網路，評分已儲存本機，請恢復連線後再送出
     </div>
     <div class="app">
       <div class="top-bar">
@@ -305,37 +298,43 @@
         </div>
         <div class="judge-chip"><i class="fa-solid fa-user-tie"></i>{{ withHonorific(judgeName) }}</div>
       </div>
+      <div class="progress-wrap">
+        <div class="progress-pct">{{ progressPct }}%</div>
+        <div class="progress-bar"><div class="progress-fill" :style="`width:${progressPct}%`"></div></div>
+      </div>
 
-      <div class="progress-bar"><div class="progress-fill" :style="`width:${scoredCount/ZODIAC.length*100}%`"></div></div>
-
-      <!-- Sticky gallery link -->
       <a :href="GALLERY_URL" target="_blank" class="gallery-sticky">
         <span><i class="fa-solid fa-images" style="margin-right:8px;"></i>查看海報展覽 Gallery</span>
         <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
       </a>
 
-      <!-- Group cards -->
       <div class="group-grid">
-        <div v-for="(z, i) in ZODIAC" :key="z.label"
-             :id="'card-'+i"
-             :class="['group-card', isScored(i) ? 'scored' : '']">
+        <div v-for="(z, i) in ZODIAC" :key="z.label" :id="'card-'+i"
+             :class="['group-card', isScored(i)?'scored':'']">
           <div class="card-header">
             <div class="zodiac-icon">{{ z.icon }}</div>
             <div>
               <div class="zodiac-name">{{ z.label }}</div>
               <div style="font-size:11px;color:#64748b;">{{ z.element }} · 第 {{ i+1 }} 組</div>
             </div>
-            <div class="status-dot"></div>
+            <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']">
+              {{ groupSubtotal(i) > 0 ? groupSubtotal(i) : '–' }}
+            </div>
           </div>
-          <div v-for="c in CRITERIA" :key="c.key" class="criteria-row">
+          <div v-for="c in CRITERIA" :key="c.key"
+               class="criteria-row" tabindex="0"
+               @keydown="onCritKey(i, c.key, $event)">
             <div class="criteria-label">{{ c.label }}</div>
             <div class="stars">
               <span v-for="n in 5" :key="n"
-                    :class="['star', scores[i][c.key] >= n ? 'active' : '']"
+                    :class="['star', scores[i][c.key]>=n?'active':'']"
                     @click="setScore(i, c.key, n)">★</span>
             </div>
-            <div style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
-              {{ scores[i][c.key] || '–' }}
+            <div style="display:flex;align-items:center;">
+              <div style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
+                {{ scores[i][c.key] || '–' }}
+              </div>
+              <span class="kb-hint">1-5</span>
             </div>
           </div>
         </div>
@@ -344,21 +343,19 @@
 
     <div class="submit-bar">
       <div class="submit-info">
-        <div>已評 <strong>{{ scoredCount }}</strong> / {{ ZODIAC.length }} 組</div>
-        <div v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;font-size:11px;">
-          還有 {{ ZODIAC.length - scoredCount }} 組未完成
-        </div>
+        <div>已評 <strong>{{ scoredCount }}</strong> / {{ ZODIAC.length }}</div>
+        <div v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;font-size:11px;">{{ ZODIAC.length - scoredCount }} 組未完成</div>
         <div v-else style="color:#4ade80;font-size:11px;">全部完成！</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div class="submit-right">
         <button v-if="scoredCount < ZODIAC.length" class="jump-btn" @click="scrollToIncomplete">
           <i class="fa-solid fa-arrow-down"></i> 未完成
         </button>
         <button :disabled="scoredCount < ZODIAC.length || submitting"
-                :class="['submit-btn', submitted ? 'done' : '']"
+                :class="['submit-btn', submitted?'done':'']"
                 @click="openSummary">
-          <i :class="submitting ? 'fa-solid fa-spinner fa-spin' : submitted ? 'fa-solid fa-check' : 'fa-solid fa-list-check'"></i>
-          {{ submitting ? '送出中…' : submitted ? '已送出' : '預覽送出' }}
+          <i :class="submitting?'fa-solid fa-spinner fa-spin':submitted?'fa-solid fa-check':'fa-solid fa-list-check'"></i>
+          {{ submitting?'送出中…':submitted?'已送出':'預覽送出' }}
         </button>
       </div>
     </div>
@@ -391,7 +388,8 @@
         </tr>
       </table>
       <div class="result-actions">
-        <button @click="window.print()"><i class="fa-solid fa-print"></i> 列印 / 存 PDF</button>
+        <button @click="copyResult"><i class="fa-solid fa-copy"></i> 複製評分</button>
+        <button @click="window.print()"><i class="fa-solid fa-print"></i> 列印 / PDF</button>
         <button @click="backToSignIn"><i class="fa-solid fa-rotate-left"></i> 重新登入修改</button>
       </div>
     </div>
@@ -408,31 +406,30 @@ function getAudioCtx() {
   if (_audioCtx.state === 'suspended') _audioCtx.resume();
   return _audioCtx;
 }
-function playTone(freq, type, duration, vol) {
+function playTone(freq, type, dur, vol) {
   try {
-    const ctx = getAudioCtx();
-    const o = ctx.createOscillator(), g = ctx.createGain();
+    const ctx=getAudioCtx(), o=ctx.createOscillator(), g=ctx.createGain();
     o.connect(g); g.connect(ctx.destination);
-    o.type = type || 'sine'; o.frequency.value = freq;
+    o.type=type||'sine'; o.frequency.value=freq;
     g.gain.setValueAtTime(vol||0.06, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    o.start(); o.stop(ctx.currentTime + duration);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+    o.start(); o.stop(ctx.currentTime+dur);
   } catch(e) {}
 }
-function vibrate(p) { try { if(navigator.vibrate) navigator.vibrate(p); } catch(e){} }
+function vibrate(p) { try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){} }
 const PIN_SOUNDS = {
-  digit:    () => { playTone(880,'sine',0.08,0.05); vibrate(18); },
-  complete: () => { playTone(1047,'sine',0.12,0.08); setTimeout(()=>playTone(1319,'sine',0.18,0.07),80); vibrate([20,30,40]); },
-  delete:   () => { playTone(440,'sine',0.06,0.03); vibrate(10); },
-  error:    () => { playTone(220,'sawtooth',0.18,0.06); vibrate([60,40,60]); },
+  digit:    ()=>{ playTone(880,'sine',0.08,0.05); vibrate(18); },
+  complete: ()=>{ playTone(1047,'sine',0.12,0.08); setTimeout(()=>playTone(1319,'sine',0.18,0.07),80); vibrate([20,30,40]); },
+  delete:   ()=>{ playTone(440,'sine',0.06,0.03); vibrate(10); },
+  error:    ()=>{ playTone(220,'sawtooth',0.18,0.06); vibrate([60,40,60]); },
 };
 
 // ── Config ────────────────────────────────────────────────────────────
-const GAS_URL     = "https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec";
-const GAS_SECRET  = "zodiac-2026-cmuh";
-const GALLERY_URL = "https://padlet.com/jnynlin/cmurx";
-const LS_SESSION  = 'pj_session';
-const LS_SCORES   = slot => `pj_scores_${slot}`;
+const GAS_URL    = "https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec";
+const GAS_SECRET = "zodiac-2026-cmuh";
+const GALLERY_URL= "https://padlet.com/jnynlin/cmurx";
+const LS_SESSION = 'pj_session';
+const LS_SCORES  = slot => `pj_scores_${slot}`;
 
 const ZODIAC = [
   {label:'子鼠',icon:'⚡️',element:'水'},{label:'丑牛',icon:'🧱',element:'土'},
@@ -452,41 +449,52 @@ const HONORIFIC_TITLES = ['教授','老師','博士','主任','院長','所長',
 
 createApp({
   setup() {
-    // ── State ──────────────────────────────────────────────────────────
-    const phase       = ref('signin');
-    const loading     = ref(false);
-    const loadingMsg  = ref('');
-    const submitting  = ref(false);
-    const submitted   = ref(false);
-    const submitTime  = ref('');
-    const judgeName   = ref('');
-    const judgeSlot   = ref('');
-    const isOnline    = ref(navigator.onLine);
-    const showSummary = ref(false);
-    const returnMode  = ref(false);
-    const returnName  = ref('');
-    const nameInput   = ref(null);
-    const pinRefs     = ref([null,null,null,null]);
-    const toast       = reactive({msg:'', type:'success', icon:''});
-    const form        = reactive({name:'', email:''});
-    const pinDigits   = reactive(['','','','']);
-    const pinStr      = computed(() => pinDigits.join(''));
-    const scores      = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
+    const phase         = ref('signin');
+    const loading       = ref(false);
+    const loadingMsg    = ref('');
+    const submitting    = ref(false);
+    const submitted     = ref(false);
+    const submitTime    = ref('');
+    const judgeName     = ref('');
+    const judgeSlot     = ref('');
+    const isOnline      = ref(navigator.onLine);
+    const showSummary   = ref(false);
+    const showSavedFlash= ref(false);
+    const returnMode    = ref(false);
+    const returnName    = ref('');
+    const nameInput     = ref(null);
+    const pinRefs       = ref([null,null,null,null]);
+    const toast         = reactive({msg:'', type:'success', icon:''});
+    const form          = reactive({name:'', email:''});
+    const pinDigits     = reactive(['','','','']);
+    const pinStr        = computed(() => pinDigits.join(''));
+    const scores        = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
+
+    let savedTimer = null;
 
     const todayStr = new Date().toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'});
-    const withHonorific = n => (!n ? '' : HONORIFIC_TITLES.some(t => n.includes(t)) ? n : n+'老師');
-    const showToast = (msg, type='success', icon='fa-solid fa-circle-check') => {
+    const withHonorific = n => (!n?'':HONORIFIC_TITLES.some(t=>n.includes(t))?n:n+'老師');
+    const showToast = (msg,type='success',icon='fa-solid fa-circle-check') => {
       toast.msg=msg; toast.type=type; toast.icon=icon;
-      setTimeout(() => { toast.msg=''; }, 4000);
+      setTimeout(()=>{toast.msg='';}, 4000);
     };
 
-    // ── Online/offline detection ────────────────────────────────────────
-    window.addEventListener('online',  () => { isOnline.value = true;  showToast('網路已恢復','success','fa-solid fa-wifi'); });
-    window.addEventListener('offline', () => { isOnline.value = false; showToast('網路已中斷，評分已儲存本機','warn','fa-solid fa-wifi-slash'); });
+    const progressPct = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
+    const groupSubtotal = i => { const s=scores[i]; return s.content+s.design+s.creativity+s.total; };
+    const groupAvg = i => {
+      const s = scores[i];
+      const vals = [s.content, s.design, s.creativity, s.total].filter(v=>v>0);
+      if (!vals.length) return '–';
+      return (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(1);
+    };
 
-    // ── Session restore on load ─────────────────────────────────────────
+    // Online / offline
+    window.addEventListener('online',  ()=>{ isOnline.value=true;  showToast('網路已恢復','success','fa-solid fa-wifi'); });
+    window.addEventListener('offline', ()=>{ isOnline.value=false; showToast('網路已中斷，評分已儲存本機','warn','fa-solid fa-wifi-slash'); });
+
+    // Session restore
     onMounted(() => {
-      const saved = JSON.parse(localStorage.getItem(LS_SESSION) || 'null');
+      const saved = JSON.parse(localStorage.getItem(LS_SESSION)||'null');
       if (saved && saved.name) {
         returnMode.value = true;
         returnName.value = saved.name;
@@ -495,139 +503,134 @@ createApp({
     });
 
     const clearReturn = () => {
-      returnMode.value = false; returnName.value = '';
+      returnMode.value=false; returnName.value='';
       localStorage.removeItem(LS_SESSION);
-      form.name = ''; form.email = ''; pinDigits.forEach((_,i) => { pinDigits[i]=''; });
+      form.name=''; form.email=''; pinDigits.forEach((_,i)=>{pinDigits[i]='';});
     };
 
-    // ── PIN input ───────────────────────────────────────────────────────
-    const focusPin = i => nextTick(() => pinRefs.value[i]?.focus());
+    // PIN input
+    const focusPin = i => nextTick(()=>pinRefs.value[i]?.focus());
     const onPinInput = (i, e) => {
       const val = e.target.value.replace(/\D/g,'').slice(0,1);
-      pinDigits[i] = val; e.target.value = val;
+      pinDigits[i]=val; e.target.value=val;
       if (val) {
-        const allFilled = i===3 && pinDigits.every(d => d!=='');
+        const allFilled = i===3 && pinDigits.every(d=>d!=='');
         allFilled ? PIN_SOUNDS.complete() : PIN_SOUNDS.digit();
-        if (i < 3) nextTick(() => pinRefs.value[i+1]?.focus());
+        if (i<3) nextTick(()=>pinRefs.value[i+1]?.focus());
       }
     };
     const onPinKey = (i, e) => {
       if (e.key==='Backspace') {
         if (pinDigits[i]) { pinDigits[i]=''; PIN_SOUNDS.delete(); }
-        else if (i > 0)   { pinDigits[i-1]=''; PIN_SOUNDS.delete(); nextTick(() => pinRefs.value[i-1]?.focus()); }
+        else if (i>0)     { pinDigits[i-1]=''; PIN_SOUNDS.delete(); nextTick(()=>pinRefs.value[i-1]?.focus()); }
       }
     };
 
-    // ── Sign-in ─────────────────────────────────────────────────────────
+    // Sign-in
     const signIn = async () => {
       const name = returnMode.value ? returnName.value : form.name;
-      if (!name || pinStr.value.length !== 4) return;
-      loading.value = true; loadingMsg.value = '正在驗證身份…';
+      if (!name || pinStr.value.length!==4) return;
+      loading.value=true; loadingMsg.value='正在驗證身份…';
       try {
-        const resp = await fetch(GAS_URL, {
-          method:'POST',
-          body: JSON.stringify({action:'loginJudge', secret:GAS_SECRET, name, pin:pinStr.value, email:form.email})
-        });
+        const resp = await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'loginJudge',secret:GAS_SECRET,name,pin:pinStr.value,email:form.email})});
         const json = await resp.json();
         if (json.status==='error') { PIN_SOUNDS.error(); showToast(json.message,'error','fa-solid fa-triangle-exclamation'); return; }
-
-        judgeName.value = name;
-        judgeSlot.value = json.slot;
-        if (!returnMode.value) form.name = name;
-
-        // Save session to localStorage
-        localStorage.setItem(LS_SESSION, JSON.stringify({name, slot:json.slot, email:form.email}));
-
-        // Restore scores
+        judgeName.value=name; judgeSlot.value=json.slot;
+        if (!returnMode.value) form.name=name;
+        localStorage.setItem(LS_SESSION, JSON.stringify({name,slot:json.slot,email:form.email}));
         const saved = localStorage.getItem(LS_SCORES(json.slot));
-        if (saved) {
-          try { JSON.parse(saved).forEach((s,i) => { if(scores[i]) Object.assign(scores[i],s); }); }
-          catch(e) {}
-        } else {
-          scores.forEach(s => { s.content=0; s.design=0; s.creativity=0; s.total=0; });
-        }
-        submitted.value = false;
-        phase.value = 'scoring';
-        showToast(json.returning ? `歡迎回來，${withHonorific(name)}` : `歡迎，${withHonorific(name)}！`,
-                  json.returning ? 'info' : 'success',
-                  json.returning ? 'fa-solid fa-handshake' : 'fa-solid fa-star');
-      } catch(e) {
-        showToast('連線失敗，請稍後再試','error','fa-solid fa-triangle-exclamation');
-      } finally { loading.value = false; }
+        if (saved) { try{JSON.parse(saved).forEach((s,i)=>{if(scores[i])Object.assign(scores[i],s);});}catch(e){} }
+        else { scores.forEach(s=>{s.content=0;s.design=0;s.creativity=0;s.total=0;}); }
+        submitted.value=false; phase.value='scoring';
+        showToast(json.returning?`歡迎回來，${withHonorific(name)}`:`歡迎，${withHonorific(name)}！`,
+                  json.returning?'info':'success', json.returning?'fa-solid fa-handshake':'fa-solid fa-star');
+      } catch(e) { showToast('連線失敗，請稍後再試','error','fa-solid fa-triangle-exclamation'); }
+      finally { loading.value=false; }
     };
 
     const backToSignIn = () => {
-      pinDigits.forEach((_,i) => { pinDigits[i]=''; });
-      phase.value = 'signin';
+      pinDigits.forEach((_,i)=>{pinDigits[i]='';});
+      phase.value='signin';
     };
 
-    // ── Scoring ─────────────────────────────────────────────────────────
+    // Scoring — toggle: click same star resets to 0
     const setScore = (i, key, val) => {
-      scores[i][key] = val;
+      scores[i][key] = (scores[i][key]===val) ? 0 : val;
       localStorage.setItem(LS_SCORES(judgeSlot.value), JSON.stringify(scores.map(s=>({...s}))));
+      showSavedFlash.value=true;
+      if (savedTimer) clearTimeout(savedTimer);
+      savedTimer = setTimeout(()=>{showSavedFlash.value=false;}, 1500);
     };
-    const isScored    = i => CRITERIA.every(c => scores[i][c.key] > 0);
-    const scoredCount = computed(() => scores.filter((_,i) => isScored(i)).length);
 
-    // Scroll to first incomplete card
+    // Keyboard: 1-5 to score focused criteria row
+    const onCritKey = (i, key, e) => {
+      const n = parseInt(e.key);
+      if (n>=1 && n<=5) { setScore(i, key, n); e.preventDefault(); }
+    };
+
+    const isScored    = i => CRITERIA.every(c=>scores[i][c.key]>0);
+    const scoredCount = computed(() => scores.filter((_,i)=>isScored(i)).length);
+
     const scrollToIncomplete = () => {
-      const idx = ZODIAC.findIndex((_,i) => !isScored(i));
-      if (idx < 0) return;
+      const idx = ZODIAC.findIndex((_,i)=>!isScored(i));
+      if (idx<0) return;
       const el = document.getElementById('card-'+idx);
       if (!el) return;
       el.scrollIntoView({behavior:'smooth', block:'center'});
       el.classList.add('incomplete-flash');
-      setTimeout(() => el.classList.remove('incomplete-flash'), 2500);
+      setTimeout(()=>el.classList.remove('incomplete-flash'), 2500);
     };
 
-    // ── Summary modal ───────────────────────────────────────────────────
     const openSummary = () => {
-      if (scoredCount.value < ZODIAC.length) { scrollToIncomplete(); return; }
+      if (scoredCount.value<ZODIAC.length) { scrollToIncomplete(); return; }
       if (!isOnline.value) { showToast('目前無網路，請恢復連線後再送出','warn','fa-solid fa-wifi-slash'); return; }
-      showSummary.value = true;
+      showSummary.value=true;
     };
 
     const confirmSubmit = async () => {
-      showSummary.value = false;
+      showSummary.value=false;
       await doSubmit();
     };
 
-    // ── Submit ──────────────────────────────────────────────────────────
     const doSubmit = async () => {
       if (submitting.value || submitted.value) return;
-      submitting.value = true;
+      submitting.value=true;
       try {
-        const now = new Date();
-        const ts  = now.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-        const rows = ZODIAC.map((z,i) => ({
-          zodiac:z.label, element:z.element,
-          content:scores[i].content, design:scores[i].design,
-          creativity:scores[i].creativity, total:scores[i].total,
-        }));
-        const resp = await fetch(GAS_URL, {
-          method:'POST',
-          body: JSON.stringify({action:'judgeScore', judge:judgeSlot.value, judgeName:judgeName.value, judgeEmail:form.email, secret:GAS_SECRET, rows, timestamp:now.toISOString()})
-        });
-        const json = await resp.json();
-        if (!resp.ok || json.status==='error') throw new Error(json.message||'GAS error');
-        submitted.value = true; submitTime.value = ts;
+        const now=new Date();
+        const ts=now.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        const rows=ZODIAC.map((z,i)=>({zodiac:z.label,element:z.element,content:scores[i].content,design:scores[i].design,creativity:scores[i].creativity,total:scores[i].total}));
+        const resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'judgeScore',judge:judgeSlot.value,judgeName:judgeName.value,judgeEmail:form.email,secret:GAS_SECRET,rows,timestamp:now.toISOString()})});
+        const json=await resp.json();
+        if (!resp.ok||json.status==='error') throw new Error(json.message||'GAS error');
+        submitted.value=true; submitTime.value=ts;
         localStorage.removeItem(LS_SCORES(judgeSlot.value));
-        setTimeout(() => { phase.value='result'; }, 800);
+        // Confetti!
+        try { confetti({particleCount:140, spread:80, origin:{y:0.55}, colors:['#3b82f6','#06b6d4','#f59e0b','#4ade80','#f8fafc']}); } catch(e){}
+        setTimeout(()=>{phase.value='result';}, 900);
       } catch(e) {
         showToast('送出失敗：'+e.message,'error','fa-solid fa-triangle-exclamation');
-      } finally { submitting.value = false; }
+      } finally { submitting.value=false; }
+    };
+
+    const copyResult = async () => {
+      const lines = ZODIAC.map((z,i) =>
+        `${z.label}：內容${scores[i].content} 視覺${scores[i].design} 創意${scores[i].creativity} 總分${scores[i].total}`
+      );
+      const text = `${withHonorific(judgeName.value)} 評分紀錄\n${todayStr}\n\n${lines.join('\n')}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('評分已複製到剪貼簿','success','fa-solid fa-check');
+      } catch(e) { showToast('複製失敗，請手動截圖','error'); }
     };
 
     return {
-      ZODIAC, GALLERY_URL, CRITERIA,
-      phase, loading, loadingMsg, form, pinDigits, pinStr,
-      judgeName, submitting, submitted, submitTime, scores,
-      scoredCount, toast, nameInput, pinRefs, isOnline,
-      showSummary, returnMode, returnName, todayStr,
-      withHonorific, focusPin, onPinInput, onPinKey,
-      signIn, backToSignIn, clearReturn,
-      setScore, isScored, openSummary, confirmSubmit, scrollToIncomplete,
-      window,
+      ZODIAC, GALLERY_URL, CRITERIA, phase, loading, loadingMsg, form,
+      pinDigits, pinStr, judgeName, submitting, submitted, submitTime,
+      scores, scoredCount, progressPct, toast, nameInput, pinRefs,
+      isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
+      withHonorific, groupSubtotal, groupAvg, focusPin, onPinInput, onPinKey, onCritKey,
+      signIn, backToSignIn, clearReturn, setScore, isScored,
+      openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
     };
   }
 }).mount('#app');
