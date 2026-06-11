@@ -1,5 +1,10 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.9
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.10
+ *
+ * Changes from v5.9:
+ *   - Averages now IGNORE judges who haven't submitted (0-cells excluded)
+ *     → rankings correct mid-event, not dragged down by absent judges
+ *   - Live "已送出 X / 3 位評審" status cell at V1
  *
  * Changes from v5.8:
  *   - 整體總分 renamed 整體印象 (holistic 1-5, not a sum of the 3 dims)
@@ -190,16 +195,21 @@ function getOrCreateJudgeSheet_() {
   sheet.getRange(2,1,zodiacRows.length,2).setValues(zodiacRows);
 
   // Avg + weighted final + rank formulas — always refresh (cols 15-20)
+  // Averages IGNORE judges who haven't submitted (their cells are 0; scores are
+  // always 1-5 so 0 reliably = not submitted). Pattern: SUM / count-of-nonzero.
   // Final score = 50% (avg of 3 dimensions) + 50% (overall impression).
-  // Linear, so computed from cross-judge average columns (O/P/Q dims, R impression).
   for (var r = 2; r <= 13; r++) {
-    sheet.getRange(r,15).setFormula('=IFERROR(ROUND(AVERAGE(C'+r+',G'+r+',K'+r+'),1),"")');  // 均分_內容
-    sheet.getRange(r,16).setFormula('=IFERROR(ROUND(AVERAGE(D'+r+',H'+r+',L'+r+'),1),"")');  // 均分_視覺
-    sheet.getRange(r,17).setFormula('=IFERROR(ROUND(AVERAGE(E'+r+',I'+r+',M'+r+'),1),"")');  // 均分_創意
-    sheet.getRange(r,18).setFormula('=IFERROR(ROUND(AVERAGE(F'+r+',J'+r+',N'+r+'),1),"")');  // 均分_整體印象
+    sheet.getRange(r,15).setFormula('=IFERROR(ROUND((C'+r+'+G'+r+'+K'+r+')/((C'+r+'>0)+(G'+r+'>0)+(K'+r+'>0)),1),"")');  // 均分_內容
+    sheet.getRange(r,16).setFormula('=IFERROR(ROUND((D'+r+'+H'+r+'+L'+r+')/((D'+r+'>0)+(H'+r+'>0)+(L'+r+'>0)),1),"")');  // 均分_視覺
+    sheet.getRange(r,17).setFormula('=IFERROR(ROUND((E'+r+'+I'+r+'+M'+r+')/((E'+r+'>0)+(I'+r+'>0)+(M'+r+'>0)),1),"")');  // 均分_創意
+    sheet.getRange(r,18).setFormula('=IFERROR(ROUND((F'+r+'+J'+r+'+N'+r+')/((F'+r+'>0)+(J'+r+'>0)+(N'+r+'>0)),1),"")');  // 均分_整體印象
     sheet.getRange(r,19).setFormula('=IFERROR(ROUND(AVERAGE(O'+r+',P'+r+',Q'+r+')*0.5 + R'+r+'*0.5, 2),"")'); // ★最終總分
     sheet.getRange(r,20).setFormula('=IFERROR(RANK(S'+r+',S$2:S$13,0),"")');                  // 排名
   }
+
+  // Live submission-status cell (V1, col 22): counts judges whose score block has data
+  sheet.getRange(1,22).setFormula('="已送出 "&((SUM(F2:F13)>0)+(SUM(J2:J13)>0)+(SUM(N2:N13)>0))&" / 3 位評審"')
+       .setFontWeight("bold").setFontColor("#1d4ed8");
 
   // Highlight final score + rank columns
   sheet.getRange(2,19,12,2).setBackground("#1a2e1a").setFontColor("#4ade80").setFontWeight("bold");
