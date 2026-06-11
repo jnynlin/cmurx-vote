@@ -427,7 +427,7 @@
             <div v-for="c in CRITERIA" :key="c.key"
                  :class="['criteria-row', c.key==='total'?'is-total':'', isModified(i,c.key)?'modified':'', scores[i][c.key]===0?'unscored':'']"
                  tabindex="0" @keydown="onCritKey(i, c.key, $event)">
-              <div class="criteria-label" :title="c.desc">{{ c.label }}<span v-if="c.key==='total'" class="total-tag" title="綜合整體感受給的1-5分，與前三項面向平均各佔50%計入排名">綜合</span></div>
+              <div class="criteria-label" :title="c.desc">{{ c.label }}</div>
               <div class="stars">
                 <span v-for="n in 5" :key="n" :class="['star', starClass(i, c.key, n)]" @click="setScore(i, c.key, n)">★</span>
               </div>
