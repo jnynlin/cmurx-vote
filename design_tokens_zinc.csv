@@ -1,0 +1,19 @@
+﻿分類 (Category),變數名稱 (Variable Name),色碼 (Hex Code),說明 (Description)
+背景與邊框 (Background & Border),--bg,#18181b,最底層的背景色，極深的沉穩灰
+背景與邊框 (Background & Border),--surface,#27272a,卡片與面板的表面顏色
+背景與邊框 (Background & Border),--surface2,#18181b,輸入框或次要區塊的背景
+背景與邊框 (Background & Border),--border,#3f3f46,各元件的邊線顏色
+文字色彩 (Text Colors),--text,#e4e4e7,主要標題與內文，稍微調暗的米白以防暈影
+文字色彩 (Text Colors),--text2,#d4d4d8,次要文字
+文字色彩 (Text Colors),--muted,#a1a1aa,弱化的輔助說明文字
+文字色彩 (Text Colors),--faint,#71717a,浮水印或極度次要的提示
+主題色 (Theme Colors),--primary,#4f46e5,主按鈕與高亮狀態（靛藍色）
+主題色 (Theme Colors),--primary-d,#4338ca,主按鈕的 Hover (滑鼠懸停) 狀態
+主題色 (Theme Colors),--primary2,#0ea5e9,次要主題色，用於漸層或裝飾
+主題色 (Theme Colors),--primary-soft,#312e81,主色調的極淡背景（例如 Tag）
+狀態與強調色 (Status & Accent Colors),--accent,#d97706,分數或重要資訊的強調色（橘黃）
+狀態與強調色 (Status & Accent Colors),--accent-l,#f59e0b,強調色的明亮版
+狀態與強調色 (Status & Accent Colors),--ok,#16a34a,成功、完成評分狀態（綠色）
+狀態與強調色 (Status & Accent Colors),--ok-l,#22c55e,成功色的明亮版
+狀態與強調色 (Status & Accent Colors),--danger,#dc2626,錯誤警告或移除星星（紅色）
+狀態與強調色 (Status & Accent Colors),--danger-l,#ef4444,錯誤色的明亮版

@@ -11,13 +11,12 @@
 <style>
   /* ── Design tokens (single source of truth → consistent, low-fatigue palette) ── */
   :root{
-    /* 溫潤・護眼・專注 — 學術評分情境:
-       暖白文字(非純白,降眩光)、暖炭灰背景(非冷藍黑)、低彩度學院強調色。 */
-    --bg:#1a1b21; --surface:#24262e; --surface2:#1e2026; --border:#3b3e49;
-    --text:#ece9e3; --text2:#d7d4cc; --muted:#9a968d; --faint:#6e6a62;
-    --primary:#6b9bd1; --primary-d:#5586bf; --primary2:#5fb1be; --primary-soft:#2b3a4d;
-    --accent:#dca54a; --accent-l:#e9c074;     /* 分數專用（柔和暖金）*/
-    --ok:#76b083; --ok-l:#94c8a0; --danger:#d4827a; --danger-l:#e3a39c;
+    /* 來源:design_tokens_zinc.csv — Tailwind zinc 中性灰 + 靛藍主色（護眼:米白文字防暈影）*/
+    --bg:#18181b; --surface:#27272a; --surface2:#18181b; --border:#3f3f46;
+    --text:#e4e4e7; --text2:#d4d4d8; --muted:#a1a1aa; --faint:#71717a;
+    --primary:#4f46e5; --primary-d:#4338ca; --primary2:#0ea5e9; --primary-soft:#312e81;
+    --accent:#d97706; --accent-l:#f59e0b;     /* 分數專用 */
+    --ok:#16a34a; --ok-l:#22c55e; --danger:#dc2626; --danger-l:#ef4444;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text2);min-height:100vh;}
@@ -118,7 +117,7 @@
   .star-legend i{font-size:13px;}
 
   /* ── Modified score indicator ── */
-  .criteria-row.modified{border-left:3px solid var(--accent);padding-left:8px;background:rgba(220,165,74,.10);border-radius:0 8px 8px 0;margin-left:-4px;}
+  .criteria-row.modified{border-left:3px solid var(--accent);padding-left:8px;background:rgba(217,119,6,.10);border-radius:0 8px 8px 0;margin-left:-4px;}
   .old-val{font-size:11px;color:var(--muted);text-decoration:line-through;font-weight:600;margin-right:2px;}
   .arrow-val{font-size:12px;color:#fb923c;font-weight:800;margin-right:2px;}
   .new-val-highlight{color:var(--accent-l) !important;font-size:13px !important;}
@@ -138,7 +137,7 @@
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;gap:18px;}}
   .group-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:20px;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
   .group-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--elem-color,#475569);}
-  .group-card:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(107,155,209,.22);}
+  .group-card:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.30);}
   .group-card.scored{border-color:var(--ok);}
   .group-card.scored .status-dot{background:var(--ok);}
   /* 群組識別色:刻意全用「冷色/中性」(藍/靛/青/灰/紫),無好壞價值暗示，
@@ -163,13 +162,13 @@
   .stars{display:flex;gap:6px;}
   .numbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;transition:all .12s;line-height:1;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;}
   .numbtn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
-  .numbtn.active{background:var(--accent);border-color:var(--accent);color:#2c2410;box-shadow:0 0 7px rgba(220,165,74,.30);}
-  .numbtn.active.up{background:var(--ok);border-color:var(--ok);color:#14271a;box-shadow:0 0 7px rgba(118,176,131,.30);}
-  .numbtn.active.down{background:var(--danger);border-color:var(--danger);color:#2e1413;box-shadow:0 0 7px rgba(212,130,122,.30);}
+  .numbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 7px rgba(217,119,6,.35);}
+  .numbtn.active.up{background:var(--ok);border-color:var(--ok);color:#fff;box-shadow:0 0 7px rgba(22,163,74,.35);}
+  .numbtn.active.down{background:var(--danger);border-color:var(--danger);color:#fff;box-shadow:0 0 7px rgba(220,38,38,.35);}
   @media(max-width:480px){.numbtn{width:38px;height:38px;font-size:16px;}.criteria-label{font-size:11px;width:66px;}}
   .kb-hint{font-size:9px;color:var(--border);font-family:monospace;margin-left:4px;}
   .criteria-row:focus .kb-hint{color:var(--faint);}
-  .criteria-row.is-total{margin-top:8px;border-top:2px solid var(--border);padding-top:10px;border-bottom:none;background:rgba(220,165,74,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
+  .criteria-row.is-total{margin-top:8px;border-top:2px solid var(--border);padding-top:10px;border-bottom:none;background:rgba(217,119,6,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
   .criteria-row.is-total .criteria-label{color:var(--accent-l);}
   .total-tag{font-size:8px;font-weight:700;color:var(--accent);background:#451a03;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
 
