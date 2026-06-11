@@ -11,11 +11,13 @@
 <style>
   /* ── Design tokens (single source of truth → consistent, low-fatigue palette) ── */
   :root{
-    --bg:#0f172a; --surface:#1e293b; --surface2:#0f172a; --border:#334155;
-    --text:#f8fafc; --text2:#e2e8f0; --muted:#94a3b8; --faint:#64748b;
-    --primary:#3b82f6; --primary-d:#2563eb; --primary2:#06b6d4; --primary-soft:#1e3a5f;
-    --accent:#f59e0b; --accent-l:#fbbf24;     /* 分數專用 */
-    --ok:#22c55e; --ok-l:#4ade80; --danger:#ef4444; --danger-l:#f87171;
+    /* 溫潤・護眼・專注 — 學術評分情境:
+       暖白文字(非純白,降眩光)、暖炭灰背景(非冷藍黑)、低彩度學院強調色。 */
+    --bg:#1a1b21; --surface:#24262e; --surface2:#1e2026; --border:#3b3e49;
+    --text:#ece9e3; --text2:#d7d4cc; --muted:#9a968d; --faint:#6e6a62;
+    --primary:#6b9bd1; --primary-d:#5586bf; --primary2:#5fb1be; --primary-soft:#2b3a4d;
+    --accent:#dca54a; --accent-l:#e9c074;     /* 分數專用（柔和暖金）*/
+    --ok:#76b083; --ok-l:#94c8a0; --danger:#d4827a; --danger-l:#e3a39c;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text2);min-height:100vh;}
@@ -110,7 +112,7 @@
   .star-legend i{font-size:13px;}
 
   /* ── Modified score indicator ── */
-  .criteria-row.modified{border-left:3px solid var(--accent);padding-left:8px;background:rgba(245,158,11,.12);border-radius:0 8px 8px 0;margin-left:-4px;}
+  .criteria-row.modified{border-left:3px solid var(--accent);padding-left:8px;background:rgba(220,165,74,.10);border-radius:0 8px 8px 0;margin-left:-4px;}
   .old-val{font-size:11px;color:var(--muted);text-decoration:line-through;font-weight:600;margin-right:2px;}
   .arrow-val{font-size:12px;color:#fb923c;font-weight:800;margin-right:2px;}
   .new-val-highlight{color:var(--accent-l) !important;font-size:13px !important;}
@@ -130,16 +132,16 @@
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;gap:18px;}}
   .group-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:20px;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
   .group-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--elem-color,#475569);}
-  .group-card:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.25);}
+  .group-card:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(107,155,209,.22);}
   .group-card.scored{border-color:var(--ok);}
   .group-card.scored .status-dot{background:var(--ok);}
   /* 群組識別色:刻意全用「冷色/中性」(藍/靛/青/灰/紫),無好壞價值暗示，
      避免評審被卡片顏色帶分;紅/綠/琥珀嚴格保留給語意(錯誤/完成/分數)。 */
-  .elem-水{--elem-color:#38bdf8;}  /* sky */
-  .elem-火{--elem-color:#818cf8;}  /* indigo — NOT red */
-  .elem-木{--elem-color:#22d3ee;}  /* cyan — NOT green */
-  .elem-土{--elem-color:#94a3b8;}  /* slate */
-  .elem-氣{--elem-color:#c084fc;}  /* violet */
+  .elem-水{--elem-color:#7fb0d4;}  /* muted sky */
+  .elem-火{--elem-color:#9098d8;}  /* muted indigo — NOT red */
+  .elem-木{--elem-color:#6fc0c9;}  /* muted teal — NOT green */
+  .elem-土{--elem-color:#a8a39a;}  /* warm grey */
+  .elem-氣{--elem-color:#b69ad6;}  /* muted violet */
   .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
   .group-num{width:30px;height:30px;border-radius:8px;background:var(--elem-color,#475569);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
   .zodiac-icon{width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:var(--elem-color,#cbd5e1);}
@@ -155,13 +157,13 @@
   .stars{display:flex;gap:6px;}
   .numbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;transition:all .12s;line-height:1;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;}
   .numbtn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
-  .numbtn.active{background:var(--accent);border-color:var(--accent);color:#1a1206;box-shadow:0 0 10px rgba(245,158,11,.4);}
-  .numbtn.active.up{background:var(--ok);border-color:var(--ok);color:#06281a;box-shadow:0 0 10px rgba(34,197,94,.5);}
-  .numbtn.active.down{background:var(--danger);border-color:var(--danger);color:#2a0a0a;box-shadow:0 0 10px rgba(239,68,68,.5);}
+  .numbtn.active{background:var(--accent);border-color:var(--accent);color:#2c2410;box-shadow:0 0 7px rgba(220,165,74,.30);}
+  .numbtn.active.up{background:var(--ok);border-color:var(--ok);color:#14271a;box-shadow:0 0 7px rgba(118,176,131,.30);}
+  .numbtn.active.down{background:var(--danger);border-color:var(--danger);color:#2e1413;box-shadow:0 0 7px rgba(212,130,122,.30);}
   @media(max-width:480px){.numbtn{width:38px;height:38px;font-size:16px;}.criteria-label{font-size:11px;width:66px;}}
   .kb-hint{font-size:9px;color:var(--border);font-family:monospace;margin-left:4px;}
   .criteria-row:focus .kb-hint{color:var(--faint);}
-  .criteria-row.is-total{margin-top:8px;border-top:2px solid var(--border);padding-top:10px;border-bottom:none;background:rgba(245,158,11,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
+  .criteria-row.is-total{margin-top:8px;border-top:2px solid var(--border);padding-top:10px;border-bottom:none;background:rgba(220,165,74,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
   .criteria-row.is-total .criteria-label{color:var(--accent-l);}
   .total-tag{font-size:8px;font-weight:700;color:var(--accent);background:#451a03;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
 
