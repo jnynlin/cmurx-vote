@@ -288,6 +288,37 @@
 <script>
 const { createApp, reactive, ref, computed, nextTick } = Vue;
 
+// ── Haptic + Audio feedback ───────────────────────────────────────────
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+function playTone(freq, type, duration, vol) {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(vol || 0.06, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    o.start(); o.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+function vibrate(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
+}
+
+const PIN_SOUNDS = {
+  digit:    () => { playTone(880, 'sine', 0.08, 0.05); vibrate(18); },
+  complete: () => { playTone(1047,'sine', 0.12, 0.08); setTimeout(()=>playTone(1319,'sine',0.18,0.07),80); vibrate([20,30,40]); },
+  delete:   () => { playTone(440, 'sine', 0.06, 0.03); vibrate(10); },
+  error:    () => { playTone(220, 'sawtooth', 0.18, 0.06); vibrate([60,40,60]); },
+};
+
 const GAS_URL     = "https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec";
 const GAS_SECRET  = "zodiac-2026-cmuh";
 const GALLERY_URL = "https://padlet.com/jnynlin/cmurx";
@@ -353,13 +384,18 @@ createApp({
       const val = e.target.value.replace(/\D/g,'').slice(0,1);
       pinDigits[i] = val;
       e.target.value = val;
-      if (val && i < 3) nextTick(() => pinRefs.value[i+1]?.focus());
+      if (val) {
+        const isLast = i === 3;
+        const allFilled = isLast && pinDigits.every(d => d !== '');
+        allFilled ? PIN_SOUNDS.complete() : PIN_SOUNDS.digit();
+        if (!isLast) nextTick(() => pinRefs.value[i+1]?.focus());
+      }
     };
 
     const onPinKey = (i, e) => {
       if (e.key === 'Backspace') {
-        if (pinDigits[i]) { pinDigits[i] = ''; }
-        else if (i > 0)   { pinDigits[i-1] = ''; nextTick(() => pinRefs.value[i-1]?.focus()); }
+        if (pinDigits[i]) { pinDigits[i] = ''; PIN_SOUNDS.delete(); }
+        else if (i > 0)   { pinDigits[i-1] = ''; PIN_SOUNDS.delete(); nextTick(() => pinRefs.value[i-1]?.focus()); }
       }
     };
 
@@ -373,7 +409,7 @@ createApp({
           body: JSON.stringify({action:'loginJudge', secret:GAS_SECRET, name:form.name, pin:pinStr.value, email:form.email})
         });
         const json = await resp.json();
-        if (json.status === 'error') { showToast(json.message,'error','fa-solid fa-triangle-exclamation'); return; }
+        if (json.status === 'error') { PIN_SOUNDS.error(); showToast(json.message,'error','fa-solid fa-triangle-exclamation'); return; }
 
         judgeName.value = form.name;
         judgeSlot.value = json.slot;
