@@ -142,7 +142,7 @@
   .elem-氣{--elem-color:#c084fc;}  /* violet */
   .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
   .group-num{width:30px;height:30px;border-radius:8px;background:var(--elem-color,#475569);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
-  .zodiac-icon{width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .zodiac-icon{width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:var(--elem-color,#cbd5e1);}
   .zodiac-name{font-weight:800;font-size:17px;color:var(--text);}
   .card-subtotal{margin-left:auto;background:var(--surface2);border-radius:8px;padding:3px 9px;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0;}
   .card-subtotal.zero{color:var(--border);background:transparent;}
@@ -270,7 +270,7 @@
       <div class="summary-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label" class="summary-row">
           <div style="flex:1;min-width:0;">
-            <div class="sr-zodiac">{{ z.icon }} {{ z.label }}</div>
+            <div class="sr-zodiac"><span v-html="z.icon"></span> {{ z.label }}</div>
             <div style="font-size:9px;color:var(--faint);">{{ z.element }}</div>
           </div>
           <div class="sr-scores">
@@ -410,7 +410,7 @@
                :class="['group-card', 'elem-'+z.element, isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
             <div class="card-header">
               <div class="group-num">{{ i+1 }}</div>
-              <div class="zodiac-icon">{{ z.icon }}</div>
+              <div class="zodiac-icon" v-html="z.icon"></div>
               <div>
                 <div class="zodiac-name">
                   {{ z.label }}
@@ -504,7 +504,7 @@
           <div style="font-size:12px;color:var(--faint);margin-bottom:12px;text-align:center;">{{ studentVoteCount }} 位學生投票 · 第1名3分/第2名2分/第3名1分</div>
           <div v-for="(g,i) in studentTally" :key="g.label" class="vrank">
             <div :class="['vrank-no', i===0?'r1':i===1?'r2':i===2?'r3':'']">{{ i+1 }}</div>
-            <div class="vrank-icon">{{ g.icon }}</div>
+            <div class="vrank-icon" v-html="g.icon"></div>
             <div class="vrank-name">{{ g.label }}<div class="vrank-bd">🥇{{ g.r1 }} 🥈{{ g.r2 }} 🥉{{ g.r3 }}</div></div>
             <div class="vrank-bar-wrap"><div class="vrank-bar" :style="`width:${g.pts/voteMaxPts*100}%;background:rgba(59,130,246,${0.35+0.65*g.pts/voteMaxPts})`"></div></div>
             <div class="vrank-pts">{{ g.pts }}</div>
@@ -552,7 +552,7 @@
       <table class="result-table">
         <tr><th>組別</th><th>選題</th><th>病生理</th><th>視覺</th><th>整體印象</th><th>加權</th></tr>
         <tr v-for="(z, i) in ZODIAC" :key="z.label">
-          <td>{{ z.icon }} {{ z.label }}</td>
+          <td><span v-html="z.icon"></span> {{ z.label }}</td>
           <td>{{ scores[i].content }}</td>
           <td>{{ scores[i].design }}</td>
           <td>{{ scores[i].creativity }}</td>
@@ -620,12 +620,12 @@ const FIREBASE = {
 };
 
 const ZODIAC = [
-  {label:'子鼠',icon:'⚡️',element:'水'},{label:'丑牛',icon:'🧱',element:'土'},
-  {label:'寅虎',icon:'🔥',element:'木'},{label:'卯兔',icon:'🧐',element:'木'},
-  {label:'辰龍',icon:'🌟',element:'土'},{label:'巳蛇',icon:'🧠',element:'火'},
-  {label:'午馬',icon:'🚀',element:'火'},{label:'未羊',icon:'🤝',element:'土'},
-  {label:'申猴',icon:'💡',element:'氣'},{label:'酉雞',icon:'⏱', element:'氣'},
-  {label:'戌狗',icon:'🛡', element:'土'},{label:'亥豬',icon:'📚',element:'水'},
+  {label:'子鼠',icon:'<i class="fa-solid fa-bolt"></i>',element:'水'},          {label:'丑牛',icon:'<i class="fa-solid fa-cubes-stacked"></i>',element:'土'},
+  {label:'寅虎',icon:'<i class="fa-solid fa-fire"></i>',element:'木'},          {label:'卯兔',icon:'<i class="fa-solid fa-magnifying-glass"></i>',element:'木'},
+  {label:'辰龍',icon:'<i class="fa-solid fa-star"></i>',element:'土'},          {label:'巳蛇',icon:'<i class="fa-solid fa-brain"></i>',element:'火'},
+  {label:'午馬',icon:'<i class="fa-solid fa-rocket"></i>',element:'火'},        {label:'未羊',icon:'<i class="fa-solid fa-handshake"></i>',element:'土'},
+  {label:'申猴',icon:'<i class="fa-solid fa-lightbulb"></i>',element:'氣'},     {label:'酉雞',icon:'<i class="fa-solid fa-stopwatch"></i>',element:'氣'},
+  {label:'戌狗',icon:'<i class="fa-solid fa-shield-halved"></i>',element:'土'}, {label:'亥豬',icon:'<i class="fa-solid fa-book"></i>',element:'水'},
 ];
 const ZICON = {}; ZODIAC.forEach(z=>ZICON[z.label]=z.icon);
 const CRITERIA = [
