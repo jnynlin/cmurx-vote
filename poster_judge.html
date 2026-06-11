@@ -600,10 +600,11 @@ createApp({
       form.name=''; form.email=''; pinDigits.forEach((_,i)=>{pinDigits[i]='';});
     };
 
-    // PIN input
+    // PIN input — NFKC normalise so full-width digits from Chinese IME
+    // (２３４５) convert to half-width before the \D filter strips them.
     const focusPin = i => nextTick(()=>pinRefs.value[i]?.focus());
     const onPinInput = (i, e) => {
-      const val = e.target.value.replace(/\D/g,'').slice(0,1);
+      const val = (e.target.value || '').normalize('NFKC').replace(/\D/g,'').slice(-1);
       pinDigits[i]=val; e.target.value=val;
       if (val) {
         const allFilled = i===3 && pinDigits.every(d=>d!=='');
