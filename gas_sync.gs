@@ -1,5 +1,10 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.8
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.9
+ *
+ * Changes from v5.8:
+ *   - 整體總分 renamed 整體印象 (holistic 1-5, not a sum of the 3 dims)
+ *   - Final score = 50% avg(content,design,creativity) + 50% impression
+ *     (col 19 weighted formula; col 18 now 均分_整體印象, was dup of 創意)
  *
  * Changes from v5.7:
  *   - New 20-col "海報評審" sheet: 組別|元素|A×4|B×4|C×4|均分×4|★最終總分|排名
@@ -169,11 +174,11 @@ function getOrCreateJudgeSheet_() {
   // Always refresh headers (idempotent — safe to run on existing sheets)
   var headers = [
     "組別","元素",
-    "評審A_內容","評審A_視覺","評審A_創意","評審A_總分",
-    "評審B_內容","評審B_視覺","評審B_創意","評審B_總分",
-    "評審C_內容","評審C_視覺","評審C_創意","評審C_總分",
-    "均分_內容","均分_視覺","均分_創意","均分_創意評分",
-    "★ 最終總分","排名"
+    "評審A_內容","評審A_視覺","評審A_創意","評審A_整體印象",
+    "評審B_內容","評審B_視覺","評審B_創意","評審B_整體印象",
+    "評審C_內容","評審C_視覺","評審C_創意","評審C_整體印象",
+    "均分_內容","均分_視覺","均分_創意","均分_整體印象",
+    "★ 最終總分 (50%面向+50%印象)","排名"
   ];
   sheet.getRange(1,1,1,headers.length).setValues([headers])
        .setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
@@ -184,14 +189,16 @@ function getOrCreateJudgeSheet_() {
   });
   sheet.getRange(2,1,zodiacRows.length,2).setValues(zodiacRows);
 
-  // Avg + rank formulas — always refresh (cols 15-20)
+  // Avg + weighted final + rank formulas — always refresh (cols 15-20)
+  // Final score = 50% (avg of 3 dimensions) + 50% (overall impression).
+  // Linear, so computed from cross-judge average columns (O/P/Q dims, R impression).
   for (var r = 2; r <= 13; r++) {
-    sheet.getRange(r,15).setFormula('=IFERROR(ROUND(AVERAGE(C'+r+',G'+r+',K'+r+'),1),"")');
-    sheet.getRange(r,16).setFormula('=IFERROR(ROUND(AVERAGE(D'+r+',H'+r+',L'+r+'),1),"")');
-    sheet.getRange(r,17).setFormula('=IFERROR(ROUND(AVERAGE(E'+r+',I'+r+',M'+r+'),1),"")');
-    sheet.getRange(r,18).setFormula('=IFERROR(ROUND(AVERAGE(E'+r+',I'+r+',M'+r+'),1),"")');
-    sheet.getRange(r,19).setFormula('=IFERROR(ROUND(AVERAGE(F'+r+',J'+r+',N'+r+'),1),"")');
-    sheet.getRange(r,20).setFormula('=IFERROR(RANK(S'+r+',S$2:S$13,0),"")');
+    sheet.getRange(r,15).setFormula('=IFERROR(ROUND(AVERAGE(C'+r+',G'+r+',K'+r+'),1),"")');  // 均分_內容
+    sheet.getRange(r,16).setFormula('=IFERROR(ROUND(AVERAGE(D'+r+',H'+r+',L'+r+'),1),"")');  // 均分_視覺
+    sheet.getRange(r,17).setFormula('=IFERROR(ROUND(AVERAGE(E'+r+',I'+r+',M'+r+'),1),"")');  // 均分_創意
+    sheet.getRange(r,18).setFormula('=IFERROR(ROUND(AVERAGE(F'+r+',J'+r+',N'+r+'),1),"")');  // 均分_整體印象
+    sheet.getRange(r,19).setFormula('=IFERROR(ROUND(AVERAGE(O'+r+',P'+r+',Q'+r+')*0.5 + R'+r+'*0.5, 2),"")'); // ★最終總分
+    sheet.getRange(r,20).setFormula('=IFERROR(RANK(S'+r+',S$2:S$13,0),"")');                  // 排名
   }
 
   // Highlight final score + rank columns
@@ -357,7 +364,7 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
     '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">內容</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">視覺</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">創意</th>' +
-    '<th style="padding:10px 12px;text-align:center;color:#f59e0b;font-weight:600;border-bottom:2px solid #1e293b;">總分</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#f59e0b;font-weight:600;border-bottom:2px solid #1e293b;">整體印象</th>' +
     '</tr>' +
     '</thead>' +
     '<tbody>' + tableRows + '</tbody>' +

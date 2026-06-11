@@ -138,6 +138,9 @@
   .criteria-row.is-total{margin-top:8px;border-top:2px solid #334155;padding-top:10px;border-bottom:none;background:rgba(245,158,11,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
   .criteria-row.is-total .criteria-label{color:#fbbf24;}
   .total-tag{font-size:8px;font-weight:700;color:#f59e0b;background:#451a03;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
+  /* scoring model note */
+  .model-note{display:flex;gap:9px;align-items:flex-start;background:#0f1a2e;border:1px solid #1e3a5f;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:12px;color:#94a3b8;line-height:1.6;}
+  .model-note b{color:#cbd5e1;}
   /* re-score colour legend */
   .star-legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:8px 14px;margin-bottom:18px;font-size:11px;}
   .star-legend span{display:inline-flex;align-items:center;gap:5px;color:#94a3b8;}
@@ -241,11 +244,11 @@
             <span class="sr-score">{{ scores[i].design }}</span>
             <span class="sr-score">{{ scores[i].creativity }}</span>
             <span class="sr-score total">{{ scores[i].total }}</span>
-            <span class="sr-score avg">{{ groupAvg(i) }}</span>
+            <span class="sr-score avg">{{ groupWeighted(i).toFixed(2) }}</span>
           </div>
         </div>
       </div>
-      <div class="modal-legend">內容 · 視覺 · 創意 · <span style="color:#f59e0b;">總分</span> · <span style="color:#60a5fa;">均</span></div>
+      <div class="modal-legend">內容 · 視覺 · 創意 · <span style="color:#f59e0b;">整體印象</span> · <span style="color:#60a5fa;">加權分</span></div>
       <div class="modal-actions">
         <button class="btn-back" @click="showSummary=false"><i class="fa-solid fa-arrow-left"></i> 返回修改</button>
         <button class="btn-confirm" @click="confirmSubmit"><i class="fa-solid fa-paper-plane"></i> 確認送出</button>
@@ -351,6 +354,13 @@
         <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
       </a>
 
+      <!-- Scoring model note -->
+      <div class="model-note">
+        <i class="fa-solid fa-circle-info" style="color:#60a5fa;"></i>
+        <span>每組評 4 項：前三項為評分面向，<b>整體印象</b>為您綜合感受的 1–5 分。
+        排名 = <b>前三項平均 × 50% + 整體印象 × 50%</b>（右上角數字即該組加權分）。</span>
+      </div>
+
       <!-- Re-score colour legend -->
       <div v-if="originalScores" class="star-legend">
         <span><i class="fa-solid fa-star" style="color:#f59e0b;"></i> 原評分</span>
@@ -376,8 +386,9 @@
               </div>
               <div style="font-size:11px;color:#64748b;">{{ z.element }}行 · 第 {{ i+1 }} 組</div>
             </div>
-            <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']">
-              {{ groupSubtotal(i) > 0 ? groupSubtotal(i) : '–' }}
+            <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']"
+                 title="此組加權分 = 前三項平均×50% + 整體印象×50%（決定排名）">
+              {{ isScored(i) ? groupWeighted(i).toFixed(2) : '–' }}
             </div>
           </div>
           <div v-for="c in CRITERIA" :key="c.key"
@@ -386,7 +397,7 @@
                  isModified(i, c.key) ? 'modified' : '',
                  scores[i][c.key] === 0 ? 'unscored' : '']"
                tabindex="0" @keydown="onCritKey(i, c.key, $event)">
-            <div class="criteria-label">{{ c.label }}<span v-if="c.key==='total'" class="total-tag">綜合</span></div>
+            <div class="criteria-label">{{ c.label }}<span v-if="c.key==='total'" class="total-tag" title="綜合整體感受給的1-5分，與前三項面向平均各佔50%計入排名">綜合</span></div>
             <div class="stars">
               <span v-for="n in 5" :key="n"
                     :class="['star', starClass(i, c.key, n)]"
@@ -445,13 +456,14 @@
       </div>
       <p style="color:#94a3b8;font-size:13px;">評分結果已同步至 Google Sheets。</p>
       <table class="result-table">
-        <tr><th>組別</th><th>內容</th><th>視覺</th><th>創意</th><th>總分</th></tr>
+        <tr><th>組別</th><th>內容</th><th>視覺</th><th>創意</th><th>整體印象</th><th>加權</th></tr>
         <tr v-for="(z, i) in ZODIAC" :key="z.label">
           <td>{{ z.icon }} {{ z.label }}</td>
           <td>{{ scores[i].content }}</td>
           <td>{{ scores[i].design }}</td>
           <td>{{ scores[i].creativity }}</td>
-          <td><strong style="color:#f59e0b;">{{ scores[i].total }}</strong></td>
+          <td style="color:#f59e0b;">{{ scores[i].total }}</td>
+          <td><strong style="color:#60a5fa;">{{ groupWeighted(i).toFixed(2) }}</strong></td>
         </tr>
       </table>
       <div class="result-actions">
@@ -510,7 +522,7 @@ const CRITERIA = [
   {key:'content',    label:'內容完整性'},
   {key:'design',     label:'視覺設計'  },
   {key:'creativity', label:'創意與深度'},
-  {key:'total',      label:'整體總分'  },
+  {key:'total',      label:'整體印象'  },
 ];
 const HONORIFIC_TITLES = ['教授','老師','博士','主任','院長','所長','醫師','醫生','副教授'];
 
@@ -573,6 +585,13 @@ createApp({
       return ZODIAC.reduce((sum, _, i) => sum + CRITERIA.filter(c => isModified(i, c.key)).length, 0);
     });
     const groupSubtotal = i => { const s=scores[i]; return s.content+s.design+s.creativity+s.total; };
+    // Weighted score (what feeds ranking): 50% avg of 3 dimensions + 50% overall impression
+    const DIM_WEIGHT = 0.5, IMPRESSION_WEIGHT = 0.5;
+    const groupWeighted = i => {
+      const s = scores[i];
+      const dim = (s.content + s.design + s.creativity) / 3;
+      return dim * DIM_WEIGHT + s.total * IMPRESSION_WEIGHT;
+    };
     const groupAvg = i => {
       const s = scores[i];
       const vals = [s.content, s.design, s.creativity, s.total].filter(v=>v>0);
@@ -716,7 +735,7 @@ createApp({
 
     const copyResult = async () => {
       const lines = ZODIAC.map((z,i) =>
-        `${z.label}：內容${scores[i].content} 視覺${scores[i].design} 創意${scores[i].creativity} 總分${scores[i].total}`
+        `${z.label}：內容${scores[i].content} 視覺${scores[i].design} 創意${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(2)}`
       );
       const text = `${withHonorific(judgeName.value)} 評分紀錄\n${todayStr}\n\n${lines.join('\n')}`;
       try {
@@ -730,7 +749,7 @@ createApp({
       pinDigits, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
-      withHonorific, groupSubtotal, groupAvg, isModified, modifiedCount, originalScores, remainCount, starClass,
+      withHonorific, groupSubtotal, groupWeighted, groupAvg, isModified, modifiedCount, originalScores, remainCount, starClass,
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
