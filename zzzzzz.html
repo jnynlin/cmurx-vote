@@ -352,6 +352,10 @@
                             <i class="fa-solid fa-comment-slash"></i>
                             {{ state.config?.enableDiscussion === false ? '討論板已封鎖' : '不開放討論板' }}
                         </button>
+                        <button @click="toggleVoting" class="w-full mt-2 p-2 rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-2 border" :class="state.votingClosed === true ? 'bg-red-900/40 border-red-500 text-red-300' : 'bg-emerald-900/30 border-emerald-500 text-emerald-300 hover:bg-emerald-900/50'">
+                            <i :class="state.votingClosed === true ? 'fa-solid fa-lock' : 'fa-solid fa-square-poll-vertical'"></i>
+                            {{ state.votingClosed === true ? '學生投票已關閉（點此重新開啟）' : '學生投票開啟中（點此關閉並開放評審參考）' }}
+                        </button>
                      </div>
                  </div>
             </div>
@@ -700,7 +704,16 @@ function useClassroom(sessionId, addToast) {
         return { display: fmtMs(end - state.openedAt), label: state.loginStatus === 'locked' ? '已結束' : '進行中', color: state.loginStatus === 'locked' ? 'text-red-400' : 'text-emerald-400', icon: 'fa-stopwatch' };
     });    
     const updateConfig = (key, value) => update(dbRef(db, `classrooms/${sessionId.value}/status/config`), { [key]: value });
-    
+
+    // 關閉/開啟學生投票:寫 status.votingClosed。預設未設 = 開啟(ON)。
+    // 關閉後,評審工具的「學生票選參考」熱力圖才會解鎖顯示。
+    const toggleVoting = async () => {
+        const willClose = state.votingClosed !== true;
+        await update(dbRef(db, `classrooms/${sessionId.value}/status`), { votingClosed: willClose });
+        addToast(willClose ? '學生投票已關閉,評審參考已開放' : '學生投票已重新開啟', willClose ? 'success' : 'info',
+                 willClose ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open');
+    };
+
     const switchPhase = async (p, group) => {
         const updates = {};
         if (group === 'A') updates.phaseA = p;
@@ -720,7 +733,7 @@ function useClassroom(sessionId, addToast) {
         }
     };
 
-    return { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule };
+    return { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, toggleVoting, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule };
 }
 
 function useRoster(sessionId, students, posterScores, addToast) {
@@ -1057,7 +1070,7 @@ createApp({
         
         const { form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession } = useAuthAndSession(addToast);
         const sessionId = computed(() => form.sessionId);
-        const { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule } = useClassroom(sessionId, addToast);
+        const { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, toggleVoting, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule } = useClassroom(sessionId, addToast);
         const { posterScores, voteCount, maxVoteScore, initVoteListener } = usePosterVoting(sessionId);
         const { searchQuery, displayedList, studentCount, activeCount, calculateScore, isSpeedrun, getStatusColor, getBeaconClass, revokeToken, assignLeader, revokeLeader, deleteStudent } = useRoster(sessionId, students, posterScores, addToast);
         const { importRaw, importMode, parsedPreview, generateDemoRoster, executeImport, undoLastImport, exportToCSV } = useImporter(sessionId, students, showImporter, addToast);
@@ -1111,7 +1124,7 @@ createApp({
         return { 
             form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession,
             toasts, showImporter, showGroupLinkSetting,
-            state, localLinks, linksDirty, setStatus, switchPhase, updateConfig, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule,
+            state, localLinks, linksDirty, setStatus, switchPhase, updateConfig, toggleVoting, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule,
             searchQuery, displayedList, studentCount, activeCount, globalProgress,
             calculateScore, isSpeedrun, getStatusColor, getBeaconClass,
             assignLeader, revokeLeader, revokeToken, deleteStudent,

@@ -9,216 +9,234 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Great+Vibes&display=swap">
 <style>
+  /* ── Design tokens (single source of truth → consistent, low-fatigue palette) ── */
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --surface2:#0f172a; --border:#334155;
+    --text:#f8fafc; --text2:#e2e8f0; --muted:#94a3b8; --faint:#64748b;
+    --primary:#3b82f6; --primary-d:#2563eb; --primary2:#06b6d4; --primary-soft:#1e3a5f;
+    --accent:#f59e0b; --accent-l:#fbbf24;     /* 分數專用 */
+    --ok:#22c55e; --ok-l:#4ade80; --danger:#ef4444; --danger-l:#f87171;
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
+  body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text2);min-height:100vh;}
   .fade-in{animation:fadeIn .35s ease both;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-  @keyframes pulse-border{0%,100%{border-color:#f59e0b}50%{border-color:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.2)}}
+  @keyframes pulse-border{0%,100%{border-color:var(--accent)}50%{border-color:var(--accent-l);box-shadow:0 0 0 3px rgba(251,191,36,.2)}}
   .incomplete-flash{animation:pulse-border .8s ease 3;}
 
   .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .panel{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:44px 40px;max-width:460px;width:100%;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 40px;max-width:460px;width:100%;}
   @media(max-width:480px){.panel{padding:32px 22px;border-radius:16px;}}
 
   /* ── Sign-in ── */
   .signin-header{text-align:center;margin-bottom:28px;}
   .signin-header .icon{font-size:40px;margin-bottom:14px;}
-  .signin-header h1{font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:6px;}
-  .signin-header p{font-size:12px;color:#64748b;line-height:1.6;}
-  .return-banner{background:#0f172a;border:1px solid #334155;border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
-  .return-banner .rb-name{font-size:16px;font-weight:700;color:#f8fafc;}
-  .return-banner .rb-sub{font-size:11px;color:#64748b;margin-top:2px;}
-  .not-me{font-size:11px;color:#475569;cursor:pointer;text-decoration:underline;margin-top:10px;display:inline-block;text-align:center;width:100%;}
-  .not-me:hover{color:#94a3b8;}
+  .signin-header h1{font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;}
+  .signin-header p{font-size:12px;color:var(--faint);line-height:1.6;}
+  .return-banner{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+  .return-banner .rb-name{font-size:16px;font-weight:700;color:var(--text);}
+  .return-banner .rb-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+  .not-me{font-size:11px;color:var(--faint);cursor:pointer;text-decoration:underline;margin-top:10px;display:inline-block;text-align:center;width:100%;}
+  .not-me:hover{color:var(--muted);}
   .field{margin-bottom:18px;}
-  .field-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-  .field-input{width:100%;background:#0f172a;border:2px solid #334155;border-radius:12px;padding:13px 16px;font-size:15px;color:#f8fafc;outline:none;transition:border-color .2s;font-family:inherit;}
-  .field-input:focus{border-color:#3b82f6;}
-  .field-input::placeholder{color:#475569;}
+  .field-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .field-input{width:100%;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:13px 16px;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;font-family:inherit;}
+  .field-input:focus{border-color:var(--primary);}
+  .field-input::placeholder{color:var(--faint);}
   .pin-boxes{display:flex;gap:10px;justify-content:center;margin-top:4px;}
-  .pin-box{width:56px;height:60px;background:#0f172a;border:2px solid #334155;border-radius:12px;font-size:24px;font-weight:800;color:#f8fafc;text-align:center;outline:none;transition:border-color .2s;caret-color:transparent;}
-  .pin-box:focus{border-color:#3b82f6;}
-  .pin-box.filled{border-color:#475569;color:#f59e0b;}
+  .pin-box{width:56px;height:60px;background:var(--surface2);border:2px solid var(--border);border-radius:12px;font-size:24px;font-weight:800;color:var(--text);text-align:center;outline:none;transition:border-color .2s;caret-color:transparent;}
+  .pin-box:focus{border-color:var(--primary);}
+  .pin-box.filled{border-color:#475569;color:var(--accent);}
   @media(max-width:380px){.pin-box{width:46px;height:54px;font-size:20px;}}
-  .pin-box.reject{border-color:#ef4444 !important;animation:pinShake .35s ease;}
+  .pin-box.reject{border-color:var(--danger) !important;animation:pinShake .35s ease;}
   @keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-  .digit-only-tag{font-size:9px;font-weight:700;color:#fbbf24;background:#451a03;border:1px solid #f59e0b;border-radius:5px;padding:1px 6px;margin-left:auto;letter-spacing:.5px;text-transform:none;}
-  .pin-hint{font-size:11px;color:#475569;text-align:center;margin-top:10px;line-height:1.7;}
-  .pin-notice{background:#172032;border:1px solid #1e3a5f;border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11px;color:#64748b;line-height:1.7;}
+  .digit-only-tag{font-size:9px;font-weight:700;color:var(--accent-l);background:#451a03;border:1px solid var(--accent);border-radius:5px;padding:1px 6px;margin-left:auto;letter-spacing:.5px;text-transform:none;}
+  .pin-hint{font-size:11px;color:var(--faint);text-align:center;margin-top:10px;line-height:1.7;}
+  .pin-notice{background:#172032;border:1px solid var(--primary-soft);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11px;color:var(--faint);line-height:1.7;}
   .pin-notice strong{color:#93c5fd;}
   .action-btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;}
-  .action-btn.primary{background:#3b82f6;color:#fff;}
-  .action-btn.primary:hover:not(:disabled){background:#2563eb;}
-  .action-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
+  .action-btn.primary{background:var(--primary);color:#fff;}
+  .action-btn.primary:hover:not(:disabled){background:var(--primary-d);}
+  .action-btn:disabled{background:var(--border);color:var(--faint);cursor:not-allowed;}
 
   /* ── Signature ── */
-  .sig-preview{background:#0a0f1a;border:1px solid #334155;border-radius:14px;padding:20px 22px;margin-top:18px;position:relative;overflow:hidden;}
+  .sig-preview{background:#0a0f1a;border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-top:18px;position:relative;overflow:hidden;}
   .sig-preview::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(6,182,212,.04));pointer-events:none;}
-  .sp-label{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
-  .sp-label::after{content:'';flex:1;height:1px;background:#1e293b;}
+  .sp-label{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+  .sp-label::after{content:'';flex:1;height:1px;background:var(--surface);}
   .sig-name{font-family:'Ma Shan Zheng','Great Vibes',cursive;font-size:42px;font-weight:400;color:#f1f5f9;line-height:1.15;margin-bottom:14px;letter-spacing:4px;text-shadow:0 0 32px rgba(148,163,184,.18);display:inline-block;transform:skewX(-8deg);transform-origin:left bottom;animation:sigAppear .7s cubic-bezier(.16,1,.3,1) both;}
   @keyframes sigAppear{from{opacity:0;transform:translateY(6px) skewX(-8deg) scale(.97)}to{opacity:1;transform:translateY(0) skewX(-8deg) scale(1)}}
-  .sig-underline{height:1px;background:linear-gradient(90deg,transparent,#60a5fa 30%,#06b6d4 70%,transparent);margin-bottom:14px;opacity:.6;}
+  .sig-underline{height:1px;background:linear-gradient(90deg,transparent,#60a5fa 30%,var(--primary2) 70%,transparent);margin-bottom:14px;opacity:.6;}
   .sig-meta{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
   .sm-role{font-size:11px;color:#60a5fa;font-weight:600;letter-spacing:.5px;}
-  .sm-date{font-size:10px;color:#475569;font-family:monospace;}
+  .sm-date{font-size:10px;color:var(--faint);font-family:monospace;}
 
   /* ── Scoring layout ── */
-  .app{max-width:900px;margin:0 auto;padding:24px 16px 88px;}
-  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
-  .top-bar h2{font-size:18px;font-weight:800;color:#f8fafc;}
-  .progress-tag{font-size:12px;color:#64748b;margin-top:2px;}
-  .judge-chip{display:inline-flex;align-items:center;gap:7px;background:#1e3a5f;border:1px solid #3b82f6;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:#f8fafc;}
-  .progress-wrap{position:relative;margin-bottom:22px;}
-  .progress-bar{height:4px;background:#1e293b;border-radius:2px;overflow:hidden;}
-  .progress-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:2px;transition:width .4s ease;}
+  .app{max-width:900px;margin:0 auto;padding:20px 16px 88px;}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .top-bar h2{font-size:18px;font-weight:800;color:var(--text);}
+  .progress-tag{font-size:12px;color:var(--faint);margin-top:2px;}
+  .judge-chip{display:inline-flex;align-items:center;gap:7px;background:var(--primary-soft);border:1px solid var(--primary);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text);}
+  .progress-wrap{position:relative;margin-bottom:20px;}
+  .progress-bar{height:4px;background:var(--surface);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary2));border-radius:2px;transition:width .4s ease;}
   .progress-pct{position:absolute;right:0;top:-18px;font-size:11px;font-weight:700;color:#60a5fa;font-family:monospace;}
 
+  /* ── Tab bar ── */
+  .tabbar{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;position:sticky;top:8px;z-index:30;box-shadow:0 4px 16px rgba(0,0,0,.35);}
+  .tabbar button{flex:1;border:none;background:transparent;color:var(--muted);padding:10px 8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;transition:all .15s;}
+  .tabbar button.active{background:var(--primary);color:#fff;}
+  .tabbar button:not(.active):hover{color:var(--text);background:rgba(255,255,255,.04);}
+  .tabbar .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  @media(max-width:480px){.tabbar button{font-size:12px;padding:9px 4px;}.tabbar button .tlabel{display:none;}.tabbar button .ticon{font-size:16px;}}
+
   /* ── Auto-save indicator ── */
-  .saved-flash{position:fixed;bottom:80px;right:16px;background:#064e3b;border:1px solid #22c55e;border-radius:8px;padding:6px 12px;font-size:11px;color:#4ade80;font-weight:600;z-index:60;display:flex;align-items:center;gap:6px;animation:fadeIn .2s ease;}
+  .saved-flash{position:fixed;bottom:80px;right:16px;background:#064e3b;border:1px solid var(--ok);border-radius:8px;padding:6px 12px;font-size:11px;color:var(--ok-l);font-weight:600;z-index:60;display:flex;align-items:center;gap:6px;animation:fadeIn .2s ease;}
 
-  /* ── Sticky gallery ── */
-  .gallery-sticky{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;background:#1c1917;border:1px solid #f59e0b;border-radius:12px;padding:11px 16px;margin-bottom:20px;text-decoration:none;color:#fbbf24;font-size:13px;font-weight:600;transition:background .2s;box-shadow:0 4px 16px rgba(0,0,0,.4);}
-  .gallery-sticky:hover{background:#292524;}
+  /* ── Info-tab blocks ── */
+  .gallery-link{display:flex;align-items:center;justify-content:space-between;background:#1c1917;border:1px solid var(--accent);border-radius:12px;padding:13px 18px;margin-bottom:14px;text-decoration:none;color:var(--accent-l);font-size:13px;font-weight:600;transition:background .2s;}
+  .gallery-link:hover{background:#292524;}
+  .info-block{border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:12.5px;line-height:1.7;display:flex;gap:9px;align-items:flex-start;}
+  .info-block.note{background:#0f1a2e;border:1px solid var(--primary-soft);color:var(--muted);} .info-block.note b{color:#cbd5e1;}
+  .info-block.comment{background:#0c1f17;border:1px solid #14532d;color:#86efac;} .info-block.comment b{color:#bbf7d0;}
+  .rubric-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1206;border:1px solid #451a03;border-radius:10px;padding:11px 14px;font-size:12px;}
+  .rubric-title{font-weight:700;color:var(--accent-l);letter-spacing:1px;margin-right:4px;}
+  .rubric-item{color:var(--muted);white-space:nowrap;}
+  .rubric-item b{color:var(--accent);font-size:14px;margin-right:3px;}
 
-  /* ── Offline bar ── */
-  .offline-bar{background:#450a0a;border-top:1px solid #7f1d1d;padding:8px 24px;text-align:center;font-size:12px;color:#f87171;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;}
+  /* ── re-score colour legend ── */
+  .star-legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;margin-bottom:18px;font-size:11px;}
+  .star-legend span{display:inline-flex;align-items:center;gap:5px;color:var(--muted);}
+  .star-legend i{font-size:13px;}
 
   /* ── Modified score indicator ── */
-  .criteria-row.modified{border-left:3px solid #f59e0b;padding-left:8px;background:rgba(245,158,11,.12);border-radius:0 8px 8px 0;margin-left:-4px;}
-  .old-val{font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:600;margin-right:2px;}
+  .criteria-row.modified{border-left:3px solid var(--accent);padding-left:8px;background:rgba(245,158,11,.12);border-radius:0 8px 8px 0;margin-left:-4px;}
+  .old-val{font-size:11px;color:var(--muted);text-decoration:line-through;font-weight:600;margin-right:2px;}
   .arrow-val{font-size:12px;color:#fb923c;font-weight:800;margin-right:2px;}
-  .new-val-highlight{color:#fbbf24 !important;font-size:13px !important;}
+  .new-val-highlight{color:var(--accent-l) !important;font-size:13px !important;}
   .modified-badge{display:inline-flex;align-items:center;gap:5px;background:#451a03;border:1px solid #f97316;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#fb923c;}
 
   /* ── Incomplete card ── */
-  .group-card.incomplete{border-color:#1e3a5f;border-style:dashed;}
+  .group-card.incomplete{border-color:var(--primary-soft);border-style:dashed;}
   .group-card.incomplete .status-dot{background:#1d4ed8;animation:dot-pulse 2s ease-in-out infinite;}
   @keyframes dot-pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
-  .remain-badge{font-size:10px;font-weight:700;color:#60a5fa;background:#1e3a5f;border-radius:6px;padding:2px 7px;margin-left:4px;}
+  .remain-badge{font-size:10px;font-weight:700;color:#60a5fa;background:var(--primary-soft);border-radius:6px;padding:2px 7px;margin-left:4px;}
   .criteria-row.unscored .stars .star:not(.active){color:#3b5a8f;}
   .criteria-row.unscored .criteria-label{color:#60a5fa;}
-
   @keyframes star-pop{from{transform:scale(1.4)}to{transform:scale(1)}}
 
   /* ── Group cards ── */
   .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
   @media(max-width:620px){.group-grid{grid-template-columns:1fr;gap:18px;}}
-  .group-card{background:#1e293b;border:2px solid #334155;border-radius:16px;padding:20px;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
+  .group-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:20px;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
   .group-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--elem-color,#475569);}
-  .group-card:focus-within{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25);}
-  .group-card.scored{border-color:#22c55e;}
-  .group-card.scored .status-dot{background:#22c55e;}
-  /* element colour accents */
+  .group-card:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.25);}
+  .group-card.scored{border-color:var(--ok);}
+  .group-card.scored .status-dot{background:var(--ok);}
   .elem-水{--elem-color:#38bdf8;}.elem-火{--elem-color:#f87171;}.elem-木{--elem-color:#4ade80;}
   .elem-土{--elem-color:#d4a574;}.elem-氣{--elem-color:#c084fc;}
   .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-  .group-num{width:30px;height:30px;border-radius:8px;background:var(--elem-color,#475569);color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
-  .zodiac-icon{width:44px;height:44px;border-radius:12px;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-  .zodiac-name{font-weight:800;font-size:17px;color:#f8fafc;}
-  .card-subtotal{margin-left:auto;background:#0f172a;border-radius:8px;padding:3px 9px;font-size:13px;font-weight:800;color:#f59e0b;flex-shrink:0;}
-  .card-subtotal.zero{color:#334155;background:transparent;}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;transition:background .3s;}
-  .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-radius:6px;padding:2px 4px;transition:background .1s;outline:none;}
-  .criteria-row:focus{background:#0f172a;box-shadow:0 0 0 2px #3b82f6;}
-  .criteria-label{font-size:12px;color:#cbd5e1;flex-shrink:0;width:72px;font-weight:600;}
+  .group-num{width:30px;height:30px;border-radius:8px;background:var(--elem-color,#475569);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
+  .zodiac-icon{width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .zodiac-name{font-weight:800;font-size:17px;color:var(--text);}
+  .card-subtotal{margin-left:auto;background:var(--surface2);border-radius:8px;padding:3px 9px;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0;}
+  .card-subtotal.zero{color:var(--border);background:transparent;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s;}
+  .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;border-bottom:1px solid var(--surface2);padding:2px 4px 6px;transition:background .1s;outline:none;}
+  .criteria-row:focus{background:var(--surface2);box-shadow:0 0 0 2px var(--primary);}
+  .criteria-row:nth-child(odd){background:rgba(255,255,255,.015);}
+  .criteria-label{font-size:12px;color:#cbd5e1;flex-shrink:0;width:74px;font-weight:600;}
   .stars{display:flex;gap:5px;}
   .star{font-size:22px;cursor:pointer;color:#475569;transition:color .1s,transform .1s;line-height:1;user-select:none;padding:3px;}
-  .star:hover,.star.active{color:#f59e0b;}
+  .star:hover,.star.active{color:var(--accent);}
   .star:hover{transform:scale(1.18);}
   .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
-  /* Re-score colours — MUST come after .star.active to win equal specificity */
-  .star.active.s-base   {color:#f59e0b;}                                                           /* unchanged base */
-  .star.active.s-added  {color:#4ade80;text-shadow:0 0 10px rgba(74,222,128,.7);animation:star-pop .25s ease;}  /* newly added */
-  .star.active.s-removed{color:#ef4444;opacity:.6;text-decoration:line-through;}                   /* removed */
-  @media(max-width:480px){.star{font-size:30px;padding:7px 4px;}.criteria-label{font-size:11px;width:64px;}}
-  .kb-hint{font-size:9px;color:#334155;font-family:monospace;margin-left:4px;}
-  .criteria-row:focus .kb-hint{color:#475569;}
-  /* row separation to prevent mis-fill */
-  .criteria-row{margin-bottom:4px;border-bottom:1px solid #0f172a;padding-bottom:6px;}
-  .criteria-row:nth-child(odd){background:rgba(255,255,255,.015);}
-  /* 整體總分 — visually separated overall rating */
-  .criteria-row.is-total{margin-top:8px;border-top:2px solid #334155;padding-top:10px;border-bottom:none;background:rgba(245,158,11,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
-  .criteria-row.is-total .criteria-label{color:#fbbf24;}
-  .total-tag{font-size:8px;font-weight:700;color:#f59e0b;background:#451a03;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
-  /* scoring model note */
-  .model-note{display:flex;gap:9px;align-items:flex-start;background:#0f1a2e;border:1px solid #1e3a5f;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:12px;color:#94a3b8;line-height:1.6;}
-  .model-note b{color:#cbd5e1;}
-  /* Padlet comment nudge */
-  .comment-nudge{display:flex;gap:9px;align-items:flex-start;background:#0c1f17;border:1px solid #14532d;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:12px;color:#86efac;line-height:1.6;}
-  .comment-nudge b{color:#bbf7d0;}
-  /* rating anchor rubric */
-  .rubric-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#1a1206;border:1px solid #451a03;border-radius:10px;padding:9px 14px;margin-bottom:18px;font-size:11px;}
-  .rubric-title{font-weight:700;color:#fbbf24;letter-spacing:1px;margin-right:4px;}
-  .rubric-item{color:#94a3b8;white-space:nowrap;}
-  .rubric-item b{color:#f59e0b;font-size:13px;margin-right:3px;}
-  /* re-score colour legend */
-  .star-legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:8px 14px;margin-bottom:18px;font-size:11px;}
-  .star-legend span{display:inline-flex;align-items:center;gap:5px;color:#94a3b8;}
-  .star-legend i{font-size:13px;}
+  .star.active.s-base{color:var(--accent);}
+  .star.active.s-added{color:var(--ok-l);text-shadow:0 0 10px rgba(74,222,128,.7);animation:star-pop .25s ease;}
+  .star.active.s-removed{color:var(--danger);opacity:.6;text-decoration:line-through;}
+  @media(max-width:480px){.star{font-size:30px;padding:7px 4px;}.criteria-label{font-size:11px;width:66px;}}
+  .kb-hint{font-size:9px;color:var(--border);font-family:monospace;margin-left:4px;}
+  .criteria-row:focus .kb-hint{color:var(--faint);}
+  .criteria-row.is-total{margin-top:8px;border-top:2px solid var(--border);padding-top:10px;border-bottom:none;background:rgba(245,158,11,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
+  .criteria-row.is-total .criteria-label{color:var(--accent-l);}
+  .total-tag{font-size:8px;font-weight:700;color:var(--accent);background:#451a03;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
+
+  /* ── Student votes heatmap (reference tab) ── */
+  .vote-state{text-align:center;padding:48px 20px;color:var(--muted);}
+  .vote-state .vs-icon{font-size:40px;margin-bottom:14px;}
+  .vote-state h3{color:var(--text);font-size:17px;margin-bottom:8px;}
+  .vote-state p{font-size:13px;line-height:1.7;color:var(--faint);}
+  .ref-banner{background:#1a1206;border:1px solid #451a03;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent-l);display:flex;gap:8px;align-items:flex-start;line-height:1.6;}
+  .vrank{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;}
+  .vrank-no{font-size:17px;font-weight:900;width:26px;text-align:center;flex-shrink:0;color:var(--faint);}
+  .vrank-no.r1{color:var(--accent-l);} .vrank-no.r2{color:#cbd5e1;} .vrank-no.r3{color:#d4a574;}
+  .vrank-icon{font-size:22px;width:34px;text-align:center;flex-shrink:0;}
+  .vrank-name{font-weight:700;font-size:14px;color:var(--text);flex-shrink:0;width:64px;}
+  .vrank-bd{font-size:10px;color:var(--faint);font-weight:400;margin-top:1px;}
+  .vrank-bar-wrap{flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;min-width:40px;}
+  .vrank-bar{height:100%;border-radius:5px;transition:width .5s;}
+  .vrank-pts{font-size:18px;font-weight:800;color:var(--accent);width:42px;text-align:right;flex-shrink:0;}
 
   /* ── Submit bar ── */
-  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
-  .submit-info{font-size:13px;color:#64748b;line-height:1.5;min-width:0;}
-  .submit-info strong{color:#f8fafc;}
+  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--surface);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
+  .submit-info{font-size:13px;color:var(--faint);line-height:1.5;min-width:0;}
+  .submit-info strong{color:var(--text);}
   .submit-right{display:flex;gap:8px;align-items:center;flex-shrink:0;}
-  .submit-btn{background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
-  .submit-btn:hover:not(:disabled){background:#2563eb;}
-  .submit-btn:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
+  .submit-btn{background:var(--primary);color:#fff;border:none;border-radius:12px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .submit-btn:hover:not(:disabled){background:var(--primary-d);}
+  .submit-btn:disabled{background:var(--border);color:var(--faint);cursor:not-allowed;}
   .submit-btn.done{background:#059669;}
-  .jump-btn{background:none;border:1px solid #475569;border-radius:8px;padding:6px 10px;color:#64748b;font-size:11px;cursor:pointer;white-space:nowrap;}
-  .jump-btn:hover{border-color:#f59e0b;color:#f59e0b;}
+  .jump-btn{background:none;border:1px solid #475569;border-radius:8px;padding:6px 10px;color:var(--faint);font-size:11px;cursor:pointer;white-space:nowrap;}
+  .jump-btn:hover{border-color:var(--accent);color:var(--accent);}
 
   /* ── Summary modal ── */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
-  .modal-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:28px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;}
-  .modal-card h3{font-size:17px;font-weight:800;color:#f8fafc;margin-bottom:4px;}
-  .modal-sub{font-size:12px;color:#64748b;margin-bottom:20px;}
+  .modal-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;}
+  .modal-card h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px;}
+  .modal-sub{font-size:12px;color:var(--faint);margin-bottom:20px;}
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
   @media(max-width:400px){.summary-grid{grid-template-columns:1fr;}}
-  .summary-row{background:#0f172a;border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;}
-  .sr-zodiac{font-weight:700;font-size:12px;color:#f8fafc;flex:1;min-width:0;}
+  .summary-row{background:var(--surface2);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;}
+  .sr-zodiac{font-weight:700;font-size:12px;color:var(--text);flex:1;min-width:0;}
   .sr-scores{display:flex;gap:4px;align-items:center;}
-  .sr-score{background:#1e293b;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:700;color:#94a3b8;}
-  .sr-score.total{color:#f59e0b;background:#292524;}
-  .sr-score.avg{color:#60a5fa;background:#1e3a5f;}
-  .modal-legend{font-size:10px;color:#475569;margin-bottom:16px;text-align:center;}
+  .sr-score{background:var(--surface);border-radius:5px;padding:2px 6px;font-size:11px;font-weight:700;color:var(--muted);}
+  .sr-score.total{color:var(--accent);background:#292524;}
+  .sr-score.avg{color:#60a5fa;background:var(--primary-soft);}
+  .modal-legend{font-size:10px;color:var(--faint);margin-bottom:16px;text-align:center;}
   .modal-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .modal-actions button{flex:1;min-width:120px;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;}
-  .btn-confirm{background:#3b82f6;color:#fff;}
-  .btn-confirm:hover{background:#2563eb;}
-  .btn-back{background:#0f172a;border:1px solid #334155;color:#94a3b8;}
-  .btn-back:hover{border-color:#60a5fa;color:#60a5fa;}
+  .btn-confirm{background:var(--primary);color:#fff;} .btn-confirm:hover{background:var(--primary-d);}
+  .btn-back{background:var(--surface2);border:1px solid var(--border);color:var(--muted);} .btn-back:hover{border-color:#60a5fa;color:#60a5fa;}
 
   /* ── Result ── */
-  .result-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:40px;max-width:560px;width:100%;text-align:center;}
-  .result-card h2{font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:16px;}
-  .sig-box{background:#0f172a;border:1px solid #334155;border-left:3px solid #3b82f6;border-radius:12px;padding:16px 20px;margin:16px 0;text-align:left;}
-  .sb-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .sb-name{font-size:22px;font-weight:800;color:#f8fafc;}
-  .sb-meta{font-size:11px;color:#64748b;margin-top:6px;line-height:1.7;}
+  .result-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:560px;width:100%;text-align:center;}
+  .result-card h2{font-size:22px;font-weight:800;color:var(--text);margin-bottom:16px;}
+  .sig-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:12px;padding:16px 20px;margin:16px 0;text-align:left;}
+  .sb-label{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .sb-name{font-size:22px;font-weight:800;color:var(--text);}
+  .sb-meta{font-size:11px;color:var(--faint);margin-top:6px;line-height:1.7;}
   .result-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px;text-align:left;}
-  .result-table th{color:#64748b;padding:6px 8px;border-bottom:1px solid #334155;font-size:10px;text-transform:uppercase;}
-  .result-table td{padding:7px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0;}
+  .result-table th{color:var(--faint);padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;}
+  .result-table td{padding:7px 8px;border-bottom:1px solid var(--surface);color:var(--text2);}
   .result-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:24px;}
-  .result-actions button{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:11px 18px;color:#94a3b8;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;}
+  .result-actions button{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 18px;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;}
   .result-actions button:hover{border-color:#60a5fa;color:#60a5fa;}
 
   /* ── Loading / Toast ── */
   .loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:200;}
   .loading-overlay .spin{font-size:32px;color:#60a5fa;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-overlay p{font-size:14px;color:#94a3b8;}
-  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;z-index:999;animation:fadeIn .2s ease;white-space:nowrap;}
-  .toast.success{border-color:#22c55e;color:#4ade80;}
-  .toast.error{border-color:#ef4444;color:#f87171;}
+  .loading-overlay p{font-size:14px;color:var(--muted);}
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;z-index:999;animation:fadeIn .2s ease;white-space:nowrap;}
+  .toast.success{border-color:var(--ok);color:var(--ok-l);}
+  .toast.error{border-color:var(--danger);color:var(--danger-l);}
   .toast.info{border-color:#60a5fa;color:#93c5fd;}
-  .toast.warn{border-color:#f59e0b;color:#fbbf24;}
+  .toast.warn{border-color:var(--accent);color:var(--accent-l);}
 
   /* ── Print ── */
   @media print{
     body{background:#fff;color:#000;}
-    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-sticky,.offline-bar,.saved-flash{display:none!important;}
+    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-link,.saved-flash,.tabbar{display:none!important;}
     .result-card{border:none;padding:0;max-width:100%;}
     .sig-box{border:1px solid #ccc;background:#f9f9f9;}
     .sb-name,.result-table td,.result-table th{color:#000;}
@@ -248,7 +266,7 @@
         <div v-for="(z, i) in ZODIAC" :key="z.label" class="summary-row">
           <div style="flex:1;min-width:0;">
             <div class="sr-zodiac">{{ z.icon }} {{ z.label }}</div>
-            <div style="font-size:9px;color:#64748b;">{{ z.element }}</div>
+            <div style="font-size:9px;color:var(--faint);">{{ z.element }}</div>
           </div>
           <div class="sr-scores">
             <span class="sr-score">{{ scores[i].content }}</span>
@@ -259,7 +277,7 @@
           </div>
         </div>
       </div>
-      <div class="modal-legend">選題 · 病生理 · 視覺 · <span style="color:#f59e0b;">整體印象</span> · <span style="color:#60a5fa;">加權分</span></div>
+      <div class="modal-legend">選題 · 病生理 · 視覺 · <span style="color:var(--accent);">整體印象</span> · <span style="color:#60a5fa;">加權分</span></div>
       <div class="modal-actions">
         <button class="btn-back" @click="showSummary=false"><i class="fa-solid fa-arrow-left"></i> 返回修改</button>
         <button class="btn-confirm" @click="confirmSubmit"><i class="fa-solid fa-paper-plane"></i> 確認送出</button>
@@ -306,7 +324,7 @@
                  maxlength="30" autocomplete="name" @keyup.enter="focusPin(0)" ref="nameInput" />
         </div>
         <div class="field">
-          <div class="field-label"><i class="fa-solid fa-envelope"></i> 電子郵件 <span style="color:#475569;font-weight:400;text-transform:none;letter-spacing:0;">（選填）</span></div>
+          <div class="field-label"><i class="fa-solid fa-envelope"></i> 電子郵件 <span style="color:var(--faint);font-weight:400;text-transform:none;letter-spacing:0;">（選填）</span></div>
           <input v-model.trim="form.email" class="field-input" type="email"
                  placeholder="your@email.com（可略過）" autocomplete="email" />
         </div>
@@ -322,7 +340,7 @@
           <div class="pin-notice"><strong>提示：</strong>此為本系統識別碼，非帳號密碼。瀏覽器若出現「儲存密碼」提示，請選擇「略過」。</div>
         </div>
         <div v-if="form.name && pinStr.length===4" class="sig-preview fade-in">
-          <div class="sp-label"><i class="fa-solid fa-pen-nib" style="color:#3b82f6;"></i> 簽名預覽 Signature Preview</div>
+          <div class="sp-label"><i class="fa-solid fa-pen-nib" style="color:var(--primary);"></i> 簽名預覽 Signature Preview</div>
           <div class="sig-name">{{ form.name }}</div>
           <div class="sig-underline"></div>
           <div class="sig-meta">
@@ -337,15 +355,15 @@
     </div>
   </div>
 
-  <!-- ── Scoring ── -->
+  <!-- ── Scoring (tabbed) ── -->
   <div v-if="phase==='scoring'" class="fade-in">
-    <div v-if="!isOnline" class="offline-bar">
+    <div v-if="!isOnline" class="offline-bar" style="background:#450a0a;border-top:1px solid #7f1d1d;padding:8px 24px;text-align:center;font-size:12px;color:var(--danger-l);font-weight:600;">
       <i class="fa-solid fa-wifi-slash"></i> 目前無網路，評分已儲存本機，請恢復連線後再送出
     </div>
     <div class="app">
       <div class="top-bar">
         <div>
-          <h2><i class="fa-solid fa-medal" style="color:#f59e0b;margin-right:8px;"></i>海報評審</h2>
+          <h2><i class="fa-solid fa-medal" style="color:var(--accent);margin-right:8px;"></i>海報評審</h2>
           <div class="progress-tag">{{ scoredCount }} / {{ ZODIAC.length }} 組已完成評分</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -355,110 +373,154 @@
           </div>
         </div>
       </div>
-      <div class="progress-wrap">
-        <div class="progress-pct">{{ progressPct }}%</div>
-        <div class="progress-bar"><div class="progress-fill" :style="`width:${progressPct}%`"></div></div>
+
+      <!-- Tab bar -->
+      <div class="tabbar">
+        <button :class="{active:activeTab==='score'}" @click="activeTab='score'">
+          <i class="fa-solid fa-star-half-stroke ticon"></i><span class="tlabel">評分</span>
+          <span v-if="scoredCount<ZODIAC.length" class="dot"></span>
+        </button>
+        <button :class="{active:activeTab==='info'}" @click="activeTab='info'">
+          <i class="fa-solid fa-circle-info ticon"></i><span class="tlabel">說明</span>
+        </button>
+        <button :class="{active:activeTab==='votes'}" @click="openVotesTab">
+          <i class="fa-solid fa-fire ticon"></i><span class="tlabel">學生票選參考</span>
+        </button>
       </div>
 
-      <a :href="GALLERY_URL" target="cmurxPosterGallery" rel="noopener noreferrer" class="gallery-sticky">
-        <span><i class="fa-solid fa-images" style="margin-right:8px;"></i>查看海報展覽 Gallery</span>
-        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
-      </a>
+      <!-- ===== 評分 tab ===== -->
+      <div v-show="activeTab==='score'">
+        <div class="progress-wrap">
+          <div class="progress-pct">{{ progressPct }}%</div>
+          <div class="progress-bar"><div class="progress-fill" :style="`width:${progressPct}%`"></div></div>
+        </div>
+        <div v-if="originalScores" class="star-legend">
+          <span><i class="fa-solid fa-star" style="color:var(--accent);"></i> 原評分</span>
+          <span><i class="fa-solid fa-star" style="color:var(--ok-l);"></i> 新增</span>
+          <span><i class="fa-solid fa-star" style="color:var(--danger);"></i> 移除</span>
+        </div>
 
-      <!-- Padlet comment nudge -->
-      <div class="comment-nudge">
-        <i class="fa-solid fa-comment-dots" style="color:#4ade80;"></i>
-        <span>除了評分，歡迎在 Padlet 海報下方<b>直接留言給予回饋</b>，鼓勵同學。</span>
-      </div>
-
-      <!-- Scoring model note -->
-      <div class="model-note">
-        <i class="fa-solid fa-circle-info" style="color:#60a5fa;"></i>
-        <span>每組評 4 項：<b>選題需求 · 病生理深度 · 視覺表達</b>為三個面向，<b>整體印象</b>為您綜合感受的 1–5 分。
-        排名 = <b>前三項平均 × 50% + 整體印象 × 50%</b>（右上角數字即該組加權分）。</span>
-      </div>
-
-      <!-- Rating anchor (rubric) -->
-      <div class="rubric-bar">
-        <span class="rubric-title">評分基準</span>
-        <span class="rubric-item"><b>1</b> 待加強</span>
-        <span class="rubric-item"><b>2</b> 尚可</span>
-        <span class="rubric-item"><b>3</b> 普通</span>
-        <span class="rubric-item"><b>4</b> 良好</span>
-        <span class="rubric-item"><b>5</b> 優異</span>
-      </div>
-
-      <!-- Re-score colour legend -->
-      <div v-if="originalScores" class="star-legend">
-        <span><i class="fa-solid fa-star" style="color:#f59e0b;"></i> 原評分</span>
-        <span><i class="fa-solid fa-star" style="color:#4ade80;"></i> 新增</span>
-        <span><i class="fa-solid fa-star" style="color:#ef4444;"></i> 移除</span>
-      </div>
-
-      <div class="group-grid">
-        <div v-for="(z, i) in ZODIAC" :key="z.label" :id="'card-'+i"
-             :class="['group-card', 'elem-'+z.element, isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
-          <div class="card-header">
-            <div class="group-num">{{ i+1 }}</div>
-            <div class="zodiac-icon">{{ z.icon }}</div>
-            <div>
-              <div class="zodiac-name">
-                {{ z.label }}
-                <span v-if="!isScored(i) && remainCount(i) < 4" class="remain-badge">
-                  還差 {{ remainCount(i) }}
-                </span>
-                <span v-if="!isScored(i) && remainCount(i) === 4" class="remain-badge">
-                  未評分
-                </span>
+        <div class="group-grid">
+          <div v-for="(z, i) in ZODIAC" :key="z.label" :id="'card-'+i"
+               :class="['group-card', 'elem-'+z.element, isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
+            <div class="card-header">
+              <div class="group-num">{{ i+1 }}</div>
+              <div class="zodiac-icon">{{ z.icon }}</div>
+              <div>
+                <div class="zodiac-name">
+                  {{ z.label }}
+                  <span v-if="!isScored(i) && remainCount(i) < 4" class="remain-badge">還差 {{ remainCount(i) }}</span>
+                  <span v-if="!isScored(i) && remainCount(i) === 4" class="remain-badge">未評分</span>
+                </div>
+                <div style="font-size:11px;color:var(--faint);">{{ z.element }}行 · 第 {{ i+1 }} 組</div>
               </div>
-              <div style="font-size:11px;color:#64748b;">{{ z.element }}行 · 第 {{ i+1 }} 組</div>
-            </div>
-            <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']"
-                 title="此組加權分 = 前三項平均×50% + 整體印象×50%（決定排名）">
-              {{ isScored(i) ? groupWeighted(i).toFixed(2) : '–' }}
-            </div>
-          </div>
-          <div v-for="c in CRITERIA" :key="c.key"
-               :class="['criteria-row',
-                 c.key === 'total' ? 'is-total' : '',
-                 isModified(i, c.key) ? 'modified' : '',
-                 scores[i][c.key] === 0 ? 'unscored' : '']"
-               tabindex="0" @keydown="onCritKey(i, c.key, $event)">
-            <div class="criteria-label" :title="c.desc">{{ c.label }}<span v-if="c.key==='total'" class="total-tag" title="綜合整體感受給的1-5分，與前三項面向平均各佔50%計入排名">綜合</span></div>
-            <div class="stars">
-              <span v-for="n in 5" :key="n"
-                    :class="['star', starClass(i, c.key, n)]"
-                    @click="setScore(i, c.key, n)">★</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:2px;">
-              <template v-if="isModified(i, c.key)">
-                <span class="old-val">{{ originalScores[i][c.key] }}</span>
-                <span class="arrow-val">→</span>
-              </template>
-              <div :class="['new-val', isModified(i,c.key)?'new-val-highlight':'']"
-                   style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
-                {{ scores[i][c.key] || '–' }}
+              <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']"
+                   title="此組加權分 = 前三項平均×50% + 整體印象×50%（決定排名）">
+                {{ isScored(i) ? groupWeighted(i).toFixed(2) : '–' }}
               </div>
-              <span class="kb-hint">1-5</span>
+            </div>
+            <div v-for="c in CRITERIA" :key="c.key"
+                 :class="['criteria-row', c.key==='total'?'is-total':'', isModified(i,c.key)?'modified':'', scores[i][c.key]===0?'unscored':'']"
+                 tabindex="0" @keydown="onCritKey(i, c.key, $event)">
+              <div class="criteria-label" :title="c.desc">{{ c.label }}<span v-if="c.key==='total'" class="total-tag" title="綜合整體感受給的1-5分，與前三項面向平均各佔50%計入排名">綜合</span></div>
+              <div class="stars">
+                <span v-for="n in 5" :key="n" :class="['star', starClass(i, c.key, n)]" @click="setScore(i, c.key, n)">★</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:2px;">
+                <template v-if="isModified(i, c.key)">
+                  <span class="old-val">{{ originalScores[i][c.key] }}</span>
+                  <span class="arrow-val">→</span>
+                </template>
+                <div :class="['new-val', isModified(i,c.key)?'new-val-highlight':'']"
+                     style="font-size:12px;font-weight:700;color:var(--accent);width:20px;text-align:right;">
+                  {{ scores[i][c.key] || '–' }}
+                </div>
+                <span class="kb-hint">1-5</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- ===== 說明 tab ===== -->
+      <div v-show="activeTab==='info'">
+        <a :href="GALLERY_URL" target="cmurxPosterGallery" rel="noopener noreferrer" class="gallery-link">
+          <span><i class="fa-solid fa-images" style="margin-right:8px;"></i>查看海報展覽 Gallery</span>
+          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
+        </a>
+        <div class="rubric-bar" style="margin-bottom:14px;">
+          <span class="rubric-title">評分基準</span>
+          <span class="rubric-item"><b>1</b>待加強</span>
+          <span class="rubric-item"><b>2</b>尚可</span>
+          <span class="rubric-item"><b>3</b>普通</span>
+          <span class="rubric-item"><b>4</b>良好</span>
+          <span class="rubric-item"><b>5</b>優異</span>
+        </div>
+        <div class="info-block note">
+          <i class="fa-solid fa-circle-info" style="color:#60a5fa;"></i>
+          <span>每組評 4 項：<b>選題需求 · 病生理深度 · 視覺表達</b>為三個面向，<b>整體印象</b>為您綜合感受的 1–5 分。
+          排名 = <b>前三項平均 × 50% + 整體印象 × 50%</b>（卡片右上角數字即該組加權分）。</span>
+        </div>
+        <div class="info-block comment">
+          <i class="fa-solid fa-comment-dots" style="color:var(--ok-l);"></i>
+          <span>除了評分，歡迎在 Padlet 海報下方<b>直接留言給予回饋</b>，鼓勵同學。</span>
+        </div>
+      </div>
+
+      <!-- ===== 學生票選參考 tab ===== -->
+      <div v-show="activeTab==='votes'">
+        <div class="ref-banner">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>此為<b>學生互評票選</b>結果，<b>僅供參考</b>，與您的專業評分各自獨立、不互相影響。投票關閉後才開放。</span>
+        </div>
+
+        <div v-if="votesState==='nosession'" class="vote-state">
+          <div class="vs-icon">🔧</div><h3>尚未設定場次</h3>
+          <p>請主辦單位在連結加上場次代碼<br>例：<code>?session=20260611-9X9Y</code></p>
+        </div>
+        <div v-else-if="votesState==='loading'" class="vote-state">
+          <div class="vs-icon"><i class="fa-solid fa-spinner spin" style="color:#60a5fa;"></i></div>
+          <h3>載入中…</h3>
+        </div>
+        <div v-else-if="votesState==='locked'" class="vote-state">
+          <div class="vs-icon">🔒</div><h3>投票尚未關閉</h3>
+          <p>學生票選結果將於<b>投票關閉後</b>開放參考。<br>請稍後再點此分頁。</p>
+          <button class="jump-btn" style="margin-top:16px;" @click="openVotesTab"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
+        </div>
+        <div v-else-if="votesState==='closed-empty'" class="vote-state">
+          <div class="vs-icon">📭</div><h3>尚無票選資料</h3>
+        </div>
+        <div v-else-if="votesState==='error'" class="vote-state">
+          <div class="vs-icon">⚠️</div><h3>讀取失敗</h3>
+          <p>請確認網路與 Anonymous 登入已啟用。</p>
+          <button class="jump-btn" style="margin-top:16px;" @click="openVotesTab"><i class="fa-solid fa-rotate-right"></i> 重試</button>
+        </div>
+        <template v-else-if="votesState==='ready'">
+          <div style="font-size:12px;color:var(--faint);margin-bottom:12px;text-align:center;">{{ studentVoteCount }} 位學生投票 · 第1名3分/第2名2分/第3名1分</div>
+          <div v-for="(g,i) in studentTally" :key="g.label" class="vrank">
+            <div :class="['vrank-no', i===0?'r1':i===1?'r2':i===2?'r3':'']">{{ i+1 }}</div>
+            <div class="vrank-icon">{{ g.icon }}</div>
+            <div class="vrank-name">{{ g.label }}<div class="vrank-bd">🥇{{ g.r1 }} 🥈{{ g.r2 }} 🥉{{ g.r3 }}</div></div>
+            <div class="vrank-bar-wrap"><div class="vrank-bar" :style="`width:${g.pts/voteMaxPts*100}%;background:rgba(59,130,246,${0.35+0.65*g.pts/voteMaxPts})`"></div></div>
+            <div class="vrank-pts">{{ g.pts }}</div>
+          </div>
+        </template>
+      </div>
     </div>
 
-    <div class="submit-bar">
+    <!-- Submit bar (only on score tab) -->
+    <div v-show="activeTab==='score'" class="submit-bar">
       <div class="submit-info">
         <div>已評 <strong>{{ scoredCount }}</strong> / {{ ZODIAC.length }}</div>
-        <div v-if="scoredCount < ZODIAC.length" style="color:#f59e0b;font-size:11px;">{{ ZODIAC.length - scoredCount }} 組未完成</div>
-        <div v-else style="color:#4ade80;font-size:11px;">全部完成！</div>
+        <div v-if="scoredCount < ZODIAC.length" style="color:var(--accent);font-size:11px;">{{ ZODIAC.length - scoredCount }} 組未完成</div>
+        <div v-else style="color:var(--ok-l);font-size:11px;">全部完成！</div>
       </div>
       <div class="submit-right">
         <button v-if="scoredCount < ZODIAC.length" class="jump-btn" @click="scrollToIncomplete">
           <i class="fa-solid fa-arrow-down"></i> 未完成
         </button>
         <button :disabled="scoredCount < ZODIAC.length || submitting"
-                :class="['submit-btn', submitted?'done':'']"
-                @click="openSummary">
+                :class="['submit-btn', submitted?'done':'']" @click="openSummary">
           <i :class="submitting?'fa-solid fa-spinner fa-spin':submitted?'fa-solid fa-check':'fa-solid fa-list-check'"></i>
           {{ submitting?'送出中…':submitted?'已送出':'預覽送出' }}
         </button>
@@ -477,11 +539,11 @@
         <div class="sb-meta">
           藥學系 Pathophysiology · Poster Review 2026<br>
           {{ submitTime }}<br>
-          <span v-if="form.email" style="color:#4ade80;"><i class="fa-solid fa-envelope"></i> 確認信已寄至 {{ form.email }}</span><br v-if="form.email">
+          <span v-if="form.email" style="color:var(--ok-l);"><i class="fa-solid fa-envelope"></i> 確認信已寄至 {{ form.email }}</span><br v-if="form.email">
           <span style="color:#60a5fa;">可憑原識別碼重新登入修改評分</span>
         </div>
       </div>
-      <p style="color:#94a3b8;font-size:13px;">評分結果已同步至 Google Sheets。</p>
+      <p style="color:var(--muted);font-size:13px;">評分結果已同步至 Google Sheets。</p>
       <table class="result-table">
         <tr><th>組別</th><th>選題</th><th>病生理</th><th>視覺</th><th>整體印象</th><th>加權</th></tr>
         <tr v-for="(z, i) in ZODIAC" :key="z.label">
@@ -489,7 +551,7 @@
           <td>{{ scores[i].content }}</td>
           <td>{{ scores[i].design }}</td>
           <td>{{ scores[i].creativity }}</td>
-          <td style="color:#f59e0b;">{{ scores[i].total }}</td>
+          <td style="color:var(--accent);">{{ scores[i].total }}</td>
           <td><strong style="color:#60a5fa;">{{ groupWeighted(i).toFixed(2) }}</strong></td>
         </tr>
       </table>
@@ -502,7 +564,10 @@
   </div>
 
 </div>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 const { createApp, reactive, ref, computed, nextTick, onMounted } = Vue;
 
 // ── Audio + Haptic ────────────────────────────────────────────────────
@@ -536,6 +601,18 @@ const GAS_SECRET = "zodiac-2026-cmuh";
 const GALLERY_URL= "https://padlet.com/jnynlin/cmurx";
 const LS_SESSION = 'pj_session';
 const LS_SCORES  = slot => `pj_scores_${slot}`;
+// Student-vote reference (heatmap) — set per event via ?session=, gated on status.votingClosed
+const EVENT_SESSION = new URLSearchParams(location.search).get('session')
+                   || new URLSearchParams(location.search).get('id') || '';
+const FIREBASE = {
+  apiKey: "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
+  authDomain: "cmu-11402-pathophysiology.firebaseapp.com",
+  databaseURL: "https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cmu-11402-pathophysiology",
+  storageBucket: "cmu-11402-pathophysiology.firebasestorage.app",
+  messagingSenderId: "367793212618",
+  appId: "1:367793212618:web:c11acedc50ce6fc3897833"
+};
 
 const ZODIAC = [
   {label:'子鼠',icon:'⚡️',element:'水'},{label:'丑牛',icon:'🧱',element:'土'},
@@ -545,6 +622,7 @@ const ZODIAC = [
   {label:'申猴',icon:'💡',element:'氣'},{label:'酉雞',icon:'⏱', element:'氣'},
   {label:'戌狗',icon:'🛡', element:'土'},{label:'亥豬',icon:'📚',element:'水'},
 ];
+const ZICON = {}; ZODIAC.forEach(z=>ZICON[z.label]=z.icon);
 const CRITERIA = [
   {key:'content',    label:'選題需求',  desc:'選題與未滿足醫療需求洞察：是否切中真實需求、選題理由清楚有說服力'},
   {key:'design',     label:'病生理深度', desc:'研究內容正確性、病生理機轉理解深度、證據是否充分'},
@@ -556,6 +634,7 @@ const HONORIFIC_TITLES = ['教授','老師','博士','主任','院長','所長',
 createApp({
   setup() {
     const phase         = ref('signin');
+    const activeTab     = ref('score');
     const loading       = ref(false);
     const loadingMsg    = ref('');
     const submitting    = ref(false);
@@ -567,7 +646,7 @@ createApp({
     const showSummary   = ref(false);
     const showSavedFlash= ref(false);
     const returnMode    = ref(false);
-    const originalScores= ref(null);  // snapshot on returning login
+    const originalScores= ref(null);
     const returnName    = ref('');
     const nameInput     = ref(null);
     const pinRefs       = ref([null,null,null,null]);
@@ -577,6 +656,13 @@ createApp({
     const pinReject     = reactive([false,false,false,false]);
     const pinStr        = computed(() => pinDigits.join(''));
     const scores        = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
+
+    // Student-vote reference state
+    const votesState    = ref('idle');      // idle|nosession|loading|locked|closed-empty|ready|error
+    const studentTally  = ref([]);          // [{label,icon,pts,r1,r2,r3}] sorted
+    const studentVoteCount = ref(0);
+    const voteMaxPts    = ref(1);
+    let fbApp, fbDb, fbAuth, fbInited=false;
 
     let savedTimer = null;
 
@@ -590,55 +676,27 @@ createApp({
     const progressPct   = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
     const isModified    = (i, key) => originalScores.value && originalScores.value[i][key] !== scores[i][key];
     const remainCount   = i => CRITERIA.filter(c => scores[i][c.key] === 0).length;
-
-    // Star colour class: when re-scoring, distinguish base / added / removed
     const starClass = (i, key, n) => {
       const cur = scores[i][key];
       const orig = originalScores.value ? originalScores.value[i][key] : null;
-      // No comparison (first-time judge) → simple active/inactive
       if (orig === null || orig === cur) return cur >= n ? 'active s-base' : '';
-      // Modified: classify each star
-      if (cur > orig) {            // score raised
-        if (n <= orig) return 'active s-base';      // unchanged base
-        if (n <= cur)  return 'active s-added';     // newly added (green)
-        return '';
-      } else {                     // score lowered
-        if (n <= cur)  return 'active s-base';      // remaining base
-        if (n <= orig) return 'active s-removed';   // removed (red strike)
-        return '';
-      }
+      if (cur > orig) { if (n <= orig) return 'active s-base'; if (n <= cur) return 'active s-added'; return ''; }
+      else            { if (n <= cur)  return 'active s-base'; if (n <= orig) return 'active s-removed'; return ''; }
     };
     const modifiedCount = computed(() => {
       if (!originalScores.value) return 0;
       return ZODIAC.reduce((sum, _, i) => sum + CRITERIA.filter(c => isModified(i, c.key)).length, 0);
     });
     const groupSubtotal = i => { const s=scores[i]; return s.content+s.design+s.creativity+s.total; };
-    // Weighted score (what feeds ranking): 50% avg of 3 dimensions + 50% overall impression
     const DIM_WEIGHT = 0.5, IMPRESSION_WEIGHT = 0.5;
-    const groupWeighted = i => {
-      const s = scores[i];
-      const dim = (s.content + s.design + s.creativity) / 3;
-      return dim * DIM_WEIGHT + s.total * IMPRESSION_WEIGHT;
-    };
-    const groupAvg = i => {
-      const s = scores[i];
-      const vals = [s.content, s.design, s.creativity, s.total].filter(v=>v>0);
-      if (!vals.length) return '–';
-      return (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(1);
-    };
+    const groupWeighted = i => { const s=scores[i]; return (s.content+s.design+s.creativity)/3*DIM_WEIGHT + s.total*IMPRESSION_WEIGHT; };
 
-    // Online / offline
     window.addEventListener('online',  ()=>{ isOnline.value=true;  showToast('網路已恢復','success','fa-solid fa-wifi'); });
     window.addEventListener('offline', ()=>{ isOnline.value=false; showToast('網路已中斷，評分已儲存本機','warn','fa-solid fa-wifi-slash'); });
 
-    // Session restore
     onMounted(() => {
       const saved = JSON.parse(localStorage.getItem(LS_SESSION)||'null');
-      if (saved && saved.name) {
-        returnMode.value = true;
-        returnName.value = saved.name;
-        form.email = saved.email || '';
-      }
+      if (saved && saved.name) { returnMode.value=true; returnName.value=saved.name; form.email=saved.email||''; }
     });
 
     const clearReturn = () => {
@@ -647,13 +705,38 @@ createApp({
       form.name=''; form.email=''; pinDigits.forEach((_,i)=>{pinDigits[i]='';});
     };
 
-    // PIN input — NFKC normalise so full-width digits from Chinese IME
-    // (２３４５) convert to half-width before the \D filter strips them.
+    // ── Student-vote reference (gated load) ────────────────────────────
+    const openVotesTab = async () => {
+      activeTab.value = 'votes';
+      if (!EVENT_SESSION) { votesState.value='nosession'; return; }
+      if (votesState.value==='ready') return;           // already loaded
+      votesState.value = 'loading';
+      try {
+        if (!fbInited) { fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp); fbAuth=getAuth(fbApp); fbInited=true; }
+        if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
+        const st = (await get(dbRef(fbDb, `classrooms/${EVENT_SESSION}/status`))).val() || {};
+        if (st.votingClosed !== true) { votesState.value='locked'; return; }   // GATE: only after voting closed
+        const votes = (await get(dbRef(fbDb, `classrooms/${EVENT_SESSION}/posterVotes`))).val() || {};
+        studentVoteCount.value = Object.keys(votes).length;
+        const t = {}; ZODIAC.forEach(z=>t[z.label]={pts:0,r1:0,r2:0,r3:0});
+        Object.values(votes).forEach(v => {
+          if (v.rank1 && t[v.rank1]) { t[v.rank1].pts+=3; t[v.rank1].r1++; }
+          if (v.rank2 && t[v.rank2]) { t[v.rank2].pts+=2; t[v.rank2].r2++; }
+          if (v.rank3 && t[v.rank3]) { t[v.rank3].pts+=1; t[v.rank3].r3++; }
+        });
+        const arr = ZODIAC.map(z=>({label:z.label, icon:z.icon, ...t[z.label]}))
+                          .filter(g=>g.pts>0).sort((a,b)=>b.pts-a.pts);
+        studentTally.value = arr;
+        voteMaxPts.value = Math.max(1, ...arr.map(g=>g.pts));
+        votesState.value = arr.length ? 'ready' : 'closed-empty';
+      } catch(e) { votesState.value='error'; }
+    };
+
+    // ── PIN input ──────────────────────────────────────────────────────
     const focusPin = i => nextTick(()=>pinRefs.value[i]?.focus());
     let rejectTimer = null;
     const flashReject = (i) => {
-      pinReject[i] = true;
-      PIN_SOUNDS.error();
+      pinReject[i] = true; PIN_SOUNDS.error();
       showToast('識別碼僅限數字，請勿輸入中文或符號','warn','fa-solid fa-hashtag');
       if (rejectTimer) clearTimeout(rejectTimer);
       rejectTimer = setTimeout(()=>{ pinReject.forEach((_,k)=>{pinReject[k]=false;}); }, 400);
@@ -661,12 +744,7 @@ createApp({
     const onPinInput = (i, e) => {
       const raw = e.target.value || '';
       const val = raw.normalize('NFKC').replace(/\D/g,'').slice(-1);
-      // Non-digit entered (e.g. Chinese/symbol from Linux IME): reject visibly
-      if (raw.length > 0 && val === '') {
-        e.target.value = pinDigits[i] || '';   // restore previous digit
-        flashReject(i);
-        return;
-      }
+      if (raw.length > 0 && val === '') { e.target.value = pinDigits[i]||''; flashReject(i); return; }
       pinDigits[i]=val; e.target.value=val;
       if (val) {
         const allFilled = i===3 && pinDigits.every(d=>d!=='');
@@ -681,7 +759,6 @@ createApp({
       }
     };
 
-    // Sign-in
     const signIn = async () => {
       const name = returnMode.value ? returnName.value : form.name;
       if (!name || pinStr.value.length!==4) return;
@@ -693,31 +770,24 @@ createApp({
         judgeName.value=name; judgeSlot.value=json.slot;
         if (!returnMode.value) form.name=name;
         localStorage.setItem(LS_SESSION, JSON.stringify({name,slot:json.slot,email:form.email}));
-        // Restore scores: GAS sheet is authoritative for returning judges (works across devices);
-        // localStorage is only a same-device draft fallback.
         scores.forEach(s=>{s.content=0;s.design=0;s.creativity=0;s.total=0;});
         if (json.returning && Array.isArray(json.scores)) {
           json.scores.forEach((s,i)=>{ if(scores[i]) Object.assign(scores[i],s); });
-          // Snapshot server scores BEFORE applying any local draft → change-tracking baseline
           originalScores.value = scores.map(s=>({...s}));
         } else {
           const saved = localStorage.getItem(LS_SCORES(json.slot));
           if (saved) { try{JSON.parse(saved).forEach((s,i)=>{if(scores[i])Object.assign(scores[i],s);});}catch(e){} }
           originalScores.value = null;
         }
-        submitted.value=false; phase.value='scoring';
+        submitted.value=false; activeTab.value='score'; phase.value='scoring';
         showToast(json.returning?`歡迎回來，${withHonorific(name)}`:`歡迎，${withHonorific(name)}！`,
                   json.returning?'info':'success', json.returning?'fa-solid fa-handshake':'fa-solid fa-star');
       } catch(e) { showToast('連線失敗，請稍後再試','error','fa-solid fa-triangle-exclamation'); }
       finally { loading.value=false; }
     };
 
-    const backToSignIn = () => {
-      pinDigits.forEach((_,i)=>{pinDigits[i]='';});
-      phase.value='signin';
-    };
+    const backToSignIn = () => { pinDigits.forEach((_,i)=>{pinDigits[i]='';}); phase.value='signin'; };
 
-    // Scoring — toggle: click same star resets to 0
     const setScore = (i, key, val) => {
       scores[i][key] = (scores[i][key]===val) ? 0 : val;
       localStorage.setItem(LS_SCORES(judgeSlot.value), JSON.stringify(scores.map(s=>({...s}))));
@@ -725,37 +795,28 @@ createApp({
       if (savedTimer) clearTimeout(savedTimer);
       savedTimer = setTimeout(()=>{showSavedFlash.value=false;}, 1500);
     };
-
-    // Keyboard: 1-5 to score focused criteria row
-    const onCritKey = (i, key, e) => {
-      const n = parseInt(e.key);
-      if (n>=1 && n<=5) { setScore(i, key, n); e.preventDefault(); }
-    };
-
+    const onCritKey = (i, key, e) => { const n=parseInt(e.key); if (n>=1&&n<=5){ setScore(i,key,n); e.preventDefault(); } };
     const isScored    = i => CRITERIA.every(c=>scores[i][c.key]>0);
     const scoredCount = computed(() => scores.filter((_,i)=>isScored(i)).length);
 
     const scrollToIncomplete = () => {
-      const idx = ZODIAC.findIndex((_,i)=>!isScored(i));
-      if (idx<0) return;
-      const el = document.getElementById('card-'+idx);
-      if (!el) return;
-      el.scrollIntoView({behavior:'smooth', block:'center'});
-      el.classList.add('incomplete-flash');
-      setTimeout(()=>el.classList.remove('incomplete-flash'), 2500);
+      activeTab.value='score';
+      nextTick(() => {
+        const idx = ZODIAC.findIndex((_,i)=>!isScored(i));
+        if (idx<0) return;
+        const el = document.getElementById('card-'+idx);
+        if (!el) return;
+        el.scrollIntoView({behavior:'smooth', block:'center'});
+        el.classList.add('incomplete-flash');
+        setTimeout(()=>el.classList.remove('incomplete-flash'), 2500);
+      });
     };
-
     const openSummary = () => {
       if (scoredCount.value<ZODIAC.length) { scrollToIncomplete(); return; }
       if (!isOnline.value) { showToast('目前無網路，請恢復連線後再送出','warn','fa-solid fa-wifi-slash'); return; }
       showSummary.value=true;
     };
-
-    const confirmSubmit = async () => {
-      showSummary.value=false;
-      await doSubmit();
-    };
-
+    const confirmSubmit = async () => { showSummary.value=false; await doSubmit(); };
     const doSubmit = async () => {
       if (submitting.value || submitted.value) return;
       submitting.value=true;
@@ -768,34 +829,30 @@ createApp({
         if (!resp.ok||json.status==='error') throw new Error(json.message||'GAS error');
         submitted.value=true; submitTime.value=ts;
         localStorage.removeItem(LS_SCORES(judgeSlot.value));
-        // Confetti!
         try { confetti({particleCount:140, spread:80, origin:{y:0.55}, colors:['#3b82f6','#06b6d4','#f59e0b','#4ade80','#f8fafc']}); } catch(e){}
         setTimeout(()=>{phase.value='result';}, 900);
-      } catch(e) {
-        showToast('送出失敗：'+e.message,'error','fa-solid fa-triangle-exclamation');
-      } finally { submitting.value=false; }
+      } catch(e) { showToast('送出失敗：'+e.message,'error','fa-solid fa-triangle-exclamation'); }
+      finally { submitting.value=false; }
     };
 
     const copyResult = async () => {
       const lines = ZODIAC.map((z,i) =>
-        `${z.label}：選題${scores[i].content} 病生理${scores[i].design} 視覺${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(2)}`
-      );
+        `${z.label}：選題${scores[i].content} 病生理${scores[i].design} 視覺${scores[i].creativity} 整體印象${scores[i].total} 加權${groupWeighted(i).toFixed(2)}`);
       const text = `${withHonorific(judgeName.value)} 評分紀錄\n${todayStr}\n\n${lines.join('\n')}`;
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast('評分已複製到剪貼簿','success','fa-solid fa-check');
-      } catch(e) { showToast('複製失敗，請手動截圖','error'); }
+      try { await navigator.clipboard.writeText(text); showToast('評分已複製到剪貼簿','success','fa-solid fa-check'); }
+      catch(e) { showToast('複製失敗，請手動截圖','error'); }
     };
 
     return {
-      ZODIAC, GALLERY_URL, CRITERIA, phase, loading, loadingMsg, form,
+      ZODIAC, GALLERY_URL, CRITERIA, phase, activeTab, loading, loadingMsg, form,
       pinDigits, pinReject, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
-      withHonorific, groupSubtotal, groupWeighted, groupAvg, isModified, modifiedCount, originalScores, remainCount, starClass,
+      withHonorific, groupSubtotal, groupWeighted, isModified, modifiedCount, originalScores, remainCount, starClass,
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
+      openVotesTab, votesState, studentTally, studentVoteCount, voteMaxPts,
     };
   }
 }).mount('#app');
