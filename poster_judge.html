@@ -93,7 +93,7 @@
   .group-card.incomplete .status-dot{background:#1d4ed8;animation:dot-pulse 2s ease-in-out infinite;}
   @keyframes dot-pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
   .remain-badge{font-size:10px;font-weight:700;color:#60a5fa;background:#1e3a5f;border-radius:6px;padding:2px 7px;margin-left:4px;}
-  .criteria-row.unscored .stars .star:not(.active){color:#1e3a5f;}
+  .criteria-row.unscored .stars .star:not(.active){color:#3b5a8f;}
   .criteria-row.unscored .criteria-label{color:#60a5fa;}
 
   /* ── Re-score star colours ── */
@@ -116,15 +116,26 @@
   .status-dot{width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;transition:background .3s;}
   .criteria-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-radius:6px;padding:2px 4px;transition:background .1s;outline:none;}
   .criteria-row:focus{background:#0f172a;box-shadow:0 0 0 2px #3b82f6;}
-  .criteria-label{font-size:11px;color:#94a3b8;flex-shrink:0;width:68px;}
-  .stars{display:flex;gap:3px;}
-  .star{font-size:20px;cursor:pointer;color:#334155;transition:color .1s,transform .1s;line-height:1;user-select:none;padding:2px;}
+  .criteria-label{font-size:12px;color:#cbd5e1;flex-shrink:0;width:72px;font-weight:600;}
+  .stars{display:flex;gap:5px;}
+  .star{font-size:22px;cursor:pointer;color:#475569;transition:color .1s,transform .1s;line-height:1;user-select:none;padding:3px;}
   .star:hover,.star.active{color:#f59e0b;}
-  .star:hover{transform:scale(1.15);}
+  .star:hover{transform:scale(1.18);}
   .star.active{text-shadow:0 0 8px rgba(245,158,11,.5);}
-  @media(max-width:480px){.star{font-size:28px;padding:6px 3px;}.criteria-label{font-size:10px;width:60px;}}
+  @media(max-width:480px){.star{font-size:30px;padding:7px 4px;}.criteria-label{font-size:11px;width:64px;}}
   .kb-hint{font-size:9px;color:#334155;font-family:monospace;margin-left:4px;}
   .criteria-row:focus .kb-hint{color:#475569;}
+  /* row separation to prevent mis-fill */
+  .criteria-row{margin-bottom:4px;border-bottom:1px solid #0f172a;padding-bottom:6px;}
+  .criteria-row:nth-child(odd){background:rgba(255,255,255,.015);}
+  /* 整體總分 — visually separated overall rating */
+  .criteria-row.is-total{margin-top:8px;border-top:2px solid #334155;padding-top:10px;border-bottom:none;background:rgba(245,158,11,.05);border-radius:8px;padding-left:8px;padding-right:6px;}
+  .criteria-row.is-total .criteria-label{color:#fbbf24;}
+  .total-tag{font-size:8px;font-weight:700;color:#f59e0b;background:#451a03;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
+  /* re-score colour legend */
+  .star-legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:8px 14px;margin-bottom:18px;font-size:11px;}
+  .star-legend span{display:inline-flex;align-items:center;gap:5px;color:#94a3b8;}
+  .star-legend i{font-size:13px;}
 
   /* ── Submit bar ── */
   .submit-bar{position:fixed;bottom:0;left:0;right:0;background:#0f172a;border-top:1px solid #1e293b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
@@ -334,6 +345,13 @@
         <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i>
       </a>
 
+      <!-- Re-score colour legend -->
+      <div v-if="originalScores" class="star-legend">
+        <span><i class="fa-solid fa-star" style="color:#f59e0b;"></i> 原評分</span>
+        <span><i class="fa-solid fa-star" style="color:#4ade80;"></i> 新增</span>
+        <span><i class="fa-solid fa-star" style="color:#ef4444;"></i> 移除</span>
+      </div>
+
       <div class="group-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label" :id="'card-'+i"
              :class="['group-card', isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
@@ -357,10 +375,11 @@
           </div>
           <div v-for="c in CRITERIA" :key="c.key"
                :class="['criteria-row',
+                 c.key === 'total' ? 'is-total' : '',
                  isModified(i, c.key) ? 'modified' : '',
                  scores[i][c.key] === 0 ? 'unscored' : '']"
                tabindex="0" @keydown="onCritKey(i, c.key, $event)">
-            <div class="criteria-label">{{ c.label }}</div>
+            <div class="criteria-label">{{ c.label }}<span v-if="c.key==='total'" class="total-tag">綜合</span></div>
             <div class="stars">
               <span v-for="n in 5" :key="n"
                     :class="['star', starClass(i, c.key, n)]"
