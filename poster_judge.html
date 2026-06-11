@@ -40,6 +40,9 @@
   .pin-box:focus{border-color:#3b82f6;}
   .pin-box.filled{border-color:#475569;color:#f59e0b;}
   @media(max-width:380px){.pin-box{width:46px;height:54px;font-size:20px;}}
+  .pin-box.reject{border-color:#ef4444 !important;animation:pinShake .35s ease;}
+  @keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .digit-only-tag{font-size:9px;font-weight:700;color:#fbbf24;background:#451a03;border:1px solid #f59e0b;border-radius:5px;padding:1px 6px;margin-left:auto;letter-spacing:.5px;text-transform:none;}
   .pin-hint{font-size:11px;color:#475569;text-align:center;margin-top:10px;line-height:1.7;}
   .pin-notice{background:#172032;border:1px solid #1e3a5f;border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11px;color:#64748b;line-height:1.7;}
   .pin-notice strong{color:#93c5fd;}
@@ -282,9 +285,9 @@
           </div>
         </div>
         <div class="field">
-          <div class="field-label"><i class="fa-solid fa-grid-2"></i> 識別碼</div>
+          <div class="field-label"><i class="fa-solid fa-grid-2"></i> 識別碼<span class="digit-only-tag"><i class="fa-solid fa-hashtag"></i> 僅數字</span></div>
           <div class="pin-boxes">
-            <input v-for="i in 4" :key="i" :class="['pin-box', pinDigits[i-1]?'filled':'']"
+            <input v-for="i in 4" :key="i" :class="['pin-box', pinDigits[i-1]?'filled':'', pinReject[i-1]?'reject':'']"
                    type="tel" inputmode="numeric" maxlength="1" autocomplete="off"
                    :value="pinDigits[i-1]" @input="onPinInput(i-1,$event)" @keydown="onPinKey(i-1,$event)"
                    :ref="el=>{if(el)pinRefs[i-1]=el}" />
@@ -308,9 +311,9 @@
                  placeholder="your@email.com（可略過）" autocomplete="email" />
         </div>
         <div class="field">
-          <div class="field-label"><i class="fa-solid fa-grid-2"></i> 個人識別碼（4位數字）</div>
+          <div class="field-label"><i class="fa-solid fa-grid-2"></i> 個人識別碼<span class="digit-only-tag"><i class="fa-solid fa-hashtag"></i> 僅數字</span></div>
           <div class="pin-boxes">
-            <input v-for="i in 4" :key="i" :class="['pin-box', pinDigits[i-1]?'filled':'']"
+            <input v-for="i in 4" :key="i" :class="['pin-box', pinDigits[i-1]?'filled':'', pinReject[i-1]?'reject':'']"
                    type="tel" inputmode="numeric" maxlength="1" autocomplete="off"
                    :value="pinDigits[i-1]" @input="onPinInput(i-1,$event)" @keydown="onPinKey(i-1,$event)"
                    :ref="el=>{if(el)pinRefs[i-1]=el}" />
@@ -571,6 +574,7 @@ createApp({
     const toast         = reactive({msg:'', type:'success', icon:''});
     const form          = reactive({name:'', email:''});
     const pinDigits     = reactive(['','','','']);
+    const pinReject     = reactive([false,false,false,false]);
     const pinStr        = computed(() => pinDigits.join(''));
     const scores        = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
 
@@ -646,8 +650,23 @@ createApp({
     // PIN input — NFKC normalise so full-width digits from Chinese IME
     // (２３４５) convert to half-width before the \D filter strips them.
     const focusPin = i => nextTick(()=>pinRefs.value[i]?.focus());
+    let rejectTimer = null;
+    const flashReject = (i) => {
+      pinReject[i] = true;
+      PIN_SOUNDS.error();
+      showToast('識別碼僅限數字，請勿輸入中文或符號','warn','fa-solid fa-hashtag');
+      if (rejectTimer) clearTimeout(rejectTimer);
+      rejectTimer = setTimeout(()=>{ pinReject.forEach((_,k)=>{pinReject[k]=false;}); }, 400);
+    };
     const onPinInput = (i, e) => {
-      const val = (e.target.value || '').normalize('NFKC').replace(/\D/g,'').slice(-1);
+      const raw = e.target.value || '';
+      const val = raw.normalize('NFKC').replace(/\D/g,'').slice(-1);
+      // Non-digit entered (e.g. Chinese/symbol from Linux IME): reject visibly
+      if (raw.length > 0 && val === '') {
+        e.target.value = pinDigits[i] || '';   // restore previous digit
+        flashReject(i);
+        return;
+      }
       pinDigits[i]=val; e.target.value=val;
       if (val) {
         const allFilled = i===3 && pinDigits.every(d=>d!=='');
@@ -770,7 +789,7 @@ createApp({
 
     return {
       ZODIAC, GALLERY_URL, CRITERIA, phase, loading, loadingMsg, form,
-      pinDigits, pinStr, judgeName, submitting, submitted, submitTime,
+      pinDigits, pinReject, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
       withHonorific, groupSubtotal, groupWeighted, groupAvg, isModified, modifiedCount, originalScores, remainCount, starClass,
