@@ -82,10 +82,19 @@
   .offline-bar{background:#450a0a;border-top:1px solid #7f1d1d;padding:8px 24px;text-align:center;font-size:12px;color:#f87171;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;}
 
   /* ── Modified score indicator ── */
-  .criteria-row.modified{border-left:3px solid #f59e0b;padding-left:8px;background:rgba(245,158,11,.04);border-radius:0 6px 6px 0;}
-  .old-val{font-size:10px;color:#64748b;text-decoration:line-through;margin-right:3px;}
-  .arrow-val{font-size:10px;color:#f59e0b;margin-right:2px;}
-  .modified-badge{display:inline-flex;align-items:center;gap:5px;background:#451a03;border:1px solid #f59e0b;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#fbbf24;}
+  .criteria-row.modified{border-left:3px solid #f59e0b;padding-left:8px;background:rgba(245,158,11,.12);border-radius:0 8px 8px 0;margin-left:-4px;}
+  .old-val{font-size:11px;color:#94a3b8;text-decoration:line-through;font-weight:600;margin-right:2px;}
+  .arrow-val{font-size:12px;color:#fb923c;font-weight:800;margin-right:2px;}
+  .new-val-highlight{color:#fbbf24 !important;font-size:13px !important;}
+  .modified-badge{display:inline-flex;align-items:center;gap:5px;background:#451a03;border:1px solid #f97316;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#fb923c;}
+
+  /* ── Incomplete card ── */
+  .group-card.incomplete{border-color:#1e3a5f;border-style:dashed;}
+  .group-card.incomplete .status-dot{background:#1d4ed8;animation:dot-pulse 2s ease-in-out infinite;}
+  @keyframes dot-pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+  .remain-badge{font-size:10px;font-weight:700;color:#60a5fa;background:#1e3a5f;border-radius:6px;padding:2px 7px;margin-left:4px;}
+  .criteria-row.unscored .stars .star:not(.active){color:#1e3a5f;}
+  .criteria-row.unscored .criteria-label{color:#60a5fa;}
 
   /* ── Group cards ── */
   .group-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -321,11 +330,19 @@
 
       <div class="group-grid">
         <div v-for="(z, i) in ZODIAC" :key="z.label" :id="'card-'+i"
-             :class="['group-card', isScored(i)?'scored':'']">
+             :class="['group-card', isScored(i)?'scored': remainCount(i)>0 && remainCount(i)<4 ?'incomplete':'']">
           <div class="card-header">
             <div class="zodiac-icon">{{ z.icon }}</div>
             <div>
-              <div class="zodiac-name">{{ z.label }}</div>
+              <div class="zodiac-name">
+                {{ z.label }}
+                <span v-if="!isScored(i) && remainCount(i) < 4" class="remain-badge">
+                  還差 {{ remainCount(i) }}
+                </span>
+                <span v-if="!isScored(i) && remainCount(i) === 4" class="remain-badge">
+                  未評分
+                </span>
+              </div>
               <div style="font-size:11px;color:#64748b;">{{ z.element }} · 第 {{ i+1 }} 組</div>
             </div>
             <div :class="['card-subtotal', groupSubtotal(i)===0?'zero':'']">
@@ -333,7 +350,9 @@
             </div>
           </div>
           <div v-for="c in CRITERIA" :key="c.key"
-               :class="['criteria-row', isModified(i, c.key) ? 'modified' : '']"
+               :class="['criteria-row',
+                 isModified(i, c.key) ? 'modified' : '',
+                 scores[i][c.key] === 0 ? 'unscored' : '']"
                tabindex="0" @keydown="onCritKey(i, c.key, $event)">
             <div class="criteria-label">{{ c.label }}</div>
             <div class="stars">
@@ -346,7 +365,8 @@
                 <span class="old-val">{{ originalScores[i][c.key] }}</span>
                 <span class="arrow-val">→</span>
               </template>
-              <div style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
+              <div :class="['new-val', isModified(i,c.key)?'new-val-highlight':'']"
+                   style="font-size:12px;font-weight:700;color:#f59e0b;width:20px;text-align:right;">
                 {{ scores[i][c.key] || '–' }}
               </div>
               <span class="kb-hint">1-5</span>
@@ -497,6 +517,7 @@ createApp({
 
     const progressPct   = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
     const isModified    = (i, key) => originalScores.value && originalScores.value[i][key] !== scores[i][key];
+    const remainCount   = i => CRITERIA.filter(c => scores[i][c.key] === 0).length;
     const modifiedCount = computed(() => {
       if (!originalScores.value) return 0;
       return ZODIAC.reduce((sum, _, i) => sum + CRITERIA.filter(c => isModified(i, c.key)).length, 0);
@@ -651,7 +672,7 @@ createApp({
       pinDigits, pinStr, judgeName, submitting, submitted, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
-      withHonorific, groupSubtotal, groupAvg, isModified, modifiedCount, originalScores,
+      withHonorific, groupSubtotal, groupAvg, isModified, modifiedCount, originalScores, remainCount,
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
