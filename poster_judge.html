@@ -31,7 +31,10 @@
   @media(max-width:480px){.panel{padding:32px 22px;border-radius:16px;}}
 
   /* ── Sign-in ── */
-  .signin-header{text-align:center;margin-bottom:28px;}
+  .signin-header{text-align:center;margin-bottom:20px;}
+  .warn-notice{display:flex;gap:10px;align-items:flex-start;background:#3a2410;border:1px solid var(--accent);border-radius:12px;padding:13px 16px;margin-bottom:22px;font-size:12.5px;color:var(--accent-l);line-height:1.7;}
+  .warn-notice i{font-size:16px;margin-top:1px;flex-shrink:0;}
+  .warn-notice b{color:#fff;}
   .signin-header .icon{font-size:40px;margin-bottom:14px;}
   .signin-header h1{font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;}
   .signin-header p{font-size:12px;color:var(--faint);line-height:1.6;}
@@ -298,6 +301,11 @@
         <div class="icon">🏆</div>
         <h1>海報評審系統</h1>
         <p>藥學系 Pathophysiology · Poster Review 2026<br>請登入以開始評審</p>
+      </div>
+
+      <div class="warn-notice">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span><b>請勿使用無痕模式評分</b>，且<b>請勿在多台裝置同時登入同一個識別碼</b>。否則評分可能無法儲存或互相覆蓋。</span>
       </div>
 
       <template v-if="returnMode">
@@ -637,6 +645,19 @@ const CRITERIA = [
 ];
 const HONORIFIC_TITLES = ['教授','老師','博士','主任','院長','所長','醫師','醫生','副教授'];
 
+// POST to GAS with a 10s timeout — aborts and throws a clear error if no response.
+async function postGAS(payload, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms || 10000);
+  try {
+    const resp = await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload), signal: ctrl.signal });
+    return await resp.json();
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('連線逾時（超過 10 秒），請檢查網路後重試');
+    throw new Error('連線失敗，請檢查網路後重試');
+  } finally { clearTimeout(timer); }
+}
+
 createApp({
   setup() {
     const phase         = ref('signin');
@@ -771,8 +792,7 @@ createApp({
       if (!name || pinStr.value.length!==4) return;
       loading.value=true; loadingMsg.value='正在驗證身份…';
       try {
-        const resp = await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'loginJudge',secret:GAS_SECRET,name,pin:pinStr.value,email:form.email})});
-        const json = await resp.json();
+        const json = await postGAS({action:'loginJudge',secret:GAS_SECRET,name,pin:pinStr.value,email:form.email,origin:location.origin});
         if (json.status==='error') { PIN_SOUNDS.error(); showToast(json.message,'error','fa-solid fa-triangle-exclamation'); return; }
         judgeName.value=name; judgeSlot.value=json.slot;
         if (!returnMode.value) form.name=name;
@@ -789,7 +809,7 @@ createApp({
         submitted.value=false; activeTab.value='score'; phase.value='scoring';
         showToast(json.returning?`歡迎回來，${withHonorific(name)}`:`歡迎，${withHonorific(name)}！`,
                   json.returning?'info':'success', json.returning?'fa-solid fa-handshake':'fa-solid fa-star');
-      } catch(e) { showToast('連線失敗，請稍後再試','error','fa-solid fa-triangle-exclamation'); }
+      } catch(e) { showToast(e.message||'連線失敗，請稍後再試','error','fa-solid fa-triangle-exclamation'); }
       finally { loading.value=false; }
     };
 
@@ -831,9 +851,8 @@ createApp({
         const now=new Date();
         const ts=now.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
         const rows=ZODIAC.map((z,i)=>({zodiac:z.label,element:z.element,content:scores[i].content,design:scores[i].design,creativity:scores[i].creativity,total:scores[i].total}));
-        const resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'judgeScore',judge:judgeSlot.value,judgeName:judgeName.value,judgeEmail:form.email,secret:GAS_SECRET,rows,timestamp:now.toISOString()})});
-        const json=await resp.json();
-        if (!resp.ok||json.status==='error') throw new Error(json.message||'GAS error');
+        const json=await postGAS({action:'judgeScore',judge:judgeSlot.value,judgeName:judgeName.value,judgeEmail:form.email,secret:GAS_SECRET,rows,timestamp:now.toISOString(),origin:location.origin});
+        if (json.status==='error') throw new Error(json.message||'GAS error');
         submitted.value=true; submitTime.value=ts;
         localStorage.removeItem(LS_SCORES(judgeSlot.value));
         // Monochrome blue + silver — on-brand, restrained (result screen already shows green ✅)

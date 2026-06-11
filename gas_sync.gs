@@ -1,5 +1,10 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.12
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.13
+ *
+ * Changes from v5.12:
+ *   - Judge actions (loginJudge/judgeScore) also verify client-sent origin
+ *     (originAllowed_) on top of the secret. GAS can't read real Origin headers,
+ *     so this is a soft layer; allowlist = jnynlin.github.io + localhost.
  *
  * Changes from v5.11:
  *   - FIX: PIN stored as TEXT (number format '@'). Sheets was coercing the
@@ -46,6 +51,15 @@ function doPost(e) {
     if (data.secret !== GAS_SECRET) {
       return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Forbidden' }))
         .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── Judge actions: also verify the request origin (client-sent; soft layer
+    //    on top of the secret — GAS web apps can't read real Origin headers) ──
+    if (data.action === 'loginJudge' || data.action === 'judgeScore') {
+      if (!originAllowed_(data.origin)) {
+        return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: '來源不符，請從正式評審連結進入' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
     }
 
     // ── Judge login / slot claim ────────────────────────────────────────
@@ -181,6 +195,16 @@ var JUDGE_COL     = { A: 3, B: 7, C: 11 };  // start col of each judge's 4-col b
 var NAME_ROW      = 15;
 var PIN_ROW       = 16;
 var EMAIL_ROW     = 17;
+
+// Client-sent origin allowlist (judge actions). GAS web apps cannot read the real
+// Origin header, so the client sends location.origin; this is a soft layer on top of
+// the shared secret. Add custom domains here if the tool is ever rehosted.
+function originAllowed_(o) {
+  o = (o || '').toString();
+  return o.indexOf('https://jnynlin.github.io') === 0
+      || o.indexOf('http://localhost') === 0
+      || o.indexOf('http://127.0.0.1') === 0;
+}
 
 function getOrCreateJudgeSheet_() {
   var ss    = SpreadsheetApp.getActiveSpreadsheet();
