@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>風格參考 — 海報評審工具</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','PingFang TC','Microsoft JhengHei',sans-serif;}
+  body{background:#0a0a0c;color:#e4e4e7;padding:32px 16px 80px;}
+  .page{max-width:1180px;margin:0 auto;}
+  .page-h{text-align:center;margin-bottom:32px;}
+  .page-h h1{font-size:22px;font-weight:900;color:#fff;}
+  .page-h p{font-size:13px;color:#71717a;margin-top:6px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px;}
+  .variant{border-radius:18px;overflow:hidden;border:1px solid #27272a;}
+  .v-tag{padding:12px 16px;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:space-between;}
+  .v-tag small{font-weight:500;opacity:.7;font-size:11px;}
+  .v-body{padding:18px;}
+
+  /* shared sample structure ----------------------------------------- */
+  .demo-gallery{display:flex;align-items:center;justify-content:space-between;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;margin-bottom:10px;}
+  .demo-tabs{display:flex;gap:5px;border-radius:11px;padding:4px;margin-bottom:16px;font-size:11px;font-weight:700;}
+  .demo-tabs span{flex:1;text-align:center;padding:7px;border-radius:8px;}
+  .card{border-radius:16px;padding:16px;}
+  .card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .c-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0;}
+  .c-ico{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .c-name{font-weight:800;font-size:16px;}
+  .c-sub{font-size:10px;opacity:.6;}
+  .c-badge{margin-left:auto;border-radius:8px;padding:3px 10px;font-size:13px;font-weight:900;}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;}
+  .row-l{font-size:12px;font-weight:600;width:74px;flex-shrink:0;}
+  .nums{display:flex;gap:5px;}
+  .nb{width:28px;height:28px;border-radius:7px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+
+  /* ============ V1 — Vivid Indigo (dark, lively-pro) ============ */
+  .v1{background:#18181b;}
+  .v1 .v-tag{background:linear-gradient(90deg,#4f46e5,#0ea5e9);color:#fff;}
+  .v1 .demo-gallery{background:linear-gradient(90deg,#7c3aed22,#0ea5e922);border:1px solid #6366f1;color:#c7d2fe;}
+  .v1 .demo-tabs{background:#27272a;}
+  .v1 .demo-tabs span{color:#a1a1aa;}
+  .v1 .demo-tabs span.on{background:linear-gradient(90deg,#4f46e5,#6366f1);color:#fff;box-shadow:0 2px 10px #4f46e555;}
+  .v1 .card{background:#27272a;border:1px solid #3f3f46;position:relative;overflow:hidden;}
+  .v1 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#4f46e5,#0ea5e9);}
+  .v1 .c-num{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;}
+  .v1 .c-ico{background:#18181b;color:#818cf8;}
+  .v1 .c-name{color:#fff;}.v1 .c-sub{color:#a1a1aa;}
+  .v1 .c-badge{background:#3f2d0a;color:#fbbf24;}
+  .v1 .row-l{color:#d4d4d8;}
+  .v1 .nb{background:#18181b;border-color:#3f3f46;color:#71717a;}
+  .v1 .nb.on{background:linear-gradient(135deg,#4f46e5,#6366f1);border-color:#6366f1;color:#fff;box-shadow:0 0 10px #4f46e588;}
+
+  /* ============ V2 — Light Academic (clean & fresh) ============ */
+  .v2{background:#f4f4f5;}
+  .v2 .v-tag{background:#4f46e5;color:#fff;}
+  .v2 .demo-gallery{background:#fff7ed;border:1px solid #fdba74;color:#c2410c;}
+  .v2 .demo-tabs{background:#e4e4e7;}
+  .v2 .demo-tabs span{color:#71717a;}
+  .v2 .demo-tabs span.on{background:#fff;color:#4f46e5;box-shadow:0 1px 4px #00000018;}
+  .v2 .card{background:#fff;border:1px solid #e4e4e7;box-shadow:0 4px 16px #0000000d;}
+  .v2 .c-num{background:#4f46e5;color:#fff;}
+  .v2 .c-ico{background:#eef2ff;color:#4f46e5;}
+  .v2 .c-name{color:#18181b;}.v2 .c-sub{color:#a1a1aa;}
+  .v2 .c-badge{background:#fef3c7;color:#b45309;}
+  .v2 .row{border-bottom:1px solid #f4f4f5;}
+  .v2 .row-l{color:#3f3f46;}
+  .v2 .nb{background:#fff;border-color:#d4d4d8;color:#a1a1aa;}
+  .v2 .nb.on{background:#f59e0b;border-color:#f59e0b;color:#fff;box-shadow:0 2px 8px #f59e0b66;}
+
+  /* ============ V4 — B light base + A gradient buttons (CHOSEN) ============ */
+  .v4{background:#f4f4f5;}
+  .v4 .v-tag{background:linear-gradient(90deg,#4f46e5,#0ea5e9);color:#fff;}
+  .v4 .demo-gallery{background:#eef2ff;border:1px solid #c7d2fe;color:#4338ca;}
+  .v4 .demo-tabs{background:#e4e4e7;}
+  .v4 .demo-tabs span{color:#71717a;}
+  .v4 .demo-tabs span.on{background:linear-gradient(90deg,#4f46e5,#6366f1);color:#fff;box-shadow:0 2px 10px #4f46e555;}
+  .v4 .card{background:#fff;border:1px solid #e4e4e7;box-shadow:0 4px 18px #0000000f;position:relative;overflow:hidden;}
+  .v4 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#4f46e5,#0ea5e9);}
+  .v4 .c-num{background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;}
+  .v4 .c-ico{background:#eef2ff;color:#4f46e5;}
+  .v4 .c-name{color:#18181b;}.v4 .c-sub{color:#a1a1aa;}
+  .v4 .c-badge{background:#fef3c7;color:#b45309;}
+  .v4 .row{border-bottom:1px solid #f4f4f5;}
+  .v4 .row-l{color:#3f3f46;}
+  .v4 .nb{background:#fff;border-color:#d4d4d8;color:#a1a1aa;}
+  .v4 .nb.on{background:linear-gradient(135deg,#4f46e5,#6366f1);border-color:#6366f1;color:#fff;box-shadow:0 2px 10px #4f46e566;}
+
+  /* ============ V3 — Bold Color-Block (energetic) ============ */
+  .v3{background:#0c0a1a;}
+  .v3 .v-tag{background:linear-gradient(90deg,#db2777,#f59e0b);color:#fff;}
+  .v3 .demo-gallery{background:#f59e0b;color:#1a1206;border:none;}
+  .v3 .demo-tabs{background:#1e1b2e;}
+  .v3 .demo-tabs span{color:#a78bfa;}
+  .v3 .demo-tabs span.on{background:#db2777;color:#fff;}
+  .v3 .card{background:#1a1730;border:1px solid #2e2a45;overflow:hidden;padding:0;}
+  .v3 .card-band{background:linear-gradient(90deg,#7c3aed,#db2777);padding:12px 16px;display:flex;align-items:center;gap:10px;}
+  .v3 .card-inner{padding:14px 16px;}
+  .v3 .c-ico{background:#ffffff22;color:#fff;}
+  .v3 .c-name{color:#fff;}.v3 .c-sub{color:#e9d5ff;}
+  .v3 .c-badge{background:#fff;color:#7c3aed;margin-left:auto;}
+  .v3 .row-l{color:#c4b5fd;}
+  .v3 .nb{background:#0c0a1a;border-color:#3b3458;color:#6d6489;}
+  .v3 .nb.on{background:#f59e0b;border-color:#f59e0b;color:#1a1206;box-shadow:0 0 10px #f59e0baa;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-h">
+    <h1>🎨 海報評審工具 — 風格參考</h1>
+    <p>同一張評分卡的三種「活潑 × 專業」方向，請挑你喜歡的（或指定要混搭哪幾個元素）</p>
+  </div>
+
+  <!-- ★ Featured combo: B light base + A gradient buttons -->
+  <div class="variant v4" style="margin-bottom:26px;border:2px solid #4f46e5;">
+    <div class="v-tag">★ 你選的混搭 · 清新淺色 + 活力漸層按鈕<small>light & clean + gradient pop</small></div>
+    <div class="v-body" style="max-width:520px;margin:0 auto;">
+      <div class="demo-gallery"><span><i class="fa-solid fa-images"></i> 查看海報展覽 Gallery</span><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i></div>
+      <div class="demo-tabs"><span>說明</span><span class="on">評分</span><span>學生票選參考</span></div>
+      <div class="card">
+        <div class="card-h">
+          <div class="c-num">5</div>
+          <div class="c-ico"><i class="fa-solid fa-star"></i></div>
+          <div><div class="c-name">辰龍</div><div class="c-sub">土行 · 第 5 組</div></div>
+          <div class="c-badge">4.5</div>
+        </div>
+        <div class="row"><span class="row-l">選題需求</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+        <div class="row"><span class="row-l">病生理深度</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+        <div class="row"><span class="row-l">視覺表達</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+        <div class="row" style="background:#fef3c7;border-radius:8px;border:none;"><span class="row-l" style="color:#b45309;">整體印象</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#71717a;margin-top:10px;">白底乾淨 + 靛藍漸層 tab/數字鈕發光 + 卡頂漸層條 + 琥珀分數</div>
+    </div>
+  </div>
+
+  <p style="text-align:center;font-size:12px;color:#52525b;margin-bottom:14px;">↓ 以下為原始三方案參考</p>
+
+  <div class="grid">
+
+    <!-- V1 -->
+    <div class="variant v1">
+      <div class="v-tag">方案 A · 活力靛藍（深色）<small>漸層・科技感・專業</small></div>
+      <div class="v-body">
+        <div class="demo-gallery"><span><i class="fa-solid fa-images"></i> 查看海報展覽</span><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i></div>
+        <div class="demo-tabs"><span>說明</span><span class="on">評分</span><span>學生票選</span></div>
+        <div class="card">
+          <div class="card-h">
+            <div class="c-num">5</div>
+            <div class="c-ico"><i class="fa-solid fa-star"></i></div>
+            <div><div class="c-name">辰龍</div><div class="c-sub">土行 · 第 5 組</div></div>
+            <div class="c-badge">4.5</div>
+          </div>
+          <div class="row"><span class="row-l">選題需求</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+          <div class="row"><span class="row-l">病生理深度</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+          <div class="row"><span class="row-l">視覺表達</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+          <div class="row" style="background:#3f2d0a44;border-radius:8px;"><span class="row-l" style="color:#fbbf24;">整體印象</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2 -->
+    <div class="variant v2">
+      <div class="v-tag">方案 B · 清新學院（淺色）<small>明亮・乾淨・現代專業</small></div>
+      <div class="v-body">
+        <div class="demo-gallery"><span><i class="fa-solid fa-images"></i> 查看海報展覽</span><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i></div>
+        <div class="demo-tabs"><span>說明</span><span class="on">評分</span><span>學生票選</span></div>
+        <div class="card">
+          <div class="card-h">
+            <div class="c-num">5</div>
+            <div class="c-ico"><i class="fa-solid fa-star"></i></div>
+            <div><div class="c-name">辰龍</div><div class="c-sub">土行 · 第 5 組</div></div>
+            <div class="c-badge">4.5</div>
+          </div>
+          <div class="row"><span class="row-l">選題需求</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+          <div class="row"><span class="row-l">病生理深度</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+          <div class="row"><span class="row-l">視覺表達</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+          <div class="row" style="background:#fef3c7;border-radius:8px;border:none;"><span class="row-l" style="color:#b45309;">整體印象</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V3 -->
+    <div class="variant v3">
+      <div class="v-tag">方案 C · 繽紛色塊（深色）<small>強烈・年輕・吸睛</small></div>
+      <div class="v-body">
+        <div class="demo-gallery"><span><i class="fa-solid fa-images"></i> 查看海報展覽</span><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i></div>
+        <div class="demo-tabs"><span>說明</span><span class="on">評分</span><span>學生票選</span></div>
+        <div class="card">
+          <div class="card-band">
+            <div class="c-ico"><i class="fa-solid fa-star"></i></div>
+            <div><div class="c-name">辰龍</div><div class="c-sub">土行 · 第 5 組</div></div>
+            <div class="c-badge">4.5</div>
+          </div>
+          <div class="card-inner">
+            <div class="row"><span class="row-l">選題需求</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+            <div class="row"><span class="row-l">病生理深度</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+            <div class="row"><span class="row-l">視覺表達</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb on">4</div><div class="nb">5</div></div></div>
+            <div class="row"><span class="row-l" style="color:#fbbf24;">整體印象</span><div class="nums"><div class="nb">1</div><div class="nb">2</div><div class="nb">3</div><div class="nb">4</div><div class="nb on">5</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;margin-top:30px;font-size:12px;color:#52525b;line-height:1.9;">
+    A＝目前 zinc 深色再「點亮」(漸層+發光)　·　B＝改成淺色乾淨學院風　·　C＝彩色色塊強烈年輕<br>
+    告訴我選哪個方案，或「要 A 的卡片 + B 的淺色」等混搭，我再套進正式工具。
+  </div>
+</div>
+</body>
+</html>
