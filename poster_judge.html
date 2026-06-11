@@ -133,8 +133,13 @@
   .group-card:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.25);}
   .group-card.scored{border-color:var(--ok);}
   .group-card.scored .status-dot{background:var(--ok);}
-  .elem-水{--elem-color:#38bdf8;}.elem-火{--elem-color:#f87171;}.elem-木{--elem-color:#4ade80;}
-  .elem-土{--elem-color:#d4a574;}.elem-氣{--elem-color:#c084fc;}
+  /* 群組識別色:刻意全用「冷色/中性」(藍/靛/青/灰/紫),無好壞價值暗示，
+     避免評審被卡片顏色帶分;紅/綠/琥珀嚴格保留給語意(錯誤/完成/分數)。 */
+  .elem-水{--elem-color:#38bdf8;}  /* sky */
+  .elem-火{--elem-color:#818cf8;}  /* indigo — NOT red */
+  .elem-木{--elem-color:#22d3ee;}  /* cyan — NOT green */
+  .elem-土{--elem-color:#94a3b8;}  /* slate */
+  .elem-氣{--elem-color:#c084fc;}  /* violet */
   .card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
   .group-num{width:30px;height:30px;border-radius:8px;background:var(--elem-color,#475569);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;}
   .zodiac-icon{width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
@@ -376,15 +381,15 @@
 
       <!-- Tab bar -->
       <div class="tabbar">
+        <button :class="{active:activeTab==='info'}" @click="activeTab='info'">
+          <i class="fa-solid fa-circle-info ticon"></i><span class="tlabel">說明</span>
+        </button>
         <button :class="{active:activeTab==='score'}" @click="activeTab='score'">
           <i class="fa-solid fa-star-half-stroke ticon"></i><span class="tlabel">評分</span>
           <span v-if="scoredCount<ZODIAC.length" class="dot"></span>
         </button>
-        <button :class="{active:activeTab==='info'}" @click="activeTab='info'">
-          <i class="fa-solid fa-circle-info ticon"></i><span class="tlabel">說明</span>
-        </button>
         <button :class="{active:activeTab==='votes'}" @click="openVotesTab">
-          <i class="fa-solid fa-fire ticon"></i><span class="tlabel">學生票選參考</span>
+          <i class="fa-solid fa-chart-simple ticon"></i><span class="tlabel">學生票選參考</span>
         </button>
       </div>
 
