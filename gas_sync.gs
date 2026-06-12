@@ -1,5 +1,9 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.14
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.15
+ *
+ * Changes from v5.14:
+ *   - Confirmation email: remove 元素 column; add 加權分 column
+ *     (= (content+design+creativity)/3 × 50% + total × 50%, rounded to 1 dp)
  *
  * Changes from v5.13:
  *   - Confirmation email now includes a clickable Padlet button (PADLET_GALLERY)
@@ -383,14 +387,16 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
 
   var tableRows = '';
   rows.forEach(function(r) {
+    var dims = (Number(r.content) + Number(r.design) + Number(r.creativity)) / 3;
+    var weighted = Math.round((dims * 0.5 + Number(r.total) * 0.5) * 10) / 10;
     tableRows +=
       '<tr>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #334155;color:#f8fafc;">' + r.zodiac + '</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #334155;color:#94a3b8;">' + (r.element || '') + '</td>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;color:#e2e8f0;">' + r.content + '</td>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;color:#e2e8f0;">' + r.design + '</td>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;color:#e2e8f0;">' + r.creativity + '</td>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;font-weight:700;color:#f59e0b;">' + r.total + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #334155;text-align:center;font-weight:800;color:#34d399;">' + weighted + '</td>' +
       '</tr>';
   });
 
@@ -414,11 +420,11 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
     '<thead>' +
     '<tr style="background:#0f172a;">' +
     '<th style="padding:10px 12px;text-align:left;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">組別</th>' +
-    '<th style="padding:10px 12px;text-align:left;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">元素</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">選題需求</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">病生理深度</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#60a5fa;font-weight:600;border-bottom:2px solid #1e293b;">視覺表達</th>' +
     '<th style="padding:10px 12px;text-align:center;color:#f59e0b;font-weight:600;border-bottom:2px solid #1e293b;">整體印象</th>' +
+    '<th style="padding:10px 12px;text-align:center;color:#34d399;font-weight:600;border-bottom:2px solid #1e293b;">加權分</th>' +
     '</tr>' +
     '</thead>' +
     '<tbody>' + tableRows + '</tbody>' +
