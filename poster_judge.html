@@ -784,7 +784,8 @@ createApp({
 
     const openVotesTab = async (forceSid) => {
       activeTab.value = 'votes';
-      const sid = (forceSid || voteSession.value || '').trim();
+      // forceSid may be a MouseEvent (from @click with no args) — ignore non-strings
+      const sid = (typeof forceSid === 'string' && forceSid ? forceSid : (voteSession.value || '')).trim();
       if (!sid) { votesState.value='nosession'; return; }
       // New session → tear down old listener
       if (sid !== voteSession.value || !_statusUnsub) {
