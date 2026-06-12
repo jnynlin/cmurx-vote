@@ -144,6 +144,9 @@
       <button :class="{active:tab==='votes'}" @click="() => openVotesTab()">
         <i class="fa-solid fa-square-poll-vertical"></i>學生票選
       </button>
+      <button :class="{active:tab==='ml'}" @click="() => openMLTab()">
+        <i class="fa-solid fa-brain"></i>ML 分析
+      </button>
     </div>
 
     <!-- ═══ JUDGE TAB ═══ -->
@@ -373,70 +376,6 @@
         </div>
       </div>
 
-      <!-- Distribution discussion -->
-      <div class="sec">
-        <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart"></i>分佈討論</div>
-        <div class="discussion">
-          <h3>整體分佈</h3>
-          <div class="kv"><span class="k">評分範圍</span><span class="v">{{ minFinal }} – {{ maxFinal }}（滿分 5.00）</span></div>
-          <div class="kv"><span class="k">全體均分</span><span class="v">{{ meanFinal }}</span></div>
-          <div class="kv"><span class="k">標準差</span><span class="v">{{ stdFinal }}（{{ spreadLabel }}）</span></div>
-          <div class="kv"><span class="k">四分位距 (IQR)</span><span class="v">{{ iqrFinal }}</span></div>
-
-          <!-- Ceiling verdict box -->
-          <div v-if="ceilingVerdict" :style="{marginTop:'12px',padding:'10px 14px',borderRadius:'10px',border:'1px solid',background:ceilingVerdict.bgColor,borderColor:ceilingVerdict.borderColor}">
-            <div style="font-weight:800;font-size:13px;" :style="{color:ceilingVerdict.textColor}">{{ ceilingVerdict.label }}</div>
-            <div style="font-size:12px;margin-top:4px;color:var(--text2);line-height:1.6;">{{ ceilingVerdict.msg }}</div>
-          </div>
-
-          <h3>評審一致性（Inter-rater）</h3>
-          <div class="kv"><span class="k">A vs B 相關</span><span class="v">{{ corrAB }}</span></div>
-          <div class="kv"><span class="k">A vs C 相關</span><span class="v">{{ corrAC }}</span></div>
-          <div class="kv"><span class="k">B vs C 相關</span><span class="v">{{ corrBC }}</span></div>
-          <div class="kv"><span class="k">平均評審相關</span><span class="v" :style="meanCorr>=0.7?'color:var(--ok)':meanCorr>=0.5?'color:var(--accent-l)':'color:var(--danger)'">
-            {{ meanCorr }}（{{ meanCorr>=0.7?'高度一致 ✓':meanCorr>=0.5?'中等一致':'低一致 ⚠' }}）
-          </span></div>
-          <div class="kv"><span class="k">各組最大評分落差</span><span class="v">{{ maxJudgeDiff }} 分（{{ maxJudgeDiffGroup }}）</span></div>
-
-          <!-- Per-judge breakdown table -->
-          <div style="margin-top:12px;overflow-x:auto;">
-            <table style="font-size:12px;border-collapse:collapse;width:auto;">
-              <thead>
-                <tr>
-                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:left;">評審</th>
-                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">均分</th>
-                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">標準差</th>
-                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">極差</th>
-                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">評了幾組</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(js,i) in judgeStats" :key="i" style="border-bottom:1px solid var(--border);">
-                  <td style="padding:6px 12px;font-weight:700;" :style="{color:['var(--primary)','var(--ok)','var(--accent-l)'][i]}">{{ js.name }}</td>
-                  <td style="padding:6px 12px;text-align:right;font-weight:700;">{{ js.mean }}</td>
-                  <td style="padding:6px 12px;text-align:right;">{{ js.sd }}</td>
-                  <td style="padding:6px 12px;text-align:right;">{{ js.range }}</td>
-                  <td style="padding:6px 12px;text-align:right;color:var(--muted);">{{ js.n > 0 ? js.n+'組' : '未送出' }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;">均分高→寬鬆型；標準差大→鑑別型；兩者結合可判斷評審風格。</div>
-          </div>
-
-          <h3>面向分析</h3>
-          <div class="kv"><span class="k">最高均分面向</span><span class="v">{{ topCriteria }}</span></div>
-          <div class="kv"><span class="k">最低均分面向</span><span class="v">{{ bottomCriteria }}</span></div>
-          <div class="kv"><span class="k">面向間落差</span><span class="v">{{ criteriaRange }}</span></div>
-
-          <h3>加權公式效果</h3>
-          <div class="kv"><span class="k">面向均分與整體印象相關</span><span class="v">{{ corrDimTotal }}</span></div>
-          <p style="margin-top:8px;font-size:12px;color:var(--muted);">
-            若相關 &gt; 0.8，整體印象與面向均分高度線性 → 50/50 加權效果近似直接用整體印象。<br>
-            若相關 &lt; 0.6，整體印象提供獨立資訊 → 加權公式有實質貢獻。
-          </p>
-        </div>
-      </div>
-
     </template>
     </div><!-- end judge tab -->
 
@@ -562,75 +501,123 @@
           </div>
         </div>
 
-        <!-- Votes discussion -->
+      </template>
+    </div><!-- end votes tab -->
+
+    <!-- ═══ ML TAB ═══ -->
+    <div v-show="tab==='ml'">
+      <div v-if="state!=='ready'" class="loading" style="padding:60px 20px;color:var(--muted);">
+        <i class="fa-solid fa-brain" style="font-size:36px;margin-bottom:12px;display:block;animation:none;opacity:.3;"></i>
+        <p>請先載入評審資料（評審分析 tab）</p>
+      </div>
+      <template v-else-if="mlResults">
+
+        <!-- PCA scatter -->
         <div class="sec">
-          <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart"></i>評審 vs 學生票選 — 討論</div>
-          <div class="discussion">
-            <h3>整體一致性</h3>
-            <div class="kv"><span class="k">Spearman ρ</span>
-              <span class="v" :style="spearmanRho>=0.7?'color:var(--ok)':spearmanRho>=0.4?'color:var(--accent-l)':'color:var(--danger)'">
-                {{ spearmanRho }}（{{ spearmanRho>=0.7?'強相關 ✓':spearmanRho>=0.4?'中等相關':'弱相關 ⚠' }}）
-              </span>
-            </div>
-            <div class="kv"><span class="k">排名完全一致組數</span><span class="v" style="color:var(--ok);">{{ exactMatchCount }} / {{ comparisonRows.length }}</span></div>
-            <div class="kv"><span class="k">差距 ≥ 3 名（顯著不一致）</span><span class="v" style="color:var(--danger);">{{ bigDiffCount }} 組</span></div>
-            <p style="margin-top:10px;font-size:12px;color:var(--muted);">
-              Spearman ρ 測量排名順序的一致性（不關心分數絕對值）。<br>
-              ρ &gt; 0.7：學生與評審對海報品質的判斷高度吻合。<br>
-              ρ &lt; 0.4：兩者評估標準明顯不同 — 可能反映學生偏好視覺衝擊、同學情誼（自組加分）或內容深度與外觀設計權重不同。
-            </p>
+          <div class="sec-title"><i class="fa-solid fa-circle-nodes" style="color:var(--primary);"></i>PCA — 評分空間（12組 × 4面向均分）</div>
+          <canvas id="pcaChart" style="max-height:420px;"></canvas>
+          <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--muted);">
+            <span>PC1 {{ mlResults.var1 }}%</span><span>PC2 {{ mlResults.var2 }}%</span>
+            <span>累積 {{ +(parseFloat(mlResults.var1)+parseFloat(mlResults.var2)).toFixed(1) }}% 變異</span>
+            <span v-for="(k,ki) in [0,1,2]" :key="ki"
+              style="display:inline-flex;align-items:center;gap:4px;">
+              <span :style="{width:'10px',height:'10px',borderRadius:'50%',background:['#4f46e5','#16a34a','#d97706'][ki],display:'inline-block'}"></span>
+              群 {{ ki+1 }}（{{ mlResults.assign.filter(a=>a===ki).length }} 組）
+            </span>
+          </div>
+        </div>
 
-            <h3>主要差異組</h3>
-            <div v-if="bigDiffGroupsAnalyzed.length===0" style="color:var(--ok);">無顯著差異（所有組別排名差距 &lt; 3）</div>
-            <div v-for="g in bigDiffGroupsAnalyzed" :key="g.zodiac" style="margin:6px 0;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);">
-              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-                <span style="font-weight:800;font-size:13px;">{{ g.zodiac }}</span>
-                <span style="font-size:12px;color:var(--muted);">評審 #{{ g.judgeRank }} → 學生 #{{ g.voteRank }}（差 {{ Math.abs(g.rankDiff) }} 名）</span>
-                <span class="agree-badge" v-if="g.rankDiff<0">學生評價更高 ↑</span>
-                <span class="disagree-badge" v-else>評審評價更高 ↑</span>
-              </div>
-              <div v-if="g.hyp" style="font-size:11px;color:var(--text2);margin-top:3px;">{{ g.hyp }}</div>
-            </div>
+        <!-- K-means cluster table -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i>K-means 聚類（k = 3）</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:60px;">群組</th>
+                <th>組別</th>
+                <th class="r">選題均</th>
+                <th class="r">病理均</th>
+                <th class="r">視覺均</th>
+                <th class="r">整體均</th>
+                <th class="r">加權分</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="(clr,ki) in ['var(--primary)','var(--ok)','var(--accent-l)']" :key="ki">
+                <tr v-for="(item,ii) in mlResults.gs.map((g,i)=>({...g,_ci:mlResults.assign[i]})).filter(x=>x._ci===ki)"
+                    :key="item.zodiac">
+                  <td v-if="ii===0"
+                      :rowspan="mlResults.gs.filter((_,i)=>mlResults.assign[i]===ki).length"
+                      style="font-weight:800;font-size:18px;text-align:center;" :style="{color:clr}">
+                    {{ ki+1 }}
+                  </td>
+                  <td>
+                    <span style="font-weight:700;">{{ item.zodiac }}</span>
+                    <span class="elem-badge" :class="'elem-'+item.element">{{ item.element }}</span>
+                  </td>
+                  <td class="r">{{ item.avg.content }}</td>
+                  <td class="r">{{ item.avg.design }}</td>
+                  <td class="r">{{ item.avg.creativity }}</td>
+                  <td class="r">{{ item.avg.total }}</td>
+                  <td class="r"><strong>{{ item.final.toFixed(2) }}</strong></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">Inertia = {{ mlResults.inertia }}　|　特徵：avg(選題, 病理, 視覺, 整體)，L2 距離聚類</div>
+        </div>
 
-            <h3>各面向對學生票選的影響力</h3>
-            <div v-if="dimVoteCorr.length===0" style="color:var(--muted);font-size:12px;">請先連接學生票選資料</div>
-            <template v-else>
-              <div v-for="d in dimVoteCorr" :key="d.label" class="kv">
-                <span class="k">{{ d.label }}</span>
-                <span class="v" :style="parseFloat(d.r)>=0.5?'color:var(--ok)':parseFloat(d.r)>=0.2?'color:var(--accent-l)':'color:var(--muted)'">
-                  r = {{ d.r }}
-                  <span style="font-size:11px;font-weight:400;">
-                    {{ parseFloat(d.r)>=0.5?'↑ 強影響':parseFloat(d.r)>=0.2?'中等影響':'弱影響' }}
-                  </span>
-                </span>
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;">
-                r 為 Pearson 相關（負排名取反），正值表示該面向分數高的組別學生票選也高。<br>
-                r 最大的面向 = 學生共鳴最強的評分維度。
-              </div>
-            </template>
+        <!-- OLS regression -->
+        <div v-if="voteState==='ready' && mlResults.regResult" class="sec">
+          <div class="sec-title"><i class="fa-solid fa-sliders" style="color:var(--primary);"></i>OLS 回歸：各面向均分 → 學生票數</div>
+          <canvas id="regChart" style="max-height:260px;"></canvas>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+            標準化係數（β）；R² = {{ mlResults.regResult.r2 }}。正值 = 該面向分數高 → 學生票數高。
+          </div>
+        </div>
+        <div v-else-if="voteState!=='ready'" class="sec" style="text-align:center;padding:18px;color:var(--muted);font-size:13px;">
+          <i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>在「學生票選」tab 連接 Session 後，此處顯示 OLS 回歸
+        </div>
 
-            <h3>自組票偏差（同組相互投票）</h3>
-            <div class="kv"><span class="k">自組票總計</span><span class="v" style="color:var(--accent-l);">{{ selfVoteCount }} 票</span></div>
-            <div class="kv"><span class="k">佔總票數</span><span class="v" :style="selfVotePct>20?'color:var(--danger)':'color:var(--ok)'">{{ selfVotePct }}%（{{ selfVotePct>20?'⚠ 偏高，建議觀察':'正常範圍' }}）</span></div>
-            <p style="margin-top:8px;font-size:12px;color:var(--muted);">
-              若某組自組票比例過高，其學生排名可能被抬高。可對照評審排名交叉確認。
-            </p>
+        <!-- Correlation matrix -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-table-cells" style="color:var(--primary);"></i>相關矩陣（面向均分 × 加權分）</div>
+          <div class="heatmap">
+            <table class="hm-table">
+              <thead>
+                <tr>
+                  <th class="lh"></th>
+                  <th v-for="h in corrMatHeaders" :key="h">{{ h }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row,i) in corrMatrix" :key="i">
+                  <td style="font-weight:700;font-size:12px;">{{ corrMatHeaders[i] }}</td>
+                  <td v-for="(v,j) in row" :key="j"
+                      :style="i===j?'background:var(--surface2);color:var(--muted);':hmStyleCorr(v)"
+                      style="text-align:center;font-size:12px;font-weight:700;">
+                    {{ i===j?'—':v }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-            <h3>投票參與</h3>
-            <div class="kv"><span class="k">投票人數</span><span class="v">{{ totalVoters }}</span></div>
-            <div class="kv"><span class="k">1st choice 集中度</span><span class="v">{{ topVoteConcentration }}%（前三組票數佔比）</span></div>
-
-            <h3>📊 綜合判斷結語</h3>
-            <div v-if="conclusionText.length===0" style="color:var(--muted);font-size:12px;">載入資料後自動生成</div>
-            <ul v-else style="padding-left:18px;margin:0;">
-              <li v-for="(line,i) in conclusionText" :key="i" style="margin:4px 0;font-size:13px;line-height:1.6;">{{ line }}</li>
-            </ul>
+        <!-- Export -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-download" style="color:var(--primary);"></i>原始資料匯出</div>
+          <button @click="exportData"
+            style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">
+            <i class="fa-solid fa-file-code" style="margin-right:6px;"></i>下載 JSON（評審 + 票選）
+          </button>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;">
+            含各組 12 維評分（3評審×4面向）＋ 學生票數，可直接送入 Python / R 進行進階 ML。
           </div>
         </div>
 
       </template>
-    </div><!-- end votes tab -->
+    </div><!-- end ml tab -->
 
   </div>
 </div>
@@ -685,6 +672,109 @@ function quantile(sorted, p) {
 }
 function fmt2(n) { return isNaN(n)?'—':n.toFixed(2); }
 
+// ── ML utilities ──────────────────────────────────────────────────────────
+function zScore(X) {
+  const n=X.length, p=X[0].length;
+  const mu=Array(p).fill(0).map((_,j)=>X.reduce((s,r)=>s+r[j],0)/n);
+  const sg=Array(p).fill(0).map((_,j)=>{
+    const m=mu[j];return Math.sqrt(X.reduce((s,r)=>s+(r[j]-m)**2,0)/n)||1;
+  });
+  return {Xs:X.map(r=>r.map((v,j)=>(v-mu[j])/sg[j])), mu, sg};
+}
+
+function pcaTop2(Xs) {
+  const n=Xs.length, p=Xs[0].length;
+  const mv=(M,v)=>M.map(r=>r.reduce((s,x,j)=>s+x*v[j],0));
+  const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+  // Cov matrix (p×p)
+  const C=Array(p).fill(0).map((_,i)=>Array(p).fill(0).map((_,j)=>
+    Xs.reduce((s,r)=>s+r[i]*r[j],0)/(n-1)));
+  function powerIter(M,iters=300){
+    let v=Array(p).fill(0).map(()=>Math.random()*2-1);
+    for(let t=0;t<iters;t++){const w=mv(M,v),nm=Math.sqrt(dot(w,w));v=w.map(x=>x/nm);}
+    return v;
+  }
+  const pc1=powerIter(C);
+  const lam1=dot(pc1,mv(C,pc1));
+  const C2=C.map((r,i)=>r.map((v,j)=>v-lam1*pc1[i]*pc1[j]));
+  const pc2=powerIter(C2);
+  const lam2=dot(pc2,mv(C2,pc2));
+  const tv=Array(p).fill(0).map((_,i)=>C[i][i]).reduce((a,b)=>a+b,0);
+  return {
+    proj:Xs.map(r=>[dot(r,pc1),dot(r,pc2)]),
+    var1:+(lam1/tv*100).toFixed(1), var2:+(lam2/tv*100).toFixed(1)
+  };
+}
+
+function kmeans3(Xs) {
+  const n=Xs.length, p=Xs[0].length, k=3;
+  // spread init across sorted PC1
+  const idx=[...Array(n).keys()].sort((a,b)=>Xs[a][0]-Xs[b][0]);
+  const step=Math.floor(n/k);
+  let cen=Array(k).fill(0).map((_,ci)=>[...Xs[idx[ci*step]]]);
+  let asgn=new Array(n).fill(0);
+  for(let it=0;it<100;it++){
+    const prev=[...asgn];
+    asgn=Xs.map(d=>{
+      let best=0,bd=Infinity;
+      cen.forEach((c,ci)=>{const d2=c.reduce((s,x,j)=>s+(x-d[j])**2,0);if(d2<bd){bd=d2;best=ci;}});
+      return best;
+    });
+    cen.forEach((c,ci)=>{
+      const pts=Xs.filter((_,i)=>asgn[i]===ci);
+      if(!pts.length)return;
+      c.forEach((_,j)=>{c[j]=pts.reduce((s,r)=>s+r[j],0)/pts.length;});
+    });
+    if(asgn.every((a,i)=>a===prev[i]))break;
+  }
+  const inertia=Xs.reduce((s,d,i)=>s+cen[asgn[i]].reduce((t,x,j)=>t+(x-d[j])**2,0),0);
+  return {assign:asgn, inertia:+inertia.toFixed(2)};
+}
+
+function olsBeta(X, y) {
+  // Standardized OLS coefficients + R²
+  const n=X.length, p=X[0].length;
+  const {Xs}=zScore(X);
+  const my=y.reduce((a,b)=>a+b,0)/n;
+  const sy=Math.sqrt(y.reduce((s,v)=>s+(v-my)**2,0)/n)||1;
+  const ys=y.map(v=>(v-my)/sy);
+  const XtX=Array(p).fill(0).map(()=>Array(p).fill(0));
+  const Xty=Array(p).fill(0);
+  for(let i=0;i<n;i++){
+    for(let j=0;j<p;j++){for(let kk=0;kk<p;kk++) XtX[j][kk]+=Xs[i][j]*Xs[i][kk];}
+    for(let j=0;j<p;j++) Xty[j]+=Xs[i][j]*ys[i];
+  }
+  const A=XtX.map((r,i)=>[...r,Xty[i]]);
+  for(let col=0;col<p;col++){
+    let mx=col;
+    for(let r=col+1;r<p;r++) if(Math.abs(A[r][col])>Math.abs(A[mx][col])) mx=r;
+    [A[col],A[mx]]=[A[mx],A[col]];
+    for(let r=col+1;r<p;r++){const f=A[r][col]/A[col][col];for(let kk=col;kk<=p;kk++) A[r][kk]-=f*A[col][kk];}
+  }
+  const beta=Array(p).fill(0);
+  for(let i=p-1;i>=0;i--){beta[i]=A[i][p];for(let j=i+1;j<p;j++) beta[i]-=A[i][j]*beta[j];beta[i]/=A[i][i];}
+  const yhat=Xs.map(r=>r.reduce((s,x,j)=>s+x*beta[j],0));
+  const ss_res=ys.reduce((s,v,i)=>s+(v-yhat[i])**2,0);
+  const r2=+(1-ss_res/ys.reduce((s,v)=>s+v*v,0)).toFixed(3);
+  return {beta:beta.map(b=>+b.toFixed(3)), r2};
+}
+
+// Chart.js plugin: draw zodiac labels next to each scatter point
+const pointLabelPlugin = {
+  id:'pointLabels',
+  afterDatasetsDraw(chart){
+    const ctx=chart.ctx;
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      meta.data.forEach((pt,pi)=>{
+        const lbl=ds.data[pi]?.label||'';
+        ctx.save();ctx.font='bold 11px system-ui';ctx.fillStyle='#3f3f46';
+        ctx.textAlign='left';ctx.fillText(lbl,pt.x+9,pt.y+4);ctx.restore();
+      });
+    });
+  }
+};
+
 createApp({
   setup() {
     const tab    = ref('judge');
@@ -724,7 +814,7 @@ createApp({
       _voteUnsub = _onValue(_dbRef(fbDb, `classrooms/${sid}/posterVotes`), (snap) => {
         voteRaw.value = snap.val() || {};
         voteState.value = 'ready';
-        nextTick(() => buildVoteCharts());
+        nextTick(() => { buildVoteCharts(); if(tab.value==='ml') buildMLCharts(); });
       }, () => { voteState.value='error'; });
     };
 
@@ -821,40 +911,39 @@ createApp({
       return dims.length ? fmt2(pearson(dims,tots)) : '—';
     });
 
-    // ── Ceiling detection ────────────────────────────────────────────────
-    const ceilingVerdict = computed(() => {
-      const m=parseFloat(meanFinal.value), s=parseFloat(stdFinal.value);
-      if (isNaN(m)||isNaN(s)||!finals.value.length) return null;
-      if (m>4.0 && s<0.4) return {
-        level:'ceiling', label:'天花板效應 ⚠',
-        textColor:'var(--danger)', bgColor:'var(--danger-soft)', borderColor:'#fca5a5',
-        msg:`均分 ${meanFinal.value} ＞ 4.0，標準差僅 ${stdFinal.value}（＜0.4）。評審評分集中於高分端，排名區分力弱。若需提升鑑別度，可考慮以各評審 Z-score 正規化後重排；但若目的在保留原始評分的教育意義，直接排名即可。`
-      };
-      if (m>3.8 && s<0.55) return {
-        level:'mild', label:'評分略偏寬鬆',
-        textColor:'var(--accent-l)', bgColor:'var(--accent-soft)', borderColor:'#fde68a',
-        msg:`均分 ${meanFinal.value}（偏高），標準差 ${stdFinal.value}。前後段仍可區分，原始排名可用，但極差較小。`
-      };
-      return {
-        level:'ok', label:'分佈健康 ✓',
-        textColor:'var(--ok)', bgColor:'var(--ok-soft)', borderColor:'#bbf7d0',
-        msg:`均分 ${meanFinal.value}，標準差 ${stdFinal.value}。分佈符合設計預期，評分具備良好鑑別度。`
-      };
+    // ── ML: PCA + K-means + OLS ──────────────────────────────────────────
+    const mlResults = computed(() => {
+      const gs=ranked.value.filter(g=>g.final>0);
+      if (gs.length<4) return null;
+      const X=gs.map(g=>[g.avg.content,g.avg.design,g.avg.creativity,g.avg.total]);
+      const {Xs}=zScore(X);
+      const {proj,var1,var2}=pcaTop2(Xs);
+      const {assign,inertia}=kmeans3(Xs);
+      let regResult=null;
+      if (voteState.value==='ready') {
+        const vpts=gs.map(g=>voteTotals.value[g.zodiac]?.points||0);
+        if (vpts.some(v=>v>0)) regResult=olsBeta(X,vpts);
+      }
+      return {gs,proj,var1,var2,assign,inertia,regResult};
     });
 
-    // ── Per-judge stats ──────────────────────────────────────────────────
-    const judgeStats = computed(() =>
-      ['A','B','C'].map((j,i) => {
-        const sc=ranked.value.map(g=>judgeWeighted(g,j)).filter(x=>x>0);
-        return {
-          name: judges.value[i]||('評審'+j),
-          mean: sc.length ? fmt2(mean(sc)) : '—',
-          sd:   sc.length>1 ? fmt2(std(sc)) : '—',
-          range:sc.length ? fmt2(Math.max(...sc)-Math.min(...sc)) : '—',
-          n: sc.length
-        };
-      })
-    );
+    // Correlation matrix: content, design, creativity, total, final
+    const corrMatHeaders = ['選題','病理','視覺','整體','加權分'];
+    const corrMatrix = computed(() => {
+      const gs=ranked.value.filter(g=>g.final>0);
+      if (!gs.length) return [];
+      const cols=[
+        gs.map(g=>g.avg.content), gs.map(g=>g.avg.design),
+        gs.map(g=>g.avg.creativity), gs.map(g=>g.avg.total), gs.map(g=>g.final)
+      ];
+      return cols.map(a=>cols.map(b=>fmt2(pearson(a,b))));
+    });
+
+    const hmStyleCorr = (v) => {
+      const t=(parseFloat(v)+1)/2; // map -1..1 to 0..1
+      const r=Math.round(220-t*140), g2=Math.round(80+t*120), b=Math.round(80+t*20);
+      return `background:rgba(${r},${g2},${b},${0.15+0.55*Math.abs(parseFloat(v))});color:${Math.abs(parseFloat(v))>0.6?'#fff':'#18181b'}`;
+    };
 
     // ── Vote analytics ───────────────────────────────────────────────────
     const ZODIAC_ORDER = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
@@ -902,54 +991,6 @@ createApp({
     const bigDiffCount    = computed(() => comparisonRows.value.filter(r=>Math.abs(r.rankDiff)>=3).length);
     const bigDiffGroups   = computed(() => comparisonRows.value.filter(r=>Math.abs(r.rankDiff)>=3).sort((a,b)=>Math.abs(b.rankDiff)-Math.abs(a.rankDiff)));
 
-    const DIM_LABEL = {content:'選題需求',design:'病生理深度',creativity:'視覺表達'};
-    const bigDiffGroupsAnalyzed = computed(() =>
-      bigDiffGroups.value.map(r => {
-        const g=raw.value.find(x=>x.zodiac===r.zodiac);
-        if (!g||!g.avg) return {...r, hyp:''};
-        const maxK=['content','design','creativity'].reduce((b,k)=>g.avg[k]>g.avg[b]?k:b,'content');
-        const minK=['content','design','creativity'].reduce((b,k)=>g.avg[k]<g.avg[b]?k:b,'content');
-        const hyp = r.rankDiff<0
-          ? `學生評價偏高：${DIM_LABEL[maxK]} 均分 ${g.avg[maxK]}（三維最高）——視覺或表達優勢可能拉高學生共鳴`
-          : `評審評分偏高：${DIM_LABEL[maxK]} 均分 ${g.avg[maxK]}——內容深度獲肯定，但學生觀感有限`;
-        return {...r, hyp};
-      })
-    );
-
-    // ── Dimension vs student vote correlation ───────────────────────────
-    // Pearson r between each avg criterion score and student vote rank (negated: high score→low rank→good)
-    const dimVoteCorr = computed(() => {
-      if (voteState.value!=='ready'||!raw.value.length) return [];
-      const rows=comparisonRows.value.filter(r=>r.judgeRank>0&&r.voteRank<99);
-      if (rows.length<4) return [];
-      const grps=rows.map(r=>raw.value.find(g=>g.zodiac===r.zodiac)).filter(Boolean);
-      const vRanks=rows.map(r=>r.voteRank);
-      return ['content','design','creativity','total'].map((k,i)=>{
-        const scores=grps.map(g=>g.avg[k]);
-        const r=-pearson(scores,vRanks);
-        return {label:['選題需求','病生理深度','視覺表達','整體印象'][i], r:fmt2(r)};
-      }).sort((a,b)=>parseFloat(b.r)-parseFloat(a.r));
-    });
-
-    // ── Auto-generated conclusion text ──────────────────────────────────
-    const conclusionText = computed(() => {
-      if (voteState.value!=='ready'||spearmanRho.value==='—') return '';
-      const rho=parseFloat(spearmanRho.value);
-      const cv=ceilingVerdict.value;
-      const agree=exactMatchCount.value, diff=bigDiffCount.value;
-      const lines=[];
-      if (rho>=0.7) lines.push(`✓ 評審與學生排名高度一致（ρ=${rho}），核心前幾名有共識。`);
-      else if (rho>=0.4) lines.push(`△ 評審與學生排名中等相關（ρ=${rho}），前段有共識但中後段分歧。`);
-      else lines.push(`⚠ 評審與學生排名相關偏低（ρ=${rho}），兩者評估標準差異大。`);
-      if (cv) {
-        if (cv.level==='ceiling') lines.push(`⚠ 評審分佈有天花板效應（均 ${meanFinal.value}，SD ${stdFinal.value}），排名比絕對分數更具參考意義。`);
-        else if (cv.level==='ok') lines.push(`✓ 評審分佈健康（均 ${meanFinal.value}，SD ${stdFinal.value}），絕對分數與排名均可引用。`);
-      }
-      if (agree>=4) lines.push(`✓ ${agree} 組排名完全一致，評審與學生對優質海報的判斷重疊高。`);
-      if (diff>=3) lines.push(`△ ${diff} 組出現顯著分歧（差距 ≥3 名），反映評估角度不同——評審重內容深度，學生重視覺表達。`);
-      if (selfVotePct.value>20) lines.push(`⚠ 自組票佔比 ${selfVotePct.value}%，部分組別學生排名可能被同組票拉高。`);
-      return lines;
-    });
 
     const selfVoteCount = computed(() => {
       let c=0;
@@ -1085,6 +1126,79 @@ createApp({
       });
     };
 
+    // ── ML chart builder ─────────────────────────────────────────────────
+    let mlCharts = {};
+    const buildMLCharts = () => {
+      Object.values(mlCharts).forEach(c=>{try{c.destroy();}catch(e){}});
+      mlCharts={};
+      const r=mlResults.value; if(!r) return;
+      const {gs,proj,var1,var2,assign,regResult}=r;
+      const CL=['#4f46e5','#16a34a','#d97706'];
+
+      // PCA scatter, color by cluster
+      mlCharts.pca=new Chart(document.getElementById('pcaChart'),{
+        type:'scatter',
+        data:{datasets:[{
+          label:'組別',
+          data:proj.map(([x,y],i)=>({x,y,label:gs[i].zodiac})),
+          backgroundColor:assign.map(k=>CL[k]+'cc'),
+          borderColor:assign.map(k=>CL[k]),
+          pointRadius:10,pointHoverRadius:13
+        }]},
+        plugins:[pointLabelPlugin],
+        options:{
+          plugins:{legend:{display:false},
+            tooltip:{callbacks:{label:ctx=>`${ctx.raw.label}　(${ctx.raw.x.toFixed(2)}, ${ctx.raw.y.toFixed(2)})`}}},
+          scales:{
+            x:{title:{display:true,text:`PC1 (${var1}% 變異)`},grid:{color:'#e4e4e7'}},
+            y:{title:{display:true,text:`PC2 (${var2}% 變異)`},grid:{color:'#e4e4e7'}}
+          },responsive:true,maintainAspectRatio:true
+        }
+      });
+
+      // OLS bar
+      if(regResult){
+        const {beta,r2}=regResult;
+        const bColors=beta.map(b=>b>=0?'#4f46e5aa':'#dc2626aa');
+        mlCharts.reg=new Chart(document.getElementById('regChart'),{
+          type:'bar',
+          data:{
+            labels:['選題需求','病生理深度','視覺表達','整體印象'],
+            datasets:[{label:'β',data:beta,backgroundColor:bColors,
+              borderColor:bColors.map(c=>c.slice(0,-2)),borderWidth:2,borderRadius:5}]
+          },
+          options:{indexAxis:'y',
+            plugins:{legend:{display:false},
+              title:{display:true,text:`OLS 標準化係數　R² = ${r2}`,font:{size:12},color:'#71717a'}},
+            scales:{x:{title:{display:true,text:'β（標準化）'},grid:{color:'#e4e4e7'}}},
+            responsive:true,maintainAspectRatio:true}
+        });
+      }
+    };
+
+    const openMLTab = () => {
+      tab.value='ml';
+      nextTick(()=>buildMLCharts());
+    };
+
+    const exportData = () => {
+      const payload={
+        meta:{session:voteSessionInput.value||'',
+              exportedAt:new Date().toISOString(),judges:judges.value},
+        groups:ranked.value.map(g=>({
+          zodiac:g.zodiac,element:g.element,
+          judgeA:g.A,judgeB:g.B,judgeC:g.C,
+          avg:g.avg,final:g.final,rank:g.rank,
+          studentVotePoints:voteTotals.value[g.zodiac]?.points??null
+        }))
+      };
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`poster_scores_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    };
+
     let voteCharts = {};
     const buildVoteCharts = () => {
       Object.values(voteCharts).forEach(c=>{try{c.destroy();}catch(e){}});
@@ -1153,17 +1267,15 @@ createApp({
 
     return {
       tab, state, ranked, judges, submitted, submittedCount, judgeWeighted,
-      maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal, spreadLabel,
-      corrAB, corrAC, corrBC, meanCorr, maxJudgeDiff, maxJudgeDiffGroup,
-      criteriaAvgs, topCriteria, bottomCriteria, criteriaRange, corrDimTotal,
-      ceilingVerdict, judgeStats,
+      maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal,
       outlierMap, flaggedGroups, OUTLIER_THRESHOLD,
       // vote tab
       voteSessionInput, voteState, voteRanked, totalVoters,
-      comparisonRows, spearmanRho, exactMatchCount, bigDiffCount, bigDiffGroups,
-      bigDiffGroupsAnalyzed, dimVoteCorr, conclusionText,
-      selfVoteCount, selfVotePct, topVoteConcentration,
+      comparisonRows, spearmanRho, exactMatchCount, bigDiffCount,
       openVotesTab, connectVoteSession,
+      // ml tab
+      mlResults, corrMatrix, corrMatHeaders, hmStyleCorr,
+      openMLTab, exportData,
       hmStyle,
     };
   }
