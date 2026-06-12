@@ -516,9 +516,11 @@
         </div>
         <div v-else-if="votesState==='locked'" class="vote-state">
           <div class="vs-icon">🔒</div><h3>投票尚未關閉</h3>
-          <p>學生票選結果將於<b>投票關閉後</b>開放參考。<br>請稍後再點此分頁。</p>
-          <div style="font-size:11px;color:var(--faint);margin-top:12px;font-family:monospace;">場次：{{ voteSession }}</div>
-          <button class="jump-btn" style="margin-top:12px;" @click="reloadVotesTab"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
+          <p>等待主辦老師按下「關閉投票」後自動顯示，<b>無需重新整理</b>。</p>
+          <div style="font-size:11px;color:var(--faint);margin-top:10px;font-family:monospace;">場次：{{ voteSession }}</div>
+          <div style="margin-top:12px;font-size:12px;color:var(--primary);display:flex;align-items:center;gap:7px;justify-content:center;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> 即時監聽中…
+          </div>
         </div>
         <div v-else-if="votesState==='closed-empty'" class="vote-state">
           <div class="vs-icon">📭</div><h3>尚無票選資料</h3>
@@ -603,7 +605,7 @@
 </div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref as dbRef, get, onValue as fbOnValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 const { createApp, reactive, ref, computed, nextTick, onMounted } = Vue;
 
@@ -757,19 +759,13 @@ createApp({
       form.name=''; form.email=''; pinDigits.forEach((_,i)=>{pinDigits[i]='';});
     };
 
-    // ── Student-vote reference (gated load) ────────────────────────────
-    const openVotesTab = async (forceSid) => {
-      activeTab.value = 'votes';
-      const sid = (forceSid || voteSession.value || '').trim();
-      if (!sid) { votesState.value='nosession'; return; }
-      voteSession.value = sid;
-      if (votesState.value==='ready') return;           // already loaded
-      votesState.value = 'loading';
+    // ── Student-vote reference ─────────────────────────────────────────
+    // Uses onValue (live listener) on status so the heatmap unlocks the
+    // moment the teacher presses 「關閉投票」— no manual refresh needed.
+    let _statusUnsub = null;   // unsubscribe previous listener on session change
+
+    const loadVotes_ = async (sid) => {
       try {
-        if (!fbInited) { fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp); fbAuth=getAuth(fbApp); fbInited=true; }
-        if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
-        const st = (await get(dbRef(fbDb, `classrooms/${sid}/status`))).val() || {};
-        if (st.votingClosed !== true) { votesState.value='locked'; return; }   // GATE: only after voting closed
         const votes = (await get(dbRef(fbDb, `classrooms/${sid}/posterVotes`))).val() || {};
         studentVoteCount.value = Object.keys(votes).length;
         const t = {}; ZODIAC.forEach(z=>t[z.label]={pts:0,r1:0,r2:0,r3:0});
@@ -786,15 +782,41 @@ createApp({
       } catch(e) { votesState.value='error'; }
     };
 
+    const openVotesTab = async (forceSid) => {
+      activeTab.value = 'votes';
+      const sid = (forceSid || voteSession.value || '').trim();
+      if (!sid) { votesState.value='nosession'; return; }
+      // New session → tear down old listener
+      if (sid !== voteSession.value || !_statusUnsub) {
+        if (_statusUnsub) { _statusUnsub(); _statusUnsub=null; }
+        voteSession.value = sid;
+      }
+      if (votesState.value==='ready') return;    // already loaded
+      votesState.value = 'loading';
+      try {
+        if (!fbInited) { fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp); fbAuth=getAuth(fbApp); fbInited=true; }
+        if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
+        // Live listener — fires immediately AND whenever votingClosed changes
+        _statusUnsub = fbOnValue(dbRef(fbDb, `classrooms/${sid}/status`), async (snap) => {
+          const st = snap.val() || {};
+          if (st.votingClosed !== true) { votesState.value='locked'; return; }
+          await loadVotes_(sid);
+        }, () => { votesState.value='error'; });
+      } catch(e) { votesState.value='error'; }
+    };
+
     const connectVoteSession = () => {
       const sid = voteSessionInput.value.trim();
       if (!sid) return;
       votesState.value = 'idle';
-      // Push session into URL so it persists on refresh / share
+      if (_statusUnsub) { _statusUnsub(); _statusUnsub=null; }
       try { const u=new URL(location.href); u.searchParams.set('session',sid); history.replaceState(null,'',u.toString()); } catch(e){}
       openVotesTab(sid);
     };
-    const reloadVotesTab = () => { votesState.value='idle'; openVotesTab(voteSession.value); };
+    const reloadVotesTab = () => {
+      if (_statusUnsub) { _statusUnsub(); _statusUnsub=null; }
+      votesState.value='idle'; openVotesTab(voteSession.value);
+    };
 
     // ── PIN input ──────────────────────────────────────────────────────
     const focusPin = i => nextTick(()=>pinRefs.value[i]?.focus());
