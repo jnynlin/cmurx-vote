@@ -10,6 +10,7 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
   .wrap{max-width:840px;margin:0 auto;padding:28px 18px 60px;}
+  .wrap.embed{padding:12px 12px 20px;}
   .head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:8px;}
   h1{font-size:20px;font-weight:800;color:#f8fafc;}
   .sub{font-size:12px;color:#64748b;margin-bottom:4px;}
@@ -68,8 +69,8 @@
 </head>
 <body>
 <div id="app">
-  <div class="wrap">
-    <div class="head">
+  <div :class="['wrap', embedMode ? 'embed' : '']">
+    <div v-if="!embedMode" class="head">
       <div>
         <h1><i class="fa-solid fa-ranking-star" style="color:#f59e0b;margin-right:8px;"></i>海報投票彙整</h1>
         <div class="sub">學生票選 · 第1名 3分 / 第2名 2分 / 第3名 1分</div>
@@ -77,7 +78,7 @@
       <span class="ro-tag"><i class="fa-solid fa-eye"></i> 唯讀</span>
     </div>
 
-    <div class="bar">
+    <div v-if="!embedMode" class="bar">
       <input v-model.trim="sid" class="session-input" placeholder="sessionId" @keyup.enter="connect" />
       <button class="btn blue" @click="connect"><i class="fa-solid fa-plug"></i> 連線</button>
       <button class="btn ghost" @click="exportCSV" :disabled="voteCount===0"><i class="fa-solid fa-file-csv"></i> 匯出 CSV</button>
@@ -87,7 +88,7 @@
     <div v-if="err" class="err"><i class="fa-solid fa-triangle-exclamation"></i> {{ err }}</div>
 
     <!-- Stats always visible -->
-    <div class="stat-row">
+    <div v-if="!embedMode" class="stat-row">
       <div class="stat"><div class="v">{{ voteCount }}</div><div class="l">已投票</div></div>
       <div class="stat"><div class="v" style="color:#f87171;">{{ notVoted.length }}</div><div class="l">未投票</div></div>
       <div class="stat"><div class="v" style="color:#fbbf24;">{{ onlineNotVoted }}</div><div class="l">未投・在線</div></div>
@@ -95,8 +96,8 @@
       <div class="stat"><div class="v">{{ totalPts }}</div><div class="l">投出總分</div></div>
     </div>
 
-    <!-- Tab bar -->
-    <div class="tabbar">
+    <!-- Tab bar (hidden in embed mode) -->
+    <div v-if="!embedMode" class="tabbar">
       <button :class="{active:tab==='rank'}" @click="tab='rank'">
         <i class="fa-solid fa-trophy"></i> 排名
         <span class="badge">{{ rankedGroups.length }}</span>
@@ -239,8 +240,10 @@ const auth = getAuth(app);
 
 createApp({
   setup() {
-    const sid = ref(new URLSearchParams(location.search).get('id') || '20260611-9X9Y');
-    const tab = ref('rank');
+    const _p = new URLSearchParams(location.search);
+    const sid = ref(_p.get('id') || '20260611-9X9Y');
+    const embedMode = ref(_p.get('embed') || '');  // e.g. ?embed=flow → show only flow tab
+    const tab = ref(embedMode.value || 'rank');
     const connected = ref(false);
     const err = ref('');
     const votes = ref({});
@@ -366,7 +369,7 @@ createApp({
 
     connect();
 
-    return { sid, tab, connected, err, voteCount, rawVotes, rankedGroups, totalPts, maxPts, connect, exportCSV,
+    return { sid, tab, embedMode, connected, err, voteCount, rawVotes, rankedGroups, totalPts, maxPts, connect, exportCSV,
              notVoted, rosterCount, onlineNotVoted, ZODIAC, flowMatrix, matrixMax, rowTops,
              mutualPairs, mutualSet };
   }
