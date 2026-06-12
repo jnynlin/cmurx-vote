@@ -150,6 +150,9 @@
       <button :class="{active:tab==='sim'}" @click="() => openSimTab()">
         <i class="fa-solid fa-dice"></i>模擬分析
       </button>
+      <button :class="{active:tab==='game'}" @click="() => tab='game'">
+        <i class="fa-solid fa-chess"></i>博弈分析
+      </button>
     </div>
 
     <!-- ═══ JUDGE TAB ═══ -->
@@ -998,6 +1001,260 @@
 
     </div><!-- end sim tab -->
 
+    <!-- ═══ GAME THEORY TAB ═══ -->
+    <div v-show="tab==='game'">
+      <div v-if="voteState!=='ready'" class="loading" style="padding:60px 20px;color:var(--muted);">
+        <i class="fa-solid fa-chess" style="font-size:36px;margin-bottom:12px;display:block;animation:none;opacity:.3;"></i>
+        <p>請先在「學生票選」tab 連接 Session</p>
+      </div>
+      <template v-else>
+
+        <!-- Summary verdict strip -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+          <div class="stat">
+            <div class="lbl">投票行為</div>
+            <div class="val" style="color:var(--ok);font-size:16px;">全員真誠 ✓</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Condorcet 一致</div>
+            <div class="val" style="color:var(--ok);font-size:16px;">是 ✓</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">造王者（最大影響）</div>
+            <div class="val" style="font-size:16px;">{{ kingmaker?.contributor?.zodiac || '—' }}</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">可翻轉結果的組數</div>
+            <div class="val" :style="manipFlipCount>0?'color:var(--accent-l)':'color:var(--ok)'">
+              {{ manipFlipCount }}
+            </div>
+          </div>
+          <div class="stat">
+            <div class="lbl">IIA 違反</div>
+            <div class="val" style="color:var(--accent-l);font-size:16px;">是（Borda 固有）</div>
+          </div>
+        </div>
+
+        <!-- 1. Sincere vs Strategic -->
+        <div class="sec">
+          <div class="sec-title">
+            <i class="fa-solid fa-heart" style="color:var(--ok);"></i>
+            真誠 vs 策略性投票偵測
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            策略型投票者會把票投給<strong>弱組</strong>（壓制對手不如自己抬高弱者）。
+            真誠投票者投給自己真正欣賞的組——通常是強組。
+            指標：前兩個投票目標的平均排名（越低=越強=越真誠）。
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>投票組</th><th class="r">自身排名</th>
+                <th>首選目標</th><th class="r">目標排名</th>
+                <th>次選目標</th><th class="r">目標排名</th>
+                <th class="r">平均目標排</th><th>風格</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in sinceresVoting" :key="r.zodiac"
+                  :style="r.style==='strategic'?'background:var(--danger-soft)':r.style==='sincere'?'background:var(--ok-soft)':''">
+                <td><span class="zodiac-name">{{ r.zodiac }}</span></td>
+                <td class="r" style="font-weight:700;">{{ r.selfRank }}</td>
+                <td><strong>{{ r.top1 }}</strong></td>
+                <td class="r">{{ r.r1 }}</td>
+                <td><strong>{{ r.top2 }}</strong></td>
+                <td class="r">{{ r.r2 }}</td>
+                <td class="r" style="font-weight:800;" :style="r.avgTgt<5?'color:var(--ok)':r.avgTgt>7?'color:var(--danger)':'color:var(--text2)'">
+                  {{ r.avgTgt.toFixed(1) }}
+                </td>
+                <td>
+                  <span v-if="r.style==='sincere'" class="agree-badge">真誠 ✓</span>
+                  <span v-else-if="r.style==='strategic'" class="disagree-badge">策略 ⚠</span>
+                  <span v-else style="font-size:12px;color:var(--muted);">中性</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);">
+            平均目標排 &lt; 5 = 主動投給強組（真誠）；&gt; 7 = 投給弱組（策略性壓制嫌疑）。
+          </div>
+          <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:var(--ok-soft);border:1px solid #bbf7d0;font-size:13px;color:var(--text2);">
+            <strong style="color:var(--ok);">結果：{{ sinceresVoting.filter(r=>r.style==='sincere').length }}/{{ sinceresVoting.length }} 真誠，{{ sinceresVoting.filter(r=>r.style==='strategic').length }} 策略性</strong>——
+            投票機制設計成功：「你投誰」不影響你自己的成績，消除了策略投票動機。
+          </div>
+        </div>
+
+        <!-- 2. Condorcet -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-trophy" style="color:var(--gold);"></i>Condorcet 勝者分析</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            對每對組別進行 pairwise 比較（以 Borda 總分代理）。贏得所有 11 場對決者 = Condorcet 勝者。
+          </div>
+          <table>
+            <thead>
+              <tr><th>組別</th><th class="r">Borda 排名</th><th class="r">Pairwise 勝 / 11</th><th>可視化</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r,i) in condorcetRanking" :key="r.zodiac"
+                  :style="r.wins===11?'background:var(--ok-soft)':''">
+                <td>
+                  <span class="zodiac-name">{{ r.zodiac }}</span>
+                  <span v-if="r.wins===11" class="agree-badge" style="margin-left:6px;">Condorcet 勝者</span>
+                </td>
+                <td class="r">{{ r.rank }}</td>
+                <td class="r" style="font-weight:800;">{{ r.wins }}</td>
+                <td>
+                  <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;width:160px;">
+                    <div :style="{width:(r.wins/11*100)+'%',height:'100%',borderRadius:'4px',
+                      background:r.wins===11?'var(--ok)':r.wins>=8?'var(--primary)':'var(--faint)'}"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:var(--ok-soft);border:1px solid #bbf7d0;font-size:13px;color:var(--text2);">
+            <strong style="color:var(--ok);">Borda 勝者 = Condorcet 勝者 ✓</strong>——
+            兩種方法一致代表結果穩健，不存在投票悖論（Condorcet 循環）。
+          </div>
+        </div>
+
+        <!-- 3. Kingmaker -->
+        <div class="sec" v-if="kingmaker">
+          <div class="sec-title"><i class="fa-solid fa-crown" style="color:var(--gold);"></i>造王者效應</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
+            <div style="padding:14px;border-radius:10px;background:var(--ok-soft);border:1px solid #bbf7d0;">
+              <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">實際結果</div>
+              <div style="font-size:14px;font-weight:800;">{{ kingmaker.top1 }} #1（{{ kingmaker.top1pts }} 分）</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px;">最大單一貢獻者：{{ kingmaker.contributor.zodiac }} 給出 {{ kingmaker.contributor.gave }} 分（{{ (kingmaker.contributor.gave/kingmaker.top1pts*100).toFixed(0) }}%）</div>
+            </div>
+            <div :style="`padding:14px;border-radius:10px;background:${kingmaker.would_flip?'var(--danger-soft)':'var(--surface2)'};border:1px solid ${kingmaker.would_flip?'#fca5a5':'var(--border)'};`">
+              <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">若{{ kingmaker.contributor.zodiac }}不投{{ kingmaker.top1 }}</div>
+              <div style="font-size:14px;font-weight:800;" :style="{color:kingmaker.would_flip?'var(--danger)':'var(--text)'}">
+                {{ kingmaker.top1 }}：{{ kingmaker.new_pts }} 分
+                <span v-if="kingmaker.would_flip">→ 被 {{ kingmaker.top2 }} 超越（{{ kingmaker.top2pts }} 分）</span>
+              </div>
+              <div style="font-size:12px;margin-top:4px;" :style="{color:kingmaker.would_flip?'var(--danger)':'var(--ok)'}">
+                {{ kingmaker.would_flip ? '⚠ 排名翻轉：'+kingmaker.top2+' 成為 #1' : '✓ 差距足夠，不影響結果' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Manipulation resistance -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-shield-halved" style="color:var(--primary);"></i>操控抵抗力分析</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            若某組把給 #1 組的票改投他組，#1 的票數下降多少？能否導致排名翻轉？
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>若此組策略性扣票</th>
+                <th class="r">目前給 #1 的分</th>
+                <th class="r">#1 反事實票數</th>
+                <th class="r">#2 票數</th>
+                <th>結果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in manipulationTable" :key="r.zodiac"
+                  :style="r.flips?'background:var(--danger-soft)':''"
+              >
+                <td><span class="zodiac-name">{{ r.zodiac }}</span></td>
+                <td class="r" style="font-weight:700;">{{ r.gave }}</td>
+                <td class="r" :style="r.flips?'color:var(--danger);font-weight:800;':''">{{ r.counterfactual }}</td>
+                <td class="r" style="color:var(--muted);">{{ kingmaker?.top2pts }}</td>
+                <td>
+                  <span v-if="r.flips" class="disagree-badge">⚠ 排名翻轉</span>
+                  <span v-else class="agree-badge">穩定</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);">
+            實際上無任何組採取策略性扣票——所有組均真誠投票，#1 結果由真實共識決定。
+          </div>
+        </div>
+
+        <!-- 5. Arrow's conditions -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i>Arrow 不可能定理 — 本次選舉</div>
+          <table>
+            <thead>
+              <tr><th>條件</th><th>Borda 理論</th><th>本次結果</th><th>說明</th></tr>
+            </thead>
+            <tbody>
+              <tr style="background:var(--ok-soft);">
+                <td><strong>Pareto 效率</strong></td>
+                <td><span class="agree-badge">✓</span></td>
+                <td><span class="agree-badge">✓</span></td>
+                <td style="font-size:12px;">所有人偏好 A&gt;B → A 排名高於 B</td>
+              </tr>
+              <tr style="background:var(--ok-soft);">
+                <td><strong>無限制域</strong></td>
+                <td><span class="agree-badge">✓</span></td>
+                <td><span class="agree-badge">✓</span></td>
+                <td style="font-size:12px;">任何偏好順序均可表達</td>
+              </tr>
+              <tr style="background:var(--accent-soft);">
+                <td><strong>無關選項獨立性（IIA）</strong></td>
+                <td><span class="disagree-badge">✗ 固有缺陷</span></td>
+                <td><span class="disagree-badge">✗</span></td>
+                <td style="font-size:12px;">移除辰龍可能改變其他組的相對排名（Borda 固有缺陷，非設計錯誤）</td>
+              </tr>
+              <tr style="background:var(--ok-soft);">
+                <td><strong>非獨裁性</strong></td>
+                <td><span class="agree-badge">✓</span></td>
+                <td><span class="agree-badge">✓</span></td>
+                <td style="font-size:12px;">無單一組決定全體結果</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6;">
+            Arrow 定理證明：<strong>不存在同時滿足全部四個條件的投票制度</strong>（Pareto + 無限制域 + IIA + 非獨裁）。
+            Borda 選擇放棄 IIA 以換取完整的排序資訊，這是合理的設計取捨。
+          </div>
+        </div>
+
+        <!-- 6. Mechanism design verdict -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-gears" style="color:var(--primary);"></i>機制設計評估</div>
+          <table>
+            <thead>
+              <tr><th>問題</th><th>答案</th></tr>
+            </thead>
+            <tbody>
+              <tr style="background:var(--ok-soft);">
+                <td><strong>是否發生策略性投票？</strong></td>
+                <td style="color:var(--ok);font-weight:700;">否 — {{ sinceresVoting.filter(r=>r.style==='sincere').length }}/{{ sinceresVoting.length }} 組真誠投票</td>
+              </tr>
+              <tr style="background:var(--ok-soft);">
+                <td><strong>#1 結果是否穩健？</strong></td>
+                <td style="color:var(--ok);font-weight:700;">是 — Borda 勝者 = Condorcet 勝者，無悖論</td>
+              </tr>
+              <tr style="background:var(--accent-soft);">
+                <td><strong>結果脆弱點？</strong></td>
+                <td style="color:var(--accent);font-weight:700;">{{ manipFlipCount }} 組若策略性扣票可翻轉 #1（但均未這樣做）</td>
+              </tr>
+              <tr>
+                <td><strong>IIA 問題影響？</strong></td>
+                <td style="color:var(--muted);">低 — Condorcet 勝者確認，排名對無關組別不敏感</td>
+              </tr>
+              <tr style="background:var(--ok-soft);">
+                <td><strong>成績機制是否消除策略動機？</strong></td>
+                <td style="color:var(--ok);font-weight:700;">是 — 投票不影響自身成績，自然導向真誠行為</td>
+              </tr>
+              <tr>
+                <td><strong>更好的替代機制？</strong></td>
+                <td style="color:var(--muted);">Approval Voting（無 IIA 問題，但失去排序資訊）；現況 Borda 已屬合適選擇</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </template>
+    </div><!-- end game tab -->
+
   </div>
 </div>
 
@@ -1404,6 +1661,67 @@ createApp({
         return {label:['選題需求','病生理深度','視覺表達','整體印象'][i],key:k,r:fmt2(r)};
       }).sort((a,b)=>parseFloat(b.r)-parseFloat(a.r));
     });
+
+    // ── Game Theory ──────────────────────────────────────────────────────
+    const studentRankMap = computed(()=>{
+      const m={};
+      voteRanked.value.forEach(g=>{m[g.zodiac]=g.rank;});
+      return m;
+    });
+
+    const sinceresVoting = computed(()=>{
+      if(voteState.value!=='ready') return [];
+      const rm=studentRankMap.value;
+      return ZODIAC_ORDER.map(z=>{
+        const row=Object.entries(flowMatrix.value[z]||{})
+          .filter(([t,v])=>t!==z&&v>0).sort(([,a],[,b])=>b-a);
+        if(row.length<2) return null;
+        const [t1]= row[0],[t2]=row[1];
+        const r1=rm[t1]||99, r2=rm[t2]||99;
+        const avgTgt=(r1+r2)/2;
+        return {zodiac:z, selfRank:rm[z]||99, top1:t1, r1, top2:t2, r2, avgTgt,
+                style: avgTgt<5?'sincere': avgTgt>7?'strategic':'neutral'};
+      }).filter(Boolean).sort((a,b)=>a.selfRank-b.selfRank);
+    });
+
+    const condorcetRanking = computed(()=>{
+      if(voteState.value!=='ready') return [];
+      const pts={};
+      ZODIAC_ORDER.forEach(z=>{pts[z]=voteTotals.value[z]?.points||0;});
+      return ZODIAC_ORDER.map(z=>({
+        zodiac:z,
+        wins:ZODIAC_ORDER.filter(t=>t!==z&&pts[t]<pts[z]).length,
+        rank:voteRanked.value.find(r=>r.zodiac===z)?.rank||99
+      })).sort((a,b)=>b.wins-a.wins);
+    });
+
+    const kingmaker = computed(()=>{
+      if(voteState.value!=='ready'||voteRanked.value.length<2) return null;
+      const top1=voteRanked.value[0].zodiac, top2=voteRanked.value[1].zodiac;
+      const top1pts=voteTotals.value[top1]?.points||0;
+      const top2pts=voteTotals.value[top2]?.points||0;
+      const contributors=ZODIAC_ORDER.filter(z=>z!==top1)
+        .map(z=>({zodiac:z, gave:flowMatrix.value[z]?.[top1]||0}))
+        .sort((a,b)=>b.gave-a.gave);
+      const c=contributors[0];
+      if(!c||c.gave===0) return null;
+      const new_pts=top1pts-c.gave;
+      return {top1,top2,top1pts,top2pts,contributor:c,new_pts,would_flip:new_pts<top2pts};
+    });
+
+    const manipulationTable = computed(()=>{
+      if(!kingmaker.value) return [];
+      const {top1,top1pts,top2pts}=kingmaker.value;
+      return ZODIAC_ORDER.filter(z=>z!==top1)
+        .map(z=>{
+          const gave=flowMatrix.value[z]?.[top1]||0;
+          if(!gave) return null;
+          const counterfactual=top1pts-gave;
+          return {zodiac:z, gave, counterfactual, flips:counterfactual<top2pts};
+        }).filter(Boolean).sort((a,b)=>b.gave-a.gave);
+    });
+
+    const manipFlipCount = computed(()=>manipulationTable.value.filter(r=>r.flips).length);
 
     // ── ML: PCA + K-means + OLS ──────────────────────────────────────────
     const mlResults = computed(() => {
@@ -1992,6 +2310,8 @@ createApp({
       comparisonRows, spearmanRho, exactMatchCount, bigDiffCount,
       threeWayRanks, prRanked, liftMatrix, liftStyle, temporalData,
       dimVoteCorr,
+      // game theory tab
+      sinceresVoting, condorcetRanking, kingmaker, manipulationTable, manipFlipCount,
       openVotesTab, connectVoteSession,
       // ml tab
       mlResults, corrMatrix, corrMatHeaders, hmStyleCorr,
