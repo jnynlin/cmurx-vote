@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海報投票彙整(唯讀)— Zodiac Ops</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
+  .wrap{max-width:840px;margin:0 auto;padding:28px 18px 60px;}
+  .head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:8px;}
+  h1{font-size:20px;font-weight:800;color:#f8fafc;}
+  .sub{font-size:12px;color:#64748b;margin-bottom:4px;}
+  .ro-tag{font-size:10px;font-weight:700;color:#4ade80;background:#064e3b;border:1px solid #22c55e;border-radius:6px;padding:2px 8px;}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0 16px;}
+  .session-input{background:#0f172a;border:2px solid #334155;border-radius:10px;padding:8px 12px;color:#f8fafc;font-family:monospace;font-size:14px;outline:none;width:200px;}
+  .session-input:focus{border-color:#3b82f6;}
+  .btn{border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn.blue{background:#3b82f6;color:#fff;} .btn.blue:hover{background:#2563eb;}
+  .btn.ghost{background:#1e293b;border:1px solid #334155;color:#94a3b8;} .btn.ghost:hover{border-color:#60a5fa;color:#60a5fa;}
+  .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  .stat{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:12px 18px;}
+  .stat .v{font-size:24px;font-weight:800;color:#60a5fa;} .stat .l{font-size:11px;color:#64748b;}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#4ade80;}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* tabs */
+  .tabbar{display:flex;gap:0;background:#0c1625;border:1px solid #1e293b;border-radius:12px;overflow:hidden;margin-bottom:18px;}
+  .tabbar button{flex:1;border:none;background:transparent;color:#64748b;padding:10px 6px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s;}
+  .tabbar button:hover{color:#e2e8f0;background:#1e293b;}
+  .tabbar button.active{background:#1e293b;color:#60a5fa;border-bottom:2px solid #3b82f6;}
+  .tabbar .badge{font-size:10px;background:#334155;border-radius:10px;padding:1px 6px;color:#94a3b8;}
+  .tabbar button.active .badge{background:#1e3a5f;color:#60a5fa;}
+  .tabbar button.warn .badge{background:#451a03;color:#fb923c;}
+
+  .rank-card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+  .rank-no{font-size:20px;font-weight:900;width:34px;text-align:center;flex-shrink:0;}
+  .rank-no.r1{color:#fbbf24;} .rank-no.r2{color:#cbd5e1;} .rank-no.r3{color:#d4a574;}
+  .rank-icon{font-size:24px;width:40px;text-align:center;flex-shrink:0;}
+  .rank-name{font-weight:700;font-size:16px;color:#f8fafc;flex:1;}
+  .rank-name .breakdown{font-size:11px;color:#64748b;font-weight:400;margin-top:2px;}
+  .rank-bar-wrap{flex:1;min-width:80px;height:8px;background:#0f172a;border-radius:4px;overflow:hidden;}
+  .rank-bar{height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);border-radius:4px;transition:width .5s;}
+  .rank-pts{font-size:20px;font-weight:800;color:#f59e0b;width:54px;text-align:right;flex-shrink:0;}
+
+  h2{font-size:13px;font-weight:700;color:#64748b;margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{color:#64748b;text-align:left;padding:7px 9px;border-bottom:1px solid #334155;font-size:10px;text-transform:uppercase;white-space:nowrap;}
+  td{padding:7px 9px;border-bottom:1px solid #1e293b;color:#e2e8f0;}
+  td.mono{font-family:monospace;color:#94a3b8;}
+  .empty{text-align:center;color:#475569;padding:40px;font-size:14px;}
+  .matrix-scroll{overflow-x:auto;border:1px solid #1e293b;border-radius:10px;}
+  table.matrix{border-collapse:collapse;font-size:11px;min-width:560px;}
+  table.matrix th,table.matrix td{padding:5px 6px;text-align:center;border:1px solid #0f172a;}
+  table.matrix thead th{background:#0f172a;color:#60a5fa;position:sticky;top:0;font-size:14px;}
+  table.matrix .rowhead{background:#0f172a;color:#cbd5e1;font-weight:700;white-space:nowrap;text-align:left;position:sticky;left:0;font-size:12px;}
+  table.matrix td.cell{color:#e2e8f0;font-weight:600;}
+  table.matrix td.diag{background:#1e293b;color:#334155;}
+  table.matrix td.top{outline:2px solid #f59e0b;border-radius:4px;color:#fbbf24;font-weight:800;}
+  table.matrix td.mutual{box-shadow:inset 0 0 0 2px #22c55e;}
+  .matrix-note{font-size:11px;color:#475569;margin:0 0 10px;}
+  .mutual-sect{margin-top:22px;}
+  .err{background:#450a0a;border:1px solid #7f1d1d;color:#f87171;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <h1><i class="fa-solid fa-ranking-star" style="color:#f59e0b;margin-right:8px;"></i>海報投票彙整</h1>
+        <div class="sub">學生票選 · 第1名 3分 / 第2名 2分 / 第3名 1分</div>
+      </div>
+      <span class="ro-tag"><i class="fa-solid fa-eye"></i> 唯讀</span>
+    </div>
+
+    <div class="bar">
+      <input v-model.trim="sid" class="session-input" placeholder="sessionId" @keyup.enter="connect" />
+      <button class="btn blue" @click="connect"><i class="fa-solid fa-plug"></i> 連線</button>
+      <button class="btn ghost" @click="exportCSV" :disabled="voteCount===0"><i class="fa-solid fa-file-csv"></i> 匯出 CSV</button>
+      <span v-if="connected" class="live"><span class="dot"></span> 即時更新中</span>
+    </div>
+
+    <div v-if="err" class="err"><i class="fa-solid fa-triangle-exclamation"></i> {{ err }}</div>
+
+    <!-- Stats always visible -->
+    <div class="stat-row">
+      <div class="stat"><div class="v">{{ voteCount }}</div><div class="l">已投票</div></div>
+      <div class="stat"><div class="v" style="color:#f87171;">{{ notVoted.length }}</div><div class="l">未投票</div></div>
+      <div class="stat"><div class="v" style="color:#fbbf24;">{{ onlineNotVoted }}</div><div class="l">未投・在線</div></div>
+      <div class="stat"><div class="v">{{ rosterCount }}</div><div class="l">名單總人</div></div>
+      <div class="stat"><div class="v">{{ totalPts }}</div><div class="l">投出總分</div></div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tabbar">
+      <button :class="{active:tab==='rank'}" @click="tab='rank'">
+        <i class="fa-solid fa-trophy"></i> 排名
+        <span class="badge">{{ rankedGroups.length }}</span>
+      </button>
+      <button :class="{active:tab==='flow'}" @click="tab='flow'">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i> 流向
+        <span class="badge">{{ mutualPairs.length }} 互</span>
+      </button>
+      <button :class="['', notVoted.length>0&&onlineNotVoted>0?'warn':'', tab==='notvote'?'active':'']" @click="tab='notvote'">
+        <i class="fa-solid fa-user-clock"></i> 未投票
+        <span class="badge">{{ notVoted.length }}</span>
+      </button>
+      <button :class="{active:tab==='raw'}" @click="tab='raw'">
+        <i class="fa-solid fa-table-list"></i> 明細
+        <span class="badge">{{ voteCount }}</span>
+      </button>
+    </div>
+
+    <div v-if="voteCount===0 && connected" class="empty">尚無投票資料</div>
+
+    <!-- Tab: 排名 -->
+    <template v-if="tab==='rank'">
+      <div v-if="rankedGroups.length===0 && !connected" class="empty">請先連線</div>
+      <div v-for="(g, idx) in rankedGroups" :key="g.label" class="rank-card">
+        <div :class="['rank-no', idx===0?'r1':idx===1?'r2':idx===2?'r3':'']">{{ idx+1 }}</div>
+        <div class="rank-icon">{{ g.icon }}</div>
+        <div class="rank-name">
+          {{ g.label }}
+          <div class="breakdown">🥇{{ g.r1 }} · 🥈{{ g.r2 }} · 🥉{{ g.r3 }}</div>
+        </div>
+        <div class="rank-bar-wrap"><div class="rank-bar" :style="`width:${g.pts/maxPts*100}%`"></div></div>
+        <div class="rank-pts">{{ g.pts }}</div>
+      </div>
+    </template>
+
+    <!-- Tab: 流向矩陣 + 互投 -->
+    <template v-if="tab==='flow'">
+      <div v-if="voteCount===0" class="empty">尚無投票資料</div>
+      <template v-else>
+        <h2>投票流向矩陣</h2>
+        <div class="matrix-note">列＝投票組　欄＝被投組　數字＝投出總分(3/2/1)；🟧橘框＝該列投最多的對象；🟩綠框＝互投；灰格＝自己</div>
+        <div class="matrix-scroll">
+          <table class="matrix">
+            <thead>
+              <tr>
+                <th class="rowhead">投↓ / 被投→</th>
+                <th v-for="t in ZODIAC" :key="t.label" :title="t.label">{{ t.icon }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="f in ZODIAC" :key="f.label">
+                <td class="rowhead">{{ f.icon }} {{ f.label }}</td>
+                <td v-for="t in ZODIAC" :key="t.label"
+                    :class="['cell', f.label===t.label?'diag':'', rowTops[f.label]===t.label?'top':'', (f.label!==t.label && mutualSet.has(f.label+'|'+t.label))?'mutual':'']"
+                    :style="f.label!==t.label && flowMatrix[f.label][t.label]>0
+                            ? `background:rgba(59,130,246,${0.12+0.78*flowMatrix[f.label][t.label]/matrixMax})` : ''">
+                  {{ f.label===t.label ? '—' : (flowMatrix[f.label][t.label]||'') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mutual-sect">
+          <h2>互投偵測（{{ mutualPairs.length }} 對）</h2>
+          <div v-if="mutualPairs.length===0" class="empty" style="padding:20px;">目前無互投組對</div>
+          <table v-else>
+            <tr><th>組對</th><th>A → B</th><th>B → A</th><th>合計</th></tr>
+            <tr v-for="p in mutualPairs" :key="p.a+p.b">
+              <td>{{ p.ia }} {{ p.a }} <span style="color:#22c55e;">⇄</span> {{ p.ib }} {{ p.b }}</td>
+              <td>{{ p.ab }}</td><td>{{ p.ba }}</td>
+              <td><strong style="color:#f59e0b;">{{ p.sum }}</strong></td>
+            </tr>
+          </table>
+        </div>
+      </template>
+    </template>
+
+    <!-- Tab: 未投票 -->
+    <template v-if="tab==='notvote'">
+      <h2>尚未投票（{{ notVoted.length }} 人 · 其中 <span style="color:#fbbf24">{{ onlineNotVoted }}</span> 人在線中）</h2>
+      <div v-if="notVoted.length===0" class="empty" style="padding:20px;">🎉 全部投完了！</div>
+      <table v-else>
+        <tr><th>狀態</th><th>學號</th><th>姓名</th><th>組別</th><th>最後連線</th></tr>
+        <tr v-for="s in notVoted" :key="s.id">
+          <td><span :style="`color:${s.online?'#4ade80':'#475569'}`">●</span> {{ s.online ? '在線' : '離線' }}</td>
+          <td class="mono">{{ s.id }}</td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.zodiac }}</td>
+          <td class="mono">{{ s.seen }}</td>
+        </tr>
+      </table>
+    </template>
+
+    <!-- Tab: 原始明細 -->
+    <template v-if="tab==='raw'">
+      <h2>原始投票明細（{{ voteCount }} 筆）</h2>
+      <div v-if="voteCount===0" class="empty">尚無投票資料</div>
+      <table v-else>
+        <tr><th>投票者學號</th><th>所屬組</th><th>🥇第1名(+3)</th><th>🥈第2名(+2)</th><th>🥉第3名(+1)</th><th>時間</th></tr>
+        <tr v-for="v in rawVotes" :key="v.voter">
+          <td class="mono">{{ v.voter }}</td>
+          <td>{{ v.voterZodiac||'—' }}</td>
+          <td>{{ v.rank1 }}</td>
+          <td>{{ v.rank2 }}</td>
+          <td>{{ v.rank3 }}</td>
+          <td class="mono">{{ v.time }}</td>
+        </tr>
+      </table>
+    </template>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+const { createApp, ref, reactive, computed } = Vue;
+
+const FIREBASE = {
+  apiKey: "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
+  authDomain: "cmu-11402-pathophysiology.firebaseapp.com",
+  databaseURL: "https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cmu-11402-pathophysiology",
+  storageBucket: "cmu-11402-pathophysiology.firebasestorage.app",
+  messagingSenderId: "367793212618",
+  appId: "1:367793212618:web:c11acedc50ce6fc3897833"
+};
+const ZODIAC = [
+  {label:'子鼠',icon:'⚡️'},{label:'丑牛',icon:'🧱'},{label:'寅虎',icon:'🔥'},{label:'卯兔',icon:'🧐'},
+  {label:'辰龍',icon:'🌟'},{label:'巳蛇',icon:'🧠'},{label:'午馬',icon:'🚀'},{label:'未羊',icon:'🤝'},
+  {label:'申猴',icon:'💡'},{label:'酉雞',icon:'⏱'},{label:'戌狗',icon:'🛡'},{label:'亥豬',icon:'📚'},
+];
+const ICON = {}; ZODIAC.forEach(z => ICON[z.label]=z.icon);
+
+const app = initializeApp(FIREBASE);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+createApp({
+  setup() {
+    const sid = ref(new URLSearchParams(location.search).get('id') || '20260611-9X9Y');
+    const tab = ref('rank');
+    const connected = ref(false);
+    const err = ref('');
+    const votes = ref({});
+    const students = ref({});
+
+    const connect = async () => {
+      err.value=''; connected.value=false; votes.value={}; students.value={};
+      if (!sid.value) { err.value='請輸入 sessionId'; return; }
+      try {
+        if (!auth.currentUser) await signInAnonymously(auth);
+        onValue(dbRef(db, `classrooms/${sid.value}/posterVotes`), snap => {
+          votes.value = snap.val() || {};
+          connected.value = true;
+        }, e => { err.value = '讀取失敗：' + e.message; });
+        onValue(dbRef(db, `classrooms/${sid.value}/students`), snap => {
+          students.value = snap.val() || {};
+        }, e => { err.value = '名單讀取失敗：' + e.message; });
+      } catch(e) {
+        err.value = '連線/驗證失敗：' + (e.code||e.message) + '（請確認 Anonymous 登入已啟用）';
+      }
+    };
+
+    const notVoted = computed(() => {
+      const voted = new Set(Object.keys(votes.value));
+      const now = Date.now();
+      return Object.entries(students.value)
+        .filter(([id]) => !voted.has(id))
+        .map(([id, s]) => {
+          const p = s.profile || {};
+          return {
+            id, name: p.Name||'', zodiac: p.Zodiac||'',
+            online: !!(s.lastSeen && (now - s.lastSeen < 40000)),
+            seen: s.lastSeen ? new Date(s.lastSeen).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'
+          };
+        })
+        .sort((a,b) => a.id.localeCompare(b.id));
+    });
+    const rosterCount = computed(() => Object.keys(students.value).length);
+    const onlineNotVoted = computed(() => notVoted.value.filter(s => s.online).length);
+
+    const rawVotes = computed(() => Object.entries(votes.value).map(([voter,v]) => ({
+      voter, rank1:v.rank1||'', rank2:v.rank2||'', rank3:v.rank3||'',
+      voterZodiac:v.voterZodiac||'',
+      time: v.submittedAt ? new Date(v.submittedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''
+    })).sort((a,b)=>a.voter.localeCompare(b.voter)));
+
+    const voteCount = computed(() => Object.keys(votes.value).length);
+
+    const tally = computed(() => {
+      const t = {};
+      Object.values(votes.value).forEach(v => {
+        if (v.rank1){ t[v.rank1]=t[v.rank1]||{pts:0,r1:0,r2:0,r3:0}; t[v.rank1].pts+=3; t[v.rank1].r1++; }
+        if (v.rank2){ t[v.rank2]=t[v.rank2]||{pts:0,r1:0,r2:0,r3:0}; t[v.rank2].pts+=2; t[v.rank2].r2++; }
+        if (v.rank3){ t[v.rank3]=t[v.rank3]||{pts:0,r1:0,r2:0,r3:0}; t[v.rank3].pts+=1; t[v.rank3].r3++; }
+      });
+      return t;
+    });
+
+    const rankedGroups = computed(() =>
+      Object.entries(tally.value)
+        .map(([label,d]) => ({ label, icon:ICON[label]||'❓', ...d }))
+        .sort((a,b)=>b.pts-a.pts)
+    );
+    const totalPts = computed(() => rankedGroups.value.reduce((s,g)=>s+g.pts,0));
+    const maxPts   = computed(() => Math.max(1, ...rankedGroups.value.map(g=>g.pts)));
+
+    const flowMatrix = computed(() => {
+      const m = {};
+      ZODIAC.forEach(z => { m[z.label]={}; ZODIAC.forEach(t => m[z.label][t.label]=0); });
+      Object.values(votes.value).forEach(v => {
+        const f = v.voterZodiac; if (!f||!m[f]) return;
+        if (v.rank1 && m[f][v.rank1]!==undefined) m[f][v.rank1]+=3;
+        if (v.rank2 && m[f][v.rank2]!==undefined) m[f][v.rank2]+=2;
+        if (v.rank3 && m[f][v.rank3]!==undefined) m[f][v.rank3]+=1;
+      });
+      return m;
+    });
+    const matrixMax = computed(() => {
+      let mx=0; Object.values(flowMatrix.value).forEach(r=>Object.values(r).forEach(v=>{if(v>mx)mx=v;}));
+      return Math.max(1,mx);
+    });
+    const rowTops = computed(() => {
+      const out={};
+      Object.entries(flowMatrix.value).forEach(([f,row])=>{
+        let best='',bv=0; Object.entries(row).forEach(([t,v])=>{if(v>bv){bv=v;best=t;}});
+        out[f]=bv>0?best:null;
+      });
+      return out;
+    });
+    const mutualPairs = computed(() => {
+      const m=flowMatrix.value, L=ZODIAC.map(z=>z.label), out=[];
+      for (let i=0;i<L.length;i++) for (let j=i+1;j<L.length;j++) {
+        const a=L[i], b=L[j], ab=m[a][b]||0, ba=m[b][a]||0;
+        if (ab>0 && ba>0) out.push({a,b,ia:ICON[a]||'',ib:ICON[b]||'',ab,ba,sum:ab+ba});
+      }
+      return out.sort((x,y)=>y.sum-x.sum);
+    });
+    const mutualSet = computed(() => {
+      const s=new Set(); mutualPairs.value.forEach(p=>{s.add(p.a+'|'+p.b);s.add(p.b+'|'+p.a);}); return s;
+    });
+
+    const exportCSV = () => {
+      const head = ['排名','組別','總分','第1名票','第2名票','第3名票'];
+      const rows = rankedGroups.value.map((g,i)=>[i+1,g.label,g.pts,g.r1,g.r2,g.r3]);
+      const sep = '\n';
+      const labels = ZODIAC.map(z=>z.label);
+      const mtx = [['',''],['投票流向矩陣（列=投票組,欄=被投組,值=投出總分）'],
+        ['投↓ / 被投→', ...labels],
+        ...labels.map(f => [f, ...labels.map(t => f===t?'':(flowMatrix.value[f][t]||0))])];
+      const mut = [['',''],['互投組對'],['A','B','A→B','B→A','合計'],
+        ...mutualPairs.value.map(p=>[p.a,p.b,p.ab,p.ba,p.sum])];
+      const nv = [['',''],['尚未投票('+notVoted.value.length+'人)'],['學號','姓名','組別','在線','最後連線'],
+        ...notVoted.value.map(s=>[s.id,s.name,s.zodiac,s.online?'在線':'離線',s.seen])];
+      const raw = [['',''],['原始明細'],['投票者學號','所屬組','第1名','第2名','第3名','時間'],
+        ...rawVotes.value.map(v=>[v.voter,v.voterZodiac,v.rank1,v.rank2,v.rank3,v.time])];
+      const csv = '﻿' + [head,...rows,...mtx,...mut,...nv,...raw].map(r=>r.map(c=>`"${c}"`).join(',')).join(sep);
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `poster_votes_${sid.value}.csv`;
+      a.click();
+    };
+
+    connect();
+
+    return { sid, tab, connected, err, voteCount, rawVotes, rankedGroups, totalPts, maxPts, connect, exportCSV,
+             notVoted, rosterCount, onlineNotVoted, ZODIAC, flowMatrix, matrixMax, rowTops,
+             mutualPairs, mutualSet };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
