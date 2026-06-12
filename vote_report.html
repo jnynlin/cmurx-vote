@@ -114,6 +114,9 @@
         <i class="fa-solid fa-table-list"></i> 明細
         <span class="badge">{{ voteCount }}</span>
       </button>
+      <button :class="{active:tab==='impact'}" @click="tab='impact'">
+        <i class="fa-solid fa-arrow-trend-up"></i> 影響力
+      </button>
     </div>
 
     <div v-if="voteCount===0 && connected" class="empty">尚無投票資料</div>
@@ -190,6 +193,113 @@
           <td class="mono">{{ s.seen }}</td>
         </tr>
       </table>
+    </template>
+
+    <!-- Tab: 影響力 -->
+    <template v-if="tab==='impact'">
+      <div v-if="voteCount===0" class="empty">尚無投票資料</div>
+      <template v-else>
+
+        <!-- 1. Counterfactual: remove each group's votes -->
+        <h2>反事實分析：移除某組票後的排名變動</h2>
+        <p style="font-size:11px;color:#475569;margin-bottom:10px;">
+          依次移除每一組的投票，重算排名。顯示影響最大的組（排名位移最多）。
+        </p>
+        <table>
+          <tr>
+            <th>移除組</th><th>該組票數</th><th>最大位移</th><th>排名上升最多</th><th>排名下降最多</th>
+          </tr>
+          <tr v-for="r in counterfactual" :key="r.removed"
+              :style="r.maxDelta>=3?'background:#1a2e1a':r.maxDelta>=2?'background:#1e1e2e':''">
+            <td><strong>{{ r.icon }} {{ r.removed }}</strong></td>
+            <td style="color:#94a3b8;">{{ r.totalVotes }} 票</td>
+            <td style="font-weight:800;" :style="r.maxDelta>=3?'color:#4ade80':r.maxDelta>=2?'color:#f59e0b':'color:#64748b'">
+              ± {{ r.maxDelta }} 名
+            </td>
+            <td style="font-size:11px;">
+              <span v-if="r.changes.filter(c=>c.delta>0).length">
+                <span v-for="c in r.changes.filter(c=>c.delta>0).slice(0,2)" :key="c.label"
+                      style="color:#4ade80;margin-right:6px;">
+                  {{ c.label }} ↑{{ c.delta }}
+                </span>
+              </span>
+              <span v-else style="color:#334155;">—</span>
+            </td>
+            <td style="font-size:11px;">
+              <span v-if="r.changes.filter(c=>c.delta<0).length">
+                <span v-for="c in r.changes.filter(c=>c.delta<0).slice(0,2)" :key="c.label"
+                      style="color:#f87171;margin-right:6px;">
+                  {{ c.label }} ↓{{ -c.delta }}
+                </span>
+              </span>
+              <span v-else style="color:#334155;">—</span>
+            </td>
+          </tr>
+        </table>
+        <div style="font-size:10px;color:#334155;margin-top:6px;">
+          位移 = 原排名 − 新排名；正值 = 該組受益於此來源票（移除後排名下滑）；負值 = 反之。
+        </div>
+
+        <!-- 2. Vote concentration (Gini) per source group -->
+        <h2 style="margin-top:24px;">投票集中度（各組如何分配票）</h2>
+        <p style="font-size:11px;color:#475569;margin-bottom:10px;">
+          Gini = 0 → 完全平均分散；Gini → 1 → 所有票集中投給一組。
+        </p>
+        <table>
+          <tr><th>投票組</th><th>總投出分</th><th>最集中投給</th><th>佔比</th><th>Gini 集中度</th><th>風格</th></tr>
+          <tr v-for="r in voteConcentration" :key="r.label">
+            <td><strong>{{ r.icon }} {{ r.label }}</strong></td>
+            <td style="color:#94a3b8;">{{ r.total }}</td>
+            <td>{{ r.top }}</td>
+            <td>{{ r.topPct }}%</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:80px;height:7px;background:#0f172a;border-radius:4px;overflow:hidden;">
+                  <div :style="`width:${r.gini*100}%;height:100%;background:${r.gini>0.6?'#f87171':r.gini>0.35?'#f59e0b':'#4ade80'};border-radius:4px;`"></div>
+                </div>
+                <span :style="`color:${r.gini>0.6?'#f87171':r.gini>0.35?'#f59e0b':'#4ade80'};font-weight:700;`">
+                  {{ r.gini }}
+                </span>
+              </div>
+            </td>
+            <td style="font-size:11px;color:#64748b;">
+              {{ r.gini>0.6?'高度集中 — 策略型':r.gini>0.35?'中等集中':'平均分散' }}
+            </td>
+          </tr>
+        </table>
+
+        <!-- 3. Normalized contribution matrix -->
+        <h2 style="margin-top:24px;">來源貢獻矩陣（佔各組得分的 %）</h2>
+        <p style="font-size:11px;color:#475569;margin-bottom:10px;">
+          列＝投票組，欄＝被投組，數字＝「該欄組」的總得分中有幾 % 來自「該列組」。
+        </p>
+        <div class="matrix-scroll">
+          <table class="matrix">
+            <thead>
+              <tr>
+                <th class="rowhead">來源↓ / 目標→</th>
+                <th v-for="t in ZODIAC" :key="t.label" :title="t.label">{{ t.icon }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="f in ZODIAC" :key="f.label">
+                <td class="rowhead">{{ f.icon }} {{ f.label }}</td>
+                <td v-for="t in ZODIAC" :key="t.label"
+                    :class="f.label===t.label?'diag':'cell'"
+                    :style="f.label!==t.label && impactMatrix[f.label]?.[t.label]>0
+                      ? `background:rgba(250,204,21,${0.05+0.65*(impactMatrix[f.label][t.label]/100)});color:${impactMatrix[f.label][t.label]>40?'#000':'#e2e8f0'}`
+                      : ''">
+                  {{ f.label===t.label ? '—' : (impactMatrix[f.label]?.[t.label]||'') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:10px;color:#334155;margin-top:6px;">
+          格值 = 該來源組佔目標組總分的百分比（%）。黃色深淺代表貢獻大小。欄加總 ≈ 100%。
+        </div>
+
+      </template>
     </template>
 
     <!-- Tab: 原始明細 -->
@@ -345,6 +455,70 @@ createApp({
       const s=new Set(); mutualPairs.value.forEach(p=>{s.add(p.a+'|'+p.b);s.add(p.b+'|'+p.a);}); return s;
     });
 
+    // ── Impact tab computeds ─────────────────────────────────────────────
+    // Counterfactual: remove each group's votes and recompute ranks
+    const counterfactual = computed(() => {
+      const allVotes = Object.values(votes.value);
+      const baseRanks = {};
+      rankedGroups.value.forEach((g,i) => { baseRanks[g.label]=i+1; });
+
+      return ZODIAC.map(removed => {
+        const n = allVotes.filter(v=>v.voterZodiac===removed.label).length;
+        if (!n) return null;
+        const filtered = allVotes.filter(v=>v.voterZodiac!==removed.label);
+        const t={};
+        filtered.forEach(v=>{
+          if(v.rank1){t[v.rank1]=(t[v.rank1]||0)+3;}
+          if(v.rank2){t[v.rank2]=(t[v.rank2]||0)+2;}
+          if(v.rank3){t[v.rank3]=(t[v.rank3]||0)+1;}
+        });
+        const newRanks={};
+        Object.entries(t).sort((a,b)=>b[1]-a[1]).forEach(([lbl],i)=>{newRanks[lbl]=i+1;});
+        const changes = ZODIAC.map(g=>{
+          const o=baseRanks[g.label]||99, nw=newRanks[g.label]||99;
+          return {label:g.label, old:o, now:nw, delta:o-nw};
+        }).filter(c=>c.delta!==0 && c.old<99).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+        const maxDelta = changes.length ? Math.abs(changes[0].delta) : 0;
+        const z = ZODIAC.find(z=>z.label===removed.label);
+        return {removed:removed.label, icon:z?.icon||'', totalVotes:n, changes, maxDelta};
+      }).filter(Boolean).sort((a,b)=>b.maxDelta-a.maxDelta);
+    });
+
+    // Vote concentration: Gini coefficient per source group
+    const voteConcentration = computed(() => {
+      return ZODIAC.map(f => {
+        const row = ZODIAC.filter(t=>t.label!==f.label)
+                          .map(t=>flowMatrix.value[f.label]?.[t.label]||0);
+        const total = row.reduce((a,b)=>a+b,0);
+        if (!total) return null;
+        const sorted=[...row].sort((a,b)=>a-b), n=sorted.length;
+        const gini=+(sorted.reduce((s,v,i)=>s+(2*(i+1)-n-1)*v,0)/(n*total)).toFixed(2);
+        const maxVal=Math.max(...row);
+        const topIdx=row.indexOf(maxVal);
+        const topLabel=ZODIAC.filter(t=>t.label!==f.label)[topIdx]?.label||'—';
+        return {label:f.label, icon:f.icon, gini, top:topLabel, topPct:+(maxVal/total*100).toFixed(0), total};
+      }).filter(Boolean).sort((a,b)=>b.gini-a.gini);
+    });
+
+    // Normalized contribution: % of each target group's score from each source
+    const impactMatrix = computed(() => {
+      const m=flowMatrix.value;
+      const colTotals={};
+      ZODIAC.forEach(t=>{
+        colTotals[t.label]=ZODIAC.reduce((s,f)=>s+(m[f.label]?.[t.label]||0),0);
+      });
+      const norm={};
+      ZODIAC.forEach(f=>{
+        norm[f.label]={};
+        ZODIAC.forEach(t=>{
+          const total=colTotals[t.label]||1;
+          const val=m[f.label]?.[t.label]||0;
+          norm[f.label][t.label]=val>0?+((val/total*100).toFixed(0)):0;
+        });
+      });
+      return norm;
+    });
+
     const exportCSV = () => {
       const head = ['排名','組別','總分','第1名票','第2名票','第3名票'];
       const rows = rankedGroups.value.map((g,i)=>[i+1,g.label,g.pts,g.r1,g.r2,g.r3]);
@@ -371,7 +545,8 @@ createApp({
 
     return { sid, tab, embedMode, connected, err, voteCount, rawVotes, rankedGroups, totalPts, maxPts, connect, exportCSV,
              notVoted, rosterCount, onlineNotVoted, ZODIAC, flowMatrix, matrixMax, rowTops,
-             mutualPairs, mutualSet };
+             mutualPairs, mutualSet,
+             counterfactual, voteConcentration, impactMatrix };
   }
 }).mount('#app');
 </script>
