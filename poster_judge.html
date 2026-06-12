@@ -15,6 +15,7 @@
     --bg:#f4f4f5; --surface:#ffffff; --surface2:#fafafa; --border:#e4e4e7;
     --text:#18181b; --text2:#3f3f46; --muted:#71717a; --faint:#a1a1aa;
     --primary:#4f46e5; --primary-d:#4338ca; --primary2:#0ea5e9; --primary-soft:#eef2ff;
+    --primary-rgb:79,70,229;
     --accent:#b45309; --accent-l:#d97706;     /* 分數專用（深一階以利淺底對比）*/
     --ok:#15803d; --ok-l:#16a34a; --danger:#dc2626; --danger-l:#ef4444;
     --grad:linear-gradient(135deg,#4f46e5,#0ea5e9);
@@ -185,8 +186,11 @@
   .vote-state h3{color:var(--text);font-size:17px;margin-bottom:8px;}
   .vote-state p{font-size:13px;line-height:1.7;color:var(--faint);}
   .ref-banner{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;display:flex;gap:8px;align-items:flex-start;line-height:1.6;}
-  /* flow matrix — zinc/indigo light theme */
-  .mx-meta{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.7;}
+  /* flow matrix — fully token-based */
+  .mx-meta{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.7;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex-shrink:0;animation:pulse 1.5s infinite;}
+  .mx-legend-top{color:var(--accent);font-weight:700;}
+  .mx-legend-mutual{color:var(--ok);font-weight:700;}
   .vote-matrix-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:12px;margin-bottom:18px;}
   table.flow-mx{border-collapse:collapse;font-size:12px;min-width:520px;width:100%;}
   table.flow-mx th,table.flow-mx td{padding:5px 7px;text-align:center;border:1px solid var(--border);}
@@ -197,9 +201,12 @@
   table.flow-mx td.mxtop{outline:2px solid var(--accent-l);border-radius:3px;color:var(--accent);font-weight:800;}
   table.flow-mx td.mxmutual{box-shadow:inset 0 0 0 2px var(--ok-l);}
   .mutual-list{margin-top:16px;}
-  .mutual-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+  .mutual-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .mutual-title i{color:var(--ok);}
+  .empty-mutual{color:var(--faint);font-size:13px;padding:12px 0;}
   .mutual-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--surface2);font-size:13px;color:var(--text2);}
-  .mutual-row .m-pts{font-size:11px;color:var(--muted);flex-shrink:0;}
+  .mutual-arrow{color:var(--ok-l);font-weight:700;font-size:15px;}
+  .mutual-row .m-pts{font-size:12px;color:var(--muted);flex-shrink:0;}
   .mutual-row .m-sum{font-size:14px;font-weight:800;color:var(--ok);margin-left:auto;flex-shrink:0;}
 
   /* ── Submit bar ── */
@@ -523,30 +530,22 @@
           <div class="vs-icon"><i class="fa-solid fa-spinner spin" style="color:var(--primary);"></i></div>
           <h3>載入中…</h3>
         </div>
-        <!-- Locked: live-waiting -->
-        <div v-else-if="votesState==='locked'" class="vote-state">
-          <div class="vs-icon">🔒</div><h3>投票尚未關閉</h3>
-          <p>等待主辦老師按下「關閉投票」後自動顯示，<b>無需重新整理</b>。</p>
-          <div style="margin-top:10px;font-size:12px;font-family:monospace;color:var(--faint);">{{ voteSession }}</div>
-          <div style="margin-top:10px;font-size:13px;color:var(--primary);display:flex;align-items:center;gap:7px;justify-content:center;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i> 即時監聽中…
-          </div>
-        </div>
         <!-- Error -->
         <div v-else-if="votesState==='error'" class="vote-state">
-          <div class="vs-icon">⚠️</div><h3>讀取失敗</h3>
+          <div class="vs-icon" style="color:var(--danger);">⚠️</div><h3>讀取失敗</h3>
           <p>請確認場次代碼正確且 Anonymous 登入已啟用。</p>
           <div style="margin-top:8px;font-size:12px;font-family:monospace;color:var(--faint);">{{ voteSession }}</div>
           <button class="jump-btn" style="margin-top:14px;" @click="reloadVotesTab"><i class="fa-solid fa-rotate-right"></i> 重試</button>
         </div>
 
-        <!-- Ready: flow matrix + mutual pairs -->
+        <!-- Ready: live flow matrix + mutual pairs -->
         <template v-else-if="votesState==='ready'">
           <div class="mx-meta">
-            列＝投票組 · 欄＝被投組 · 數字＝投出總分(3/2/1)
-            <span style="color:var(--accent);font-weight:700;">■</span> 該列最多 ·
-            <span style="color:var(--ok);font-weight:700;">■</span> 互投 ·
-            <span style="color:var(--muted);">{{ voteCount }} 位投票</span>
+            <span class="live-dot"></span> 即時更新中 ·
+            列＝投票組 · 欄＝被投組 · 數字＝投出總分(3/2/1) ·
+            <span class="mx-legend-top">■</span> 該列最多 ·
+            <span class="mx-legend-mutual">■</span> 互投 ·
+            {{ voteCount }} 位已投
           </div>
           <div class="vote-matrix-scroll">
             <table class="flow-mx">
@@ -564,7 +563,7 @@
                                vRowTops[f.label]===t.label?'mxtop':'',
                                (f.label!==t.label && vMutualSet.has(f.label+'|'+t.label))?'mxmutual':'']"
                       :style="f.label!==t.label && vflowMatrix[f.label][t.label]>0
-                              ? `background:rgba(79,70,229,${0.07+0.55*vflowMatrix[f.label][t.label]/vMatrixMax})` : ''">
+                              ? `background:rgba(var(--primary-rgb),${(0.07+0.55*vflowMatrix[f.label][t.label]/vMatrixMax).toFixed(2)})` : ''">
                     {{ f.label===t.label ? '—' : (vflowMatrix[f.label][t.label]||'') }}
                   </td>
                 </tr>
@@ -572,11 +571,11 @@
             </table>
           </div>
           <div class="mutual-list">
-            <div class="mutual-title"><i class="fa-solid fa-arrow-right-arrow-left" style="margin-right:6px;color:var(--ok);"></i>互投偵測（{{ vMutualPairs.length }} 對）</div>
-            <div v-if="vMutualPairs.length===0" style="color:var(--faint);font-size:13px;padding:12px 0;">目前無互投組對</div>
+            <div class="mutual-title"><i class="fa-solid fa-arrow-right-arrow-left"></i> 互投偵測（{{ vMutualPairs.length }} 對）</div>
+            <div v-if="vMutualPairs.length===0" class="empty-mutual">目前無互投組對</div>
             <div v-for="p in vMutualPairs" :key="p.a+p.b" class="mutual-row">
               <span v-html="p.ia"></span> {{ p.a }}
-              <span style="color:var(--ok-l);font-weight:700;font-size:15px;">⇄</span>
+              <span class="mutual-arrow">⇄</span>
               <span v-html="p.ib"></span> {{ p.b }}
               <span class="m-pts">{{ p.ab }}→ / ←{{ p.ba }}</span>
               <span class="m-sum">{{ p.sum }}</span>
@@ -644,7 +643,7 @@
 </div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref as dbRef, get, onValue as fbOnValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref as dbRef, onValue as fbOnValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 const { createApp, reactive, ref, computed, nextTick, onMounted } = Vue;
 
@@ -811,19 +810,15 @@ createApp({
     };
 
     // ── Student-vote reference ─────────────────────────────────────────
+    // Direct onValue on posterVotes — same as vote_report.html, no gate.
     const loadVoteFlow_ = async (sid) => {
       if (!fbInited) { fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp); fbAuth=getAuth(fbApp); fbInited=true; }
       if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
       if (_voteUnsub) { _voteUnsub(); _voteUnsub=null; }
       votesState.value = 'loading';
-      _voteUnsub = fbOnValue(dbRef(fbDb, `classrooms/${sid}/status`), async (snap) => {
-        const st = snap.val() || {};
-        if (st.votingClosed !== true) { votesState.value='locked'; return; }
-        try {
-          const s2 = await get(dbRef(fbDb, `classrooms/${sid}/posterVotes`));
-          voteRawVotes.value = s2.val() || {};
-          votesState.value = 'ready';
-        } catch(e2) { votesState.value='error'; }
+      _voteUnsub = fbOnValue(dbRef(fbDb, `classrooms/${sid}/posterVotes`), (snap) => {
+        voteRawVotes.value = snap.val() || {};
+        votesState.value = 'ready';
       }, () => { votesState.value='error'; });
     };
 
