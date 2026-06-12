@@ -40,6 +40,15 @@
   .card .val.amber{color:var(--accent-l);}
   .card .val.red{color:var(--danger);}
   .card .hint{font-size:11px;color:var(--faint);margin-top:4px;}
+  .card{cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s;}
+  .card:hover{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+  .card.active{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px rgba(79,70,229,.12);}
+  .card.active .hint{color:var(--primary);font-weight:700;}
+  .filter-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+               background:var(--primary-soft);color:var(--primary);border:1px solid #c7d2fe;
+               border-radius:99px;padding:5px 12px;}
+  .chip-clear{background:none;border:none;cursor:pointer;color:var(--primary);padding:0;
+              font-size:11px;margin-left:2px;line-height:1;}
 
   /* ── Controls ── */
   .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
@@ -160,39 +169,39 @@
       </div>
     </div>
 
-    <!-- Summary cards -->
+    <!-- Summary cards (clickable filters — re-click to clear) -->
     <div v-if="state==='ready'" class="cards">
-      <div class="card">
+      <div class="card" :class="{active:!activeFilter}" @click="setFilter(null)" title="顯示全部">
         <div class="label">學生人數</div>
         <div class="val blue">{{ total }}</div>
-        <div class="hint">本 Session 名單</div>
+        <div class="hint">點擊 → 全部顯示</div>
       </div>
-      <div class="card">
+      <div class="card" :class="{active:activeFilter==='hasLogin'}" @click="setFilter('hasLogin')" title="篩選：有登入記錄">
         <div class="label">有登入記錄</div>
         <div class="val green">{{ hasLoginCount }}</div>
         <div class="hint">loginAt 存在（含舊版）</div>
       </div>
-      <div class="card">
+      <div class="card" :class="{active:activeFilter==='online'}" @click="setFilter('online')" title="篩選：目前在線">
         <div class="label">目前在線</div>
         <div class="val green">{{ onlineCount }}</div>
         <div class="hint">isActive = true</div>
       </div>
-      <div class="card">
+      <div class="card" :class="{active:activeFilter==='counted'}" @click="setFilter('counted')" title="篩選：計數登入">
         <div class="label">計數登入次數</div>
         <div class="val green">{{ totalLogins }}</div>
         <div class="hint">≥ 2026-06-12 後累計</div>
       </div>
-      <div class="card">
+      <div class="card" :class="{active:activeFilter==='legacy'}" @click="setFilter('legacy')" title="篩選：舊版登入">
         <div class="label">舊版登入</div>
         <div class="val amber">{{ legacyCount }}</div>
         <div class="hint">loginAt 有 / loginCount=0</div>
       </div>
-      <div class="card">
+      <div class="card" :class="{active:activeFilter==='multi'}" @click="setFilter('multi')" title="篩選：多次登入">
         <div class="label">多次登入</div>
         <div class="val red">{{ multiLoginCount }}</div>
         <div class="hint">loginCount ≥ 2</div>
       </div>
-      <div class="card">
+      <div class="card" :class="{active:activeFilter==='never'}" @click="setFilter('never')" title="篩選：從未登入">
         <div class="label">從未登入</div>
         <div class="val" style="color:var(--faint);">{{ neverLoginCount }}</div>
         <div class="hint">loginAt 不存在</div>
@@ -201,6 +210,12 @@
 
     <!-- Controls -->
     <div v-if="state==='ready'" class="controls">
+      <span v-if="activeFilter" class="filter-chip">
+        <i class="fa-solid fa-filter"></i>
+        {{ {hasLogin:'有登入記錄',online:'目前在線',counted:'計數登入',legacy:'舊版登入',multi:'多次登入',never:'從未登入'}[activeFilter] }}
+        · {{ filtered.length }} 人
+        <button class="chip-clear" @click="setFilter(null)" title="清除篩選"><i class="fa-solid fa-xmark"></i></button>
+      </span>
       <input v-model="searchQ" class="search-box" placeholder="搜尋姓名 / 學號 / 組別…">
       <button class="sort-btn" :class="{active:sortKey==='loginCount'}" @click="toggleSort('loginCount')">
         <i class="fa-solid fa-arrow-right-to-bracket"></i> 登入次數
@@ -394,12 +409,13 @@ function fmtTime(ts) {
 
 createApp({
   setup() {
-    const state     = ref('loading');
-    const rawData   = ref({});
-    const searchQ   = ref('');
-    const sortKey   = ref('loginCount');
-    const sortAsc   = ref(false);
-    const dbgOpen   = ref(false);
+    const state        = ref('loading');
+    const rawData      = ref({});
+    const searchQ      = ref('');
+    const sortKey      = ref('loginCount');
+    const sortAsc      = ref(false);
+    const dbgOpen      = ref(false);
+    const activeFilter = ref(null);   // null | 'hasLogin'|'online'|'counted'|'legacy'|'multi'|'never'
 
     const students = computed(() => {
       return Object.entries(rawData.value).map(([uid, d]) => {
@@ -431,16 +447,28 @@ createApp({
       });
     });
 
+    const FILTER_FN = {
+      hasLogin: s => s.hasLoggedIn,
+      online:   s => s.isActive,
+      counted:  s => s.loginStatus === 'counted',
+      legacy:   s => s.loginStatus === 'legacy',
+      multi:    s => s.loginCount >= 2,
+      never:    s => !s.hasLoggedIn,
+    };
     const filtered = computed(() => {
+      let arr = activeFilter.value && FILTER_FN[activeFilter.value]
+                ? students.value.filter(FILTER_FN[activeFilter.value])
+                : students.value;
       const q = searchQ.value.trim().toLowerCase();
-      if (!q) return students.value;
-      return students.value.filter(s =>
+      if (!q) return arr;
+      return arr.filter(s =>
         s.name.toLowerCase().includes(q) ||
         s.studentId.toLowerCase().includes(q) ||
         s.zodiac.toLowerCase().includes(q) ||
         s.uid.toLowerCase().includes(q)
       );
     });
+    const setFilter = (key) => { activeFilter.value = activeFilter.value === key ? null : key; };
 
     const displayed = computed(() => {
       const arr = [...filtered.value];
@@ -536,7 +564,7 @@ createApp({
       totalLogins, totalLogouts, multiLoginCount, legacyCount,
       neverLoginCount, hasLoginCount,
       displayedLoginSum, displayedLogoutSum,
-      toggleSort, exportCSV,
+      toggleSort, exportCSV, setFilter, activeFilter,
       dbgOpen, debug,
     };
   }
