@@ -93,11 +93,11 @@
   .sticky-head{position:sticky;top:0;z-index:40;background:var(--bg);padding:8px 0 14px;margin-bottom:6px;}
   .sticky-head .gallery-link{margin-bottom:8px;}
   .tabbar{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:5px;box-shadow:0 4px 16px rgba(0,0,0,.35);}
-  .tabbar button{flex:1;border:none;background:transparent;color:var(--muted);padding:10px 8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;transition:all .15s;}
+  .tabbar button{flex:1;border:none;background:transparent;color:var(--muted);padding:10px 8px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;transition:all .15s;}
   .tabbar button.active{background:var(--grad-btn);color:#fff;}
   .tabbar button:not(.active):hover{color:var(--text);background:rgba(255,255,255,.04);}
   .tabbar .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
-  @media(max-width:480px){.tabbar button{font-size:12px;padding:9px 4px;}.tabbar button .tlabel{display:none;}.tabbar button .ticon{font-size:16px;}}
+  @media(max-width:480px){.tabbar button{font-size:13px;padding:9px 4px;}.tabbar button .tlabel{display:none;}.tabbar button .ticon{font-size:17px;}}
 
   /* ── Auto-save indicator ── */
   .saved-flash{position:fixed;bottom:80px;right:16px;background:#064e3b;border:1px solid var(--ok);border-radius:8px;padding:6px 12px;font-size:11px;color:var(--ok-l);font-weight:600;z-index:60;display:flex;align-items:center;gap:6px;animation:fadeIn .2s ease;}
@@ -105,10 +105,10 @@
   /* ── Info-tab blocks ── */
   .gallery-link{display:flex;align-items:center;justify-content:space-between;background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:13px 18px;margin-bottom:14px;text-decoration:none;color:#4338ca;font-size:13px;font-weight:600;transition:background .2s;}
   .gallery-link:hover{background:#e0e7ff;}
-  .info-block{border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:12.5px;line-height:1.7;display:flex;gap:9px;align-items:flex-start;}
+  .info-block{border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.7;display:flex;gap:9px;align-items:flex-start;}
   .info-block.note{background:#eef2ff;border:1px solid #c7d2fe;color:#3f3f46;} .info-block.note b{color:#3730a3;}
   .info-block.comment{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;} .info-block.comment b{color:#166534;}
-  .rubric-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:12px;}
+  .rubric-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:14px;}
   .rubric-title{font-weight:700;color:var(--accent-l);letter-spacing:1px;margin-right:4px;}
   .rubric-item{color:var(--muted);white-space:nowrap;}
   .rubric-item b{color:var(--accent);font-size:14px;margin-right:3px;}
@@ -176,7 +176,7 @@
   .criteria-row.is-total .criteria-label{background:var(--accent);}
   .total-tag{font-size:8px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
 
-  /* ── Student votes heatmap (reference tab) ── */
+  /* ── Student votes reference tab ── */
   .session-inp{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-size:13px;font-family:monospace;outline:none;width:240px;transition:border-color .2s;}
   .session-inp:focus{border-color:var(--primary);}
   .session-inp::placeholder{color:var(--faint);}
@@ -185,15 +185,6 @@
   .vote-state h3{color:var(--text);font-size:17px;margin-bottom:8px;}
   .vote-state p{font-size:13px;line-height:1.7;color:var(--faint);}
   .ref-banner{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#92400e;display:flex;gap:8px;align-items:flex-start;line-height:1.6;}
-  .vrank{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;}
-  .vrank-no{font-size:17px;font-weight:900;width:26px;text-align:center;flex-shrink:0;color:var(--faint);}
-  .vrank-no.r1{color:var(--accent-l);} .vrank-no.r2{color:#71717a;} .vrank-no.r3{color:#a16207;}
-  .vrank-icon{font-size:22px;width:34px;text-align:center;flex-shrink:0;}
-  .vrank-name{font-weight:700;font-size:14px;color:var(--text);flex-shrink:0;width:64px;}
-  .vrank-bd{font-size:10px;color:var(--faint);font-weight:400;margin-top:1px;}
-  .vrank-bar-wrap{flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;min-width:40px;}
-  .vrank-bar{height:100%;border-radius:5px;transition:width .5s;}
-  .vrank-pts{font-size:18px;font-weight:800;color:var(--accent);width:42px;text-align:right;flex-shrink:0;}
 
   /* ── Submit bar ── */
   .submit-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);box-shadow:0 -4px 16px #0000000a;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
@@ -499,10 +490,10 @@
       <div v-show="activeTab==='votes'">
         <div class="ref-banner">
           <i class="fa-solid fa-circle-exclamation"></i>
-          <span>此為<b>學生互評票選</b>結果，<b>僅供參考</b>，與您的專業評分各自獨立、不互相影響。投票關閉後才開放。</span>
+          <span>此為<b>學生互評票選</b>結果，<b>僅供參考</b>，與您的專業評分各自獨立、不互相影響。</span>
         </div>
-
-        <div v-if="votesState==='nosession'" class="vote-state">
+        <!-- No session → input form -->
+        <div v-if="!voteSession" class="vote-state">
           <div class="vs-icon">🔧</div><h3>請輸入場次代碼</h3>
           <p style="margin-bottom:16px;">向主辦單位取得場次代碼後輸入即可連線<br><span style="font-size:11px;">（或請主辦單位在連結後附上 <code>?session=...</code>）</span></p>
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
@@ -510,40 +501,10 @@
             <button class="jump-btn" :disabled="!voteSessionInput" @click="connectVoteSession" style="padding:10px 16px;"><i class="fa-solid fa-plug"></i> 連線</button>
           </div>
         </div>
-        <div v-else-if="votesState==='loading'" class="vote-state">
-          <div class="vs-icon"><i class="fa-solid fa-spinner spin" style="color:var(--primary);"></i></div>
-          <h3>載入中…</h3>
-        </div>
-        <div v-else-if="votesState==='locked'" class="vote-state">
-          <div class="vs-icon">🔒</div><h3>投票尚未關閉</h3>
-          <p>等待主辦老師按下「關閉投票」後自動顯示，<b>無需重新整理</b>。</p>
-          <div style="font-size:11px;color:var(--faint);margin-top:10px;font-family:monospace;">場次：{{ voteSession }}</div>
-          <div style="margin-top:12px;font-size:12px;color:var(--primary);display:flex;align-items:center;gap:7px;justify-content:center;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i> 即時監聽中…
-          </div>
-        </div>
-        <div v-else-if="votesState==='closed-empty'" class="vote-state">
-          <div class="vs-icon">📭</div><h3>尚無票選資料</h3>
-        </div>
-        <div v-else-if="votesState==='error'" class="vote-state">
-          <div class="vs-icon">⚠️</div><h3>讀取失敗</h3>
-          <p>請確認網路與場次代碼正確，且 Anonymous 登入已啟用。</p>
-          <div style="font-size:11px;color:var(--faint);margin-top:12px;font-family:monospace;">場次：{{ voteSession }}</div>
-          <button class="jump-btn" style="margin-top:12px;" @click="reloadVotesTab"><i class="fa-solid fa-rotate-right"></i> 重試</button>
-        </div>
-        <template v-else-if="votesState==='ready'">
-          <div style="font-size:12px;color:var(--faint);margin-bottom:12px;text-align:center;">
-            {{ studentVoteCount }} 位學生投票 · 第1名3分/第2名2分/第3名1分
-            <span style="font-family:monospace;margin-left:8px;background:var(--surface2);border-radius:4px;padding:1px 6px;">{{ voteSession }}</span>
-          </div>
-          <div v-for="(g,i) in studentTally" :key="g.label" class="vrank">
-            <div :class="['vrank-no', i===0?'r1':i===1?'r2':i===2?'r3':'']">{{ i+1 }}</div>
-            <div class="vrank-icon" v-html="g.icon"></div>
-            <div class="vrank-name">{{ g.label }}<div class="vrank-bd">🥇{{ g.r1 }} 🥈{{ g.r2 }} 🥉{{ g.r3 }}</div></div>
-            <div class="vrank-bar-wrap"><div class="vrank-bar" :style="`width:${g.pts/voteMaxPts*100}%;background:rgba(59,130,246,${0.35+0.65*g.pts/voteMaxPts})`"></div></div>
-            <div class="vrank-pts">{{ g.pts }}</div>
-          </div>
-        </template>
+        <!-- Session set → embed vote_report.html (full ranking + matrix + mutual) -->
+        <iframe v-else :src="'vote_report.html?id='+voteSession"
+                style="width:100%;height:calc(100vh - 210px);border:1px solid var(--border);border-radius:12px;display:block;"
+                title="票選結果"></iframe>
       </div>
     </div>
 
@@ -604,9 +565,6 @@
 
 </div>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref as dbRef, get, onValue as fbOnValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 const { createApp, reactive, ref, computed, nextTick, onMounted } = Vue;
 
 // ── Audio + Haptic ────────────────────────────────────────────────────
@@ -642,15 +600,6 @@ const LS_SESSION = 'pj_session';
 const LS_SCORES  = slot => `pj_scores_${slot}`;
 const URL_SESSION = new URLSearchParams(location.search).get('session')
                  || new URLSearchParams(location.search).get('id') || '';
-const FIREBASE = {
-  apiKey: "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
-  authDomain: "cmu-11402-pathophysiology.firebaseapp.com",
-  databaseURL: "https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "cmu-11402-pathophysiology",
-  storageBucket: "cmu-11402-pathophysiology.firebasestorage.app",
-  messagingSenderId: "367793212618",
-  appId: "1:367793212618:web:c11acedc50ce6fc3897833"
-};
 
 const ZODIAC = [
   {label:'子鼠',icon:'<i class="fa-solid fa-bolt"></i>',element:'水'},          {label:'丑牛',icon:'<i class="fa-solid fa-cubes-stacked"></i>',element:'土'},
@@ -708,14 +657,9 @@ createApp({
     const pinStr        = computed(() => pinDigits.join(''));
     const scores        = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
 
-    // Student-vote reference state
-    const votesState       = ref('idle');   // idle|nosession|loading|locked|closed-empty|ready|error
+    // Student-vote reference — session for iframe
     const voteSession      = ref(URL_SESSION);
     const voteSessionInput = ref(URL_SESSION);
-    const studentTally     = ref([]);
-    const studentVoteCount = ref(0);
-    const voteMaxPts       = ref(1);
-    let fbApp, fbDb, fbAuth, fbInited=false;
 
     let savedTimer = null;
 
@@ -760,63 +704,16 @@ createApp({
     };
 
     // ── Student-vote reference ─────────────────────────────────────────
-    // Uses onValue (live listener) on status so the heatmap unlocks the
-    // moment the teacher presses 「關閉投票」— no manual refresh needed.
-    let _statusUnsub = null;   // unsubscribe previous listener on session change
-
-    const loadVotes_ = async (sid) => {
-      try {
-        const votes = (await get(dbRef(fbDb, `classrooms/${sid}/posterVotes`))).val() || {};
-        studentVoteCount.value = Object.keys(votes).length;
-        const t = {}; ZODIAC.forEach(z=>t[z.label]={pts:0,r1:0,r2:0,r3:0});
-        Object.values(votes).forEach(v => {
-          if (v.rank1 && t[v.rank1]) { t[v.rank1].pts+=3; t[v.rank1].r1++; }
-          if (v.rank2 && t[v.rank2]) { t[v.rank2].pts+=2; t[v.rank2].r2++; }
-          if (v.rank3 && t[v.rank3]) { t[v.rank3].pts+=1; t[v.rank3].r3++; }
-        });
-        const arr = ZODIAC.map(z=>({label:z.label, icon:z.icon, ...t[z.label]}))
-                          .filter(g=>g.pts>0).sort((a,b)=>b.pts-a.pts);
-        studentTally.value = arr;
-        voteMaxPts.value = Math.max(1, ...arr.map(g=>g.pts));
-        votesState.value = arr.length ? 'ready' : 'closed-empty';
-      } catch(e) { votesState.value='error'; }
-    };
-
-    const openVotesTab = async (forceSid) => {
-      activeTab.value = 'votes';
-      // forceSid may be a MouseEvent (from @click with no args) — ignore non-strings
-      const sid = (typeof forceSid === 'string' && forceSid ? forceSid : (voteSession.value || '')).trim();
-      if (!sid) { votesState.value='nosession'; return; }
-      // New session → tear down old listener
-      if (sid !== voteSession.value || !_statusUnsub) {
-        if (_statusUnsub) { _statusUnsub(); _statusUnsub=null; }
-        voteSession.value = sid;
-      }
-      if (votesState.value==='ready') return;    // already loaded
-      votesState.value = 'loading';
-      try {
-        if (!fbInited) { fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp); fbAuth=getAuth(fbApp); fbInited=true; }
-        if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
-        // Live listener — fires immediately AND whenever votingClosed changes
-        _statusUnsub = fbOnValue(dbRef(fbDb, `classrooms/${sid}/status`), async (snap) => {
-          const st = snap.val() || {};
-          if (st.votingClosed !== true) { votesState.value='locked'; return; }
-          await loadVotes_(sid);
-        }, () => { votesState.value='error'; });
-      } catch(e) { votesState.value='error'; }
-    };
+    // iframe approach: just set voteSession and the template renders
+    // vote_report.html?id={sid} inline — no duplicate Firebase code.
+    const openVotesTab = () => { activeTab.value = 'votes'; };
 
     const connectVoteSession = () => {
       const sid = voteSessionInput.value.trim();
       if (!sid) return;
-      votesState.value = 'idle';
-      if (_statusUnsub) { _statusUnsub(); _statusUnsub=null; }
+      voteSession.value = sid;
       try { const u=new URL(location.href); u.searchParams.set('session',sid); history.replaceState(null,'',u.toString()); } catch(e){}
-      openVotesTab(sid);
-    };
-    const reloadVotesTab = () => {
-      if (_statusUnsub) { _statusUnsub(); _statusUnsub=null; }
-      votesState.value='idle'; openVotesTab(voteSession.value);
+      activeTab.value = 'votes';
     };
 
     // ── PIN input ──────────────────────────────────────────────────────
@@ -939,7 +836,7 @@ createApp({
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
-      openVotesTab, connectVoteSession, reloadVotesTab, votesState, voteSession, voteSessionInput, studentTally, studentVoteCount, voteMaxPts,
+      openVotesTab, connectVoteSession, voteSession, voteSessionInput,
     };
   }
 }).mount('#app');
