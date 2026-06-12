@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>海報投票彙整(唯讀)— Zodiac Ops</title>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -65,6 +66,15 @@
   .matrix-note{font-size:11px;color:#475569;margin:0 0 10px;}
   .mutual-sect{margin-top:22px;}
   .err{background:#450a0a;border:1px solid #7f1d1d;color:#f87171;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:16px;}
+  .load-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0c1625;border:1px solid #1e293b;border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:12px;}
+  .load-bar button{border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#3b82f6;color:#fff;}
+  .load-bar button:disabled{opacity:.5;cursor:not-allowed;}
+  .ok-tag{color:#4ade80;font-weight:700;} .err-tag{color:#f87171;font-weight:700;}
+  table.lift th,table.lift td{padding:5px 7px;text-align:center;border:1px solid #0f172a;font-size:11px;font-weight:700;}
+  table.lift thead th{background:#0c1625;color:#60a5fa;font-size:13px;}
+  table.lift .lh{background:#0c1625;color:#cbd5e1;text-align:left;white-space:nowrap;}
+  .rank-delta{font-size:11px;font-weight:700;margin-left:4px;}
+  .up{color:#4ade80;} .dn{color:#f87171;} .eq{color:#475569;}
 </style>
 </head>
 <body>
@@ -116,6 +126,9 @@
       </button>
       <button :class="{active:tab==='impact'}" @click="tab='impact'">
         <i class="fa-solid fa-arrow-trend-up"></i> 影響力
+      </button>
+      <button :class="{active:tab==='adv'}" @click="openAdvTab()">
+        <i class="fa-solid fa-flask"></i> 進階
       </button>
     </div>
 
@@ -302,6 +315,132 @@
       </template>
     </template>
 
+    <!-- Tab: 進階分析 -->
+    <template v-if="tab==='adv'">
+      <div v-if="voteCount===0" class="empty">請先連線</div>
+      <template v-else>
+
+        <!-- Teacher score loader -->
+        <div class="load-bar">
+          <i class="fa-solid fa-gavel" style="color:#60a5fa;"></i>
+          <span style="color:#94a3b8;">合併評審分</span>
+          <button @click="loadJudgeScores" :disabled="judgeLoading">
+            <i class="fa-solid fa-download"></i> {{ judgeLoading ? '載入中…' : '載入評審分' }}
+          </button>
+          <span v-if="judgeScores" class="ok-tag"><i class="fa-solid fa-circle-check"></i> 已載入 {{ Object.keys(judgeScores).length }} 組</span>
+          <span v-if="judgeErr" class="err-tag">{{ judgeErr }}</span>
+        </div>
+
+        <!-- 3-way ranking (only when judge loaded) -->
+        <template v-if="judgeScores">
+          <h2>三方排名對照（學生 Borda · PageRank · 評審加權）</h2>
+          <table style="margin-bottom:20px;">
+            <tr>
+              <th>組別</th>
+              <th style="text-align:right;">Borda 排</th>
+              <th style="text-align:right;">PageRank 排</th>
+              <th style="text-align:right;">評審排</th>
+              <th style="text-align:right;">平均排名</th>
+              <th>一致性</th>
+            </tr>
+            <tr v-for="r in threeWayRanks" :key="r.label">
+              <td><strong>{{ r.icon }} {{ r.label }}</strong></td>
+              <td style="text-align:right;font-weight:700;">{{ r.borda }}</td>
+              <td style="text-align:right;">
+                {{ r.pr }}
+                <span class="rank-delta" :class="r.pr<r.borda?'up':r.pr>r.borda?'dn':'eq'">
+                  {{ r.pr<r.borda?'↑'+(r.borda-r.pr):r.pr>r.borda?'↓'+(r.pr-r.borda):'' }}
+                </span>
+              </td>
+              <td style="text-align:right;">
+                {{ r.judge }}
+                <span class="rank-delta" :class="r.judge<r.borda?'up':r.judge>r.borda?'dn':'eq'">
+                  {{ r.judge<r.borda?'↑'+(r.borda-r.judge):r.judge>r.borda?'↓'+(r.judge-r.borda):'' }}
+                </span>
+              </td>
+              <td style="text-align:right;font-weight:800;color:#f59e0b;">{{ r.avg }}</td>
+              <td>
+                <span v-if="r.maxSpread<=1" style="color:#4ade80;font-size:11px;font-weight:700;">一致 ✓</span>
+                <span v-else-if="r.maxSpread<=3" style="color:#f59e0b;font-size:11px;">中等</span>
+                <span v-else style="color:#f87171;font-size:11px;font-weight:700;">分歧 ⚠</span>
+              </td>
+            </tr>
+          </table>
+        </template>
+
+        <!-- PageRank -->
+        <h2>PageRank（品質加權排名）</h2>
+        <p style="font-size:11px;color:#475569;margin-bottom:10px;">
+          獲得高人氣組別的投票加分更多。與 Borda 差距越大，表示該組的票「品質」與「數量」不一致。
+        </p>
+        <table style="margin-bottom:20px;">
+          <tr><th>PageRank 排</th><th>組別</th><th style="text-align:right;">PR 分</th><th style="text-align:right;">Borda 排</th><th>位移</th></tr>
+          <tr v-for="(r,i) in pageRankRanked" :key="r.label">
+            <td style="font-weight:800;font-size:16px;" :style="i===0?'color:#fbbf24':i===1?'color:#cbd5e1':i===2?'color:#d4a574':'color:#475569'">
+              {{ i+1 }}
+            </td>
+            <td><strong>{{ r.icon }} {{ r.label }}</strong></td>
+            <td style="text-align:right;font-family:monospace;color:#60a5fa;">{{ r.score }}</td>
+            <td style="text-align:right;color:#94a3b8;">{{ r.bordaRank }}</td>
+            <td>
+              <span v-if="r.delta>0" class="up">↑ {{ r.delta }}</span>
+              <span v-else-if="r.delta<0" class="dn">↓ {{ -r.delta }}</span>
+              <span v-else class="eq">—</span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Lift matrix -->
+        <h2>Lift 矩陣（真實偏好強度）</h2>
+        <p style="font-size:11px;color:#475569;margin-bottom:10px;">
+          lift = 實際票數 ÷ 若完全隨機的期望票數。
+          &gt; 2 = 強烈偏好（深綠）；≈ 1 = 符合預期（灰）；&lt; 0.5 = 低於預期（深紅）；空格 = 無投票。
+        </p>
+        <div class="matrix-scroll">
+          <table class="lift">
+            <thead>
+              <tr>
+                <th class="lh">投↓ / 被投→</th>
+                <th v-for="t in ZODIAC" :key="t.label" :title="t.label">{{ t.icon }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="f in ZODIAC" :key="f.label">
+                <td class="lh">{{ f.icon }} {{ f.label }}</td>
+                <td v-for="t in ZODIAC" :key="t.label"
+                    :style="f.label===t.label
+                      ? 'background:#1e293b;color:#334155;'
+                      : liftMatrix[f.label]?.[t.label]>0
+                        ? liftCellStyle(liftMatrix[f.label][t.label])
+                        : 'background:#0c1625;color:#1e293b;'">
+                  {{ f.label===t.label ? '—' : liftMatrix[f.label]?.[t.label]>0 ? liftMatrix[f.label][t.label] : '' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:10px;color:#334155;margin-top:6px;display:flex;gap:14px;">
+          <span style="color:#4ade80;">■ &gt;2.0 強烈偏好</span>
+          <span style="color:#86efac;">■ 1.5–2.0</span>
+          <span style="color:#475569;">■ 0.8–1.5 隨機範圍</span>
+          <span style="color:#f87171;">■ &lt;0.5 低於預期</span>
+        </div>
+
+        <!-- Temporal trajectory -->
+        <h2 style="margin-top:24px;">投票時序：排名演變</h2>
+        <div v-if="!temporalData" style="color:#475569;font-size:12px;padding:12px 0;">
+          投票資料中缺少 submittedAt 時間戳，無法繪製時序圖。
+        </div>
+        <template v-else>
+          <p style="font-size:11px;color:#475569;margin-bottom:10px;">
+            依投票送出時間排序，追蹤前 6 組累積票數的演變（越早穩定 = 越早建立領先）。
+          </p>
+          <canvas id="temporalChart" style="max-height:360px;"></canvas>
+        </template>
+
+      </template>
+    </template>
+
     <!-- Tab: 原始明細 -->
     <template v-if="tab==='raw'">
       <h2>原始投票明細（{{ voteCount }} 筆）</h2>
@@ -326,7 +465,29 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-const { createApp, ref, reactive, computed } = Vue;
+const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
+
+const GAS_URL    = 'https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec';
+const GAS_SECRET = 'zodiac-2026-cmuh';
+
+function pageRankCalc(flowMatrix, groups, damping=0.85, iters=60) {
+  const n=groups.length;
+  let pr={};
+  groups.forEach(g=>{pr[g]=1/n;});
+  for(let it=0;it<iters;it++){
+    const np={};
+    groups.forEach(t=>{
+      let s=0;
+      groups.forEach(f=>{
+        const out=groups.reduce((a,x)=>a+(flowMatrix[f]?.[x]||0),0);
+        if(out>0) s+=pr[f]*(flowMatrix[f]?.[t]||0)/out;
+      });
+      np[t]=(1-damping)/n+damping*s;
+    });
+    pr=np;
+  }
+  return pr;
+}
 
 const FIREBASE = {
   apiKey: "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
@@ -541,12 +702,157 @@ createApp({
       a.click();
     };
 
+    // ── Advanced tab ─────────────────────────────────────────────────────
+    const judgeScores  = ref(null);   // {zodiac: finalScore}
+    const judgeRanks   = ref({});     // {zodiac: rank}
+    const judgeLoading = ref(false);
+    const judgeErr     = ref('');
+
+    const loadJudgeScores = async () => {
+      judgeLoading.value=true; judgeErr.value='';
+      try {
+        const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'getScores',secret:GAS_SECRET})});
+        const j=await res.json();
+        if(j.status!=='success') throw new Error(j.message||'GAS error');
+        const sc={},rk={};
+        j.groups.forEach(g=>{sc[g.zodiac]=g.final; rk[g.zodiac]=g.rank;});
+        judgeScores.value=sc; judgeRanks.value=rk;
+      } catch(e){ judgeErr.value='載入失敗：'+e.message; }
+      finally { judgeLoading.value=false; }
+    };
+
+    // PageRank
+    const pageRankScores = computed(()=>{
+      if(!Object.keys(flowMatrix.value).length) return {};
+      return pageRankCalc(flowMatrix.value, ZODIAC.map(z=>z.label));
+    });
+    const pageRankRanked = computed(()=>{
+      const boardaRankMap={};
+      rankedGroups.value.forEach((g,i)=>{boardaRankMap[g.label]=i+1;});
+      return Object.entries(pageRankScores.value)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([label,score],i)=>{
+          const z=ZODIAC.find(z=>z.label===label);
+          const bordaRank=boardaRankMap[label]||99;
+          return {label,icon:z?.icon||'',score:score.toFixed(4),prRank:i+1,bordaRank,delta:bordaRank-(i+1)};
+        });
+    });
+
+    // 3-way comparison
+    const threeWayRanks = computed(()=>{
+      if(!judgeScores.value) return [];
+      const bordaMap={},prMap={};
+      rankedGroups.value.forEach((g,i)=>{bordaMap[g.label]=i+1;});
+      pageRankRanked.value.forEach(r=>{prMap[r.label]=r.prRank;});
+      return ZODIAC.map(z=>{
+        const borda=bordaMap[z.label]||99;
+        const pr=prMap[z.label]||99;
+        const judge=judgeRanks.value[z.label]||99;
+        const avg=+((borda+pr+judge)/3).toFixed(1);
+        const maxSpread=Math.max(borda,pr,judge)-Math.min(borda,pr,judge);
+        return {label:z.label,icon:z.icon,borda,pr,judge,avg,maxSpread};
+      }).filter(r=>r.borda<99).sort((a,b)=>a.avg-b.avg);
+    });
+
+    // Lift matrix
+    const liftMatrix = computed(()=>{
+      const m=flowMatrix.value;
+      const labels=ZODIAC.map(z=>z.label);
+      const outS={},inS={};
+      let total=0;
+      labels.forEach(f=>{outS[f]=labels.reduce((s,t)=>s+(m[f]?.[t]||0),0);});
+      labels.forEach(t=>{inS[t]=labels.reduce((s,f)=>s+(m[f]?.[t]||0),0); total+=inS[t];});
+      const lift={};
+      labels.forEach(f=>{
+        lift[f]={};
+        labels.forEach(t=>{
+          if(f===t){lift[f][t]=0;return;}
+          const exp=(outS[f]*inS[t])/(total||1);
+          const act=m[f]?.[t]||0;
+          lift[f][t]=exp>0?+(act/exp).toFixed(1):0;
+        });
+      });
+      return lift;
+    });
+
+    const liftCellStyle = (v) => {
+      if(v>=3)   return 'background:#14532d;color:#4ade80;';
+      if(v>=2)   return 'background:#166534;color:#86efac;';
+      if(v>=1.5) return 'background:#1c3a28;color:#86efac;';
+      if(v>=0.8) return 'background:#1e293b;color:#64748b;';
+      if(v>=0.5) return 'background:#2a1f1f;color:#f87171;';
+      return             'background:#450a0a;color:#f87171;';
+    };
+
+    // Temporal data
+    const temporalData = computed(()=>{
+      const all=Object.values(votes.value).filter(v=>v.submittedAt).sort((a,b)=>a.submittedAt-b.submittedAt);
+      if(all.length<5) return null;
+      const running={};
+      ZODIAC.forEach(z=>{running[z.label]=0;});
+      const snaps=[];
+      const step=Math.max(1,Math.floor(all.length/30));
+      all.forEach((v,i)=>{
+        if(v.rank1) running[v.rank1]=(running[v.rank1]||0)+3;
+        if(v.rank2) running[v.rank2]=(running[v.rank2]||0)+2;
+        if(v.rank3) running[v.rank3]=(running[v.rank3]||0)+1;
+        if(i%step===0||i===all.length-1){
+          const t=new Date(v.submittedAt);
+          snaps.push({x:i+1,label:`${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`,scores:{...running}});
+        }
+      });
+      return snaps;
+    });
+
+    let temporalChart=null;
+    const buildTemporalChart=()=>{
+      if(!temporalData.value||!document.getElementById('temporalChart')) return;
+      if(temporalChart){try{temporalChart.destroy();}catch(e){} temporalChart=null;}
+      const snaps=temporalData.value;
+      const labels=snaps.map(s=>s.label);
+      // Top 6 by final score
+      const finalSnap=snaps[snaps.length-1].scores;
+      const top6=Object.entries(finalSnap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([l])=>l);
+      const COLORS=['#f59e0b','#60a5fa','#4ade80','#f87171','#a78bfa','#34d399'];
+      const datasets=top6.map((lbl,i)=>({
+        label:lbl,
+        data:snaps.map(s=>s.scores[lbl]||0),
+        borderColor:COLORS[i], backgroundColor:'transparent',
+        borderWidth:2.5, pointRadius:0, tension:0.3
+      }));
+      temporalChart=new Chart(document.getElementById('temporalChart'),{
+        type:'line',
+        data:{labels,datasets},
+        options:{
+          plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:11}}}},
+          scales:{
+            x:{ticks:{color:'#475569',maxTicksLimit:12},grid:{color:'#1e293b'}},
+            y:{beginAtZero:true,ticks:{color:'#475569'},grid:{color:'#1e293b'},
+               title:{display:true,text:'累積票數',color:'#475569'}}
+          },
+          responsive:true,maintainAspectRatio:true
+        }
+      });
+    };
+
+    const openAdvTab=()=>{
+      tab.value='adv';
+      nextTick(()=>buildTemporalChart());
+    };
+
+    watch(()=>votes.value,(()=>{
+      if(tab.value==='adv') nextTick(()=>buildTemporalChart());
+    }),{deep:true});
+
     connect();
 
     return { sid, tab, embedMode, connected, err, voteCount, rawVotes, rankedGroups, totalPts, maxPts, connect, exportCSV,
              notVoted, rosterCount, onlineNotVoted, ZODIAC, flowMatrix, matrixMax, rowTops,
              mutualPairs, mutualSet,
-             counterfactual, voteConcentration, impactMatrix };
+             counterfactual, voteConcentration, impactMatrix,
+             judgeScores, judgeErr, judgeLoading, loadJudgeScores,
+             pageRankRanked, threeWayRanks, liftMatrix, liftCellStyle,
+             temporalData, openAdvTab };
   }
 }).mount('#app');
 </script>
