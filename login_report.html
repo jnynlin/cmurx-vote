@@ -92,6 +92,9 @@
   /* ── Highlight rows ── */
   tr.multi-login td:first-child{border-left:3px solid var(--accent-l);}
   tr.active-now td:first-child{border-left:3px solid var(--ok);}
+  tr.legacy-row{background:var(--accent-soft);}
+  tr.legacy-row:hover{background:#fef3c7;}
+  .legacy-cnt{display:inline-flex;align-items:center;gap:4px;}
 
   /* ── Empty / loading ── */
   .state-box{padding:60px 20px;text-align:center;color:var(--muted);}
@@ -144,19 +147,24 @@
         <div class="hint">本 Session 名單</div>
       </div>
       <div class="card">
+        <div class="label">有登入記錄</div>
+        <div class="val green">{{ hasLoginCount }}</div>
+        <div class="hint">loginAt 存在（含舊版）</div>
+      </div>
+      <div class="card">
         <div class="label">目前在線</div>
         <div class="val green">{{ onlineCount }}</div>
         <div class="hint">isActive = true</div>
       </div>
       <div class="card">
-        <div class="label">總登入次數</div>
+        <div class="label">計數登入次數</div>
         <div class="val green">{{ totalLogins }}</div>
-        <div class="hint">所有學生合計</div>
+        <div class="hint">≥ 2026-06-12 後累計</div>
       </div>
       <div class="card">
-        <div class="label">總登出次數</div>
-        <div class="val amber">{{ totalLogouts }}</div>
-        <div class="hint">所有學生合計</div>
+        <div class="label">舊版登入</div>
+        <div class="val amber">{{ legacyCount }}</div>
+        <div class="hint">loginAt 有 / loginCount=0</div>
       </div>
       <div class="card">
         <div class="label">多次登入</div>
@@ -166,7 +174,7 @@
       <div class="card">
         <div class="label">從未登入</div>
         <div class="val" style="color:var(--faint);">{{ neverLoginCount }}</div>
-        <div class="hint">loginCount = 0</div>
+        <div class="hint">loginAt 不存在</div>
       </div>
     </div>
 
@@ -204,7 +212,8 @@
         </thead>
         <tbody>
           <tr v-for="(s, idx) in displayed" :key="s.uid"
-              :class="{'multi-login': s.loginCount >= 2, 'active-now': s.isActive}">
+              :class="{'multi-login': s.loginCount >= 2, 'active-now': s.isActive, 'legacy-row': s.loginStatus==='legacy'}"
+              :title="s.loginStatus==='legacy'?'舊版登入：loginAt 有記錄但 loginCount 未計數（登入時間早於 2026-06-12 計數部署）':''">
             <td style="color:var(--faint);font-size:12px;">{{ idx + 1 }}</td>
             <td>
               <div class="name">{{ s.name }}</div>
@@ -218,7 +227,13 @@
               </span>
             </td>
             <td class="r">
-              <span :class="['cnt', s.loginCount >= 2 ? 'warn' : '']">
+              <span v-if="s.loginStatus==='never'" style="color:var(--faint);font-size:12px;">—</span>
+              <span v-else-if="s.loginStatus==='legacy'" class="legacy-cnt" title="登入時間早於計數部署，次數不明">
+                <i class="fa-solid fa-right-to-bracket" style="color:var(--accent-l);"></i>
+                <span style="color:var(--accent-l);font-weight:800;">有</span>
+                <i class="fa-solid fa-circle-question" style="color:var(--faint);font-size:10px;margin-left:2px;"></i>
+              </span>
+              <span v-else :class="['cnt', s.loginCount >= 2 ? 'warn' : '']">
                 <i class="fa-solid fa-right-to-bracket cnt-in"></i>
                 {{ s.loginCount }}
               </span>
@@ -266,7 +281,9 @@
     </div>
 
     <div class="foot">
-      資料來源：Firebase Realtime DB · classrooms/{{ SESSION_ID }}/students · 登入計數自 2026-06-12 起累計
+      資料來源：Firebase Realtime DB · classrooms/{{ SESSION_ID }}/students<br>
+      「有登入記錄」以 <code>auth.loginAt</code> 判斷（自 v1 起即寫入）；「計數」以 <code>auth.loginCount</code> 判斷（2026-06-12 起部署）·
+      <span style="color:var(--accent-l);">▌</span> 黃底 = 舊版登入（loginAt 有記錄，次數不明）
     </div>
   </div>
 </div>
@@ -314,6 +331,13 @@ createApp({
         const profile = d.profile || {};
         const loginCount  = auth.loginCount  || 0;
         const logoutCount = auth.logoutCount || 0;
+        const hasLoggedIn = !!auth.loginAt;   // loginAt written on every login since v1
+        // 'never'   — loginAt absent: truly never opened the app this session
+        // 'legacy'  — loginAt exists but loginCount=0: logged in before counter deploy (≤2026-06-11)
+        // 'counted' — loginCount>0: tracked by new counter (≥2026-06-12)
+        const loginStatus = !hasLoggedIn ? 'never'
+                          : loginCount === 0 ? 'legacy'
+                          : 'counted';
         return {
           uid,
           name:         profile.Name       || uid,
@@ -322,6 +346,8 @@ createApp({
           isActive:     !!auth.isActive,
           loginCount,
           logoutCount,
+          hasLoggedIn,
+          loginStatus,
           delta:        loginCount - logoutCount,
           lastLoginStr: fmtTime(auth.loginAt),
           loginAt:      auth.loginAt || 0,
@@ -354,12 +380,15 @@ createApp({
       return arr;
     });
 
-    const total           = computed(() => students.value.length);
-    const onlineCount     = computed(() => students.value.filter(s => s.isActive).length);
-    const totalLogins     = computed(() => students.value.reduce((a, s) => a + s.loginCount, 0));
-    const totalLogouts    = computed(() => students.value.reduce((a, s) => a + s.logoutCount, 0));
-    const multiLoginCount = computed(() => students.value.filter(s => s.loginCount >= 2).length);
-    const neverLoginCount = computed(() => students.value.filter(s => s.loginCount === 0).length);
+    const total            = computed(() => students.value.length);
+    const onlineCount      = computed(() => students.value.filter(s => s.isActive).length);
+    const totalLogins      = computed(() => students.value.reduce((a, s) => a + s.loginCount, 0));
+    const totalLogouts     = computed(() => students.value.reduce((a, s) => a + s.logoutCount, 0));
+    const multiLoginCount  = computed(() => students.value.filter(s => s.loginCount >= 2).length);
+    const legacyCount      = computed(() => students.value.filter(s => s.loginStatus === 'legacy').length);
+    // Ground truth: use loginAt absence — NOT loginCount===0 — to detect "truly never logged in"
+    const neverLoginCount  = computed(() => students.value.filter(s => !s.hasLoggedIn).length);
+    const hasLoginCount    = computed(() => students.value.filter(s => s.hasLoggedIn).length);
     const displayedLoginSum  = computed(() => displayed.value.reduce((a, s) => a + s.loginCount, 0));
     const displayedLogoutSum = computed(() => displayed.value.reduce((a, s) => a + s.logoutCount, 0));
 
@@ -399,7 +428,8 @@ createApp({
     return {
       SESSION_ID, state, searchQ, sortKey, sortAsc,
       displayed, total, onlineCount,
-      totalLogins, totalLogouts, multiLoginCount, neverLoginCount,
+      totalLogins, totalLogouts, multiLoginCount, legacyCount,
+      neverLoginCount, hasLoginCount,
       displayedLoginSum, displayedLogoutSum,
       toggleSort, exportCSV,
     };
