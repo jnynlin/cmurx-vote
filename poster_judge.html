@@ -177,6 +177,9 @@
   .total-tag{font-size:8px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
 
   /* ── Student votes heatmap (reference tab) ── */
+  .session-inp{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-size:13px;font-family:monospace;outline:none;width:240px;transition:border-color .2s;}
+  .session-inp:focus{border-color:var(--primary);}
+  .session-inp::placeholder{color:var(--faint);}
   .vote-state{text-align:center;padding:48px 20px;color:var(--muted);}
   .vote-state .vs-icon{font-size:40px;margin-bottom:14px;}
   .vote-state h3{color:var(--text);font-size:17px;margin-bottom:8px;}
@@ -500,8 +503,12 @@
         </div>
 
         <div v-if="votesState==='nosession'" class="vote-state">
-          <div class="vs-icon">🔧</div><h3>尚未設定場次</h3>
-          <p>請主辦單位在連結加上場次代碼<br>例：<code>?session=20260611-9X9Y</code></p>
+          <div class="vs-icon">🔧</div><h3>請輸入場次代碼</h3>
+          <p style="margin-bottom:16px;">向主辦單位取得場次代碼後輸入即可連線<br><span style="font-size:11px;">（或請主辦單位在連結後附上 <code>?session=...</code>）</span></p>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <input v-model.trim="voteSessionInput" class="session-inp" placeholder="場次代碼 e.g. 20260611-9X9Y" @keyup.enter="connectVoteSession" />
+            <button class="jump-btn" :disabled="!voteSessionInput" @click="connectVoteSession" style="padding:10px 16px;"><i class="fa-solid fa-plug"></i> 連線</button>
+          </div>
         </div>
         <div v-else-if="votesState==='loading'" class="vote-state">
           <div class="vs-icon"><i class="fa-solid fa-spinner spin" style="color:var(--primary);"></i></div>
@@ -510,18 +517,23 @@
         <div v-else-if="votesState==='locked'" class="vote-state">
           <div class="vs-icon">🔒</div><h3>投票尚未關閉</h3>
           <p>學生票選結果將於<b>投票關閉後</b>開放參考。<br>請稍後再點此分頁。</p>
-          <button class="jump-btn" style="margin-top:16px;" @click="openVotesTab"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
+          <div style="font-size:11px;color:var(--faint);margin-top:12px;font-family:monospace;">場次：{{ voteSession }}</div>
+          <button class="jump-btn" style="margin-top:12px;" @click="reloadVotesTab"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
         </div>
         <div v-else-if="votesState==='closed-empty'" class="vote-state">
           <div class="vs-icon">📭</div><h3>尚無票選資料</h3>
         </div>
         <div v-else-if="votesState==='error'" class="vote-state">
           <div class="vs-icon">⚠️</div><h3>讀取失敗</h3>
-          <p>請確認網路與 Anonymous 登入已啟用。</p>
-          <button class="jump-btn" style="margin-top:16px;" @click="openVotesTab"><i class="fa-solid fa-rotate-right"></i> 重試</button>
+          <p>請確認網路與場次代碼正確，且 Anonymous 登入已啟用。</p>
+          <div style="font-size:11px;color:var(--faint);margin-top:12px;font-family:monospace;">場次：{{ voteSession }}</div>
+          <button class="jump-btn" style="margin-top:12px;" @click="reloadVotesTab"><i class="fa-solid fa-rotate-right"></i> 重試</button>
         </div>
         <template v-else-if="votesState==='ready'">
-          <div style="font-size:12px;color:var(--faint);margin-bottom:12px;text-align:center;">{{ studentVoteCount }} 位學生投票 · 第1名3分/第2名2分/第3名1分</div>
+          <div style="font-size:12px;color:var(--faint);margin-bottom:12px;text-align:center;">
+            {{ studentVoteCount }} 位學生投票 · 第1名3分/第2名2分/第3名1分
+            <span style="font-family:monospace;margin-left:8px;background:var(--surface2);border-radius:4px;padding:1px 6px;">{{ voteSession }}</span>
+          </div>
           <div v-for="(g,i) in studentTally" :key="g.label" class="vrank">
             <div :class="['vrank-no', i===0?'r1':i===1?'r2':i===2?'r3':'']">{{ i+1 }}</div>
             <div class="vrank-icon" v-html="g.icon"></div>
@@ -626,9 +638,8 @@ const GAS_SECRET = "zodiac-2026-cmuh";
 const GALLERY_URL= "https://padlet.com/jnynlin/cmurx";
 const LS_SESSION = 'pj_session';
 const LS_SCORES  = slot => `pj_scores_${slot}`;
-// Student-vote reference (heatmap) — set per event via ?session=, gated on status.votingClosed
-const EVENT_SESSION = new URLSearchParams(location.search).get('session')
-                   || new URLSearchParams(location.search).get('id') || '';
+const URL_SESSION = new URLSearchParams(location.search).get('session')
+                 || new URLSearchParams(location.search).get('id') || '';
 const FIREBASE = {
   apiKey: "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
   authDomain: "cmu-11402-pathophysiology.firebaseapp.com",
@@ -696,10 +707,12 @@ createApp({
     const scores        = reactive(ZODIAC.map(() => ({content:0,design:0,creativity:0,total:0})));
 
     // Student-vote reference state
-    const votesState    = ref('idle');      // idle|nosession|loading|locked|closed-empty|ready|error
-    const studentTally  = ref([]);          // [{label,icon,pts,r1,r2,r3}] sorted
+    const votesState       = ref('idle');   // idle|nosession|loading|locked|closed-empty|ready|error
+    const voteSession      = ref(URL_SESSION);
+    const voteSessionInput = ref(URL_SESSION);
+    const studentTally     = ref([]);
     const studentVoteCount = ref(0);
-    const voteMaxPts    = ref(1);
+    const voteMaxPts       = ref(1);
     let fbApp, fbDb, fbAuth, fbInited=false;
 
     let savedTimer = null;
@@ -745,17 +758,19 @@ createApp({
     };
 
     // ── Student-vote reference (gated load) ────────────────────────────
-    const openVotesTab = async () => {
+    const openVotesTab = async (forceSid) => {
       activeTab.value = 'votes';
-      if (!EVENT_SESSION) { votesState.value='nosession'; return; }
+      const sid = (forceSid || voteSession.value || '').trim();
+      if (!sid) { votesState.value='nosession'; return; }
+      voteSession.value = sid;
       if (votesState.value==='ready') return;           // already loaded
       votesState.value = 'loading';
       try {
         if (!fbInited) { fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp); fbAuth=getAuth(fbApp); fbInited=true; }
         if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
-        const st = (await get(dbRef(fbDb, `classrooms/${EVENT_SESSION}/status`))).val() || {};
+        const st = (await get(dbRef(fbDb, `classrooms/${sid}/status`))).val() || {};
         if (st.votingClosed !== true) { votesState.value='locked'; return; }   // GATE: only after voting closed
-        const votes = (await get(dbRef(fbDb, `classrooms/${EVENT_SESSION}/posterVotes`))).val() || {};
+        const votes = (await get(dbRef(fbDb, `classrooms/${sid}/posterVotes`))).val() || {};
         studentVoteCount.value = Object.keys(votes).length;
         const t = {}; ZODIAC.forEach(z=>t[z.label]={pts:0,r1:0,r2:0,r3:0});
         Object.values(votes).forEach(v => {
@@ -770,6 +785,16 @@ createApp({
         votesState.value = arr.length ? 'ready' : 'closed-empty';
       } catch(e) { votesState.value='error'; }
     };
+
+    const connectVoteSession = () => {
+      const sid = voteSessionInput.value.trim();
+      if (!sid) return;
+      votesState.value = 'idle';
+      // Push session into URL so it persists on refresh / share
+      try { const u=new URL(location.href); u.searchParams.set('session',sid); history.replaceState(null,'',u.toString()); } catch(e){}
+      openVotesTab(sid);
+    };
+    const reloadVotesTab = () => { votesState.value='idle'; openVotesTab(voteSession.value); };
 
     // ── PIN input ──────────────────────────────────────────────────────
     const focusPin = i => nextTick(()=>pinRefs.value[i]?.focus());
@@ -891,7 +916,7 @@ createApp({
       focusPin, onPinInput, onPinKey, onCritKey,
       signIn, backToSignIn, clearReturn, setScore, isScored,
       openSummary, confirmSubmit, scrollToIncomplete, copyResult, window,
-      openVotesTab, votesState, studentTally, studentVoteCount, voteMaxPts,
+      openVotesTab, connectVoteSession, reloadVotesTab, votesState, voteSession, voteSessionInput, studentTally, studentVoteCount, voteMaxPts,
     };
   }
 }).mount('#app');
