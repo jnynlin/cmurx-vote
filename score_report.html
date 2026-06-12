@@ -94,6 +94,31 @@
   .kv .k{min-width:130px;color:var(--muted);font-size:12px;}
   .kv .v{font-weight:700;}
 
+  /* tabs */
+  .tabbar{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
+          border-radius:12px;padding:4px;margin-bottom:22px;}
+  .tabbar button{flex:1;padding:9px 16px;border:none;border-radius:9px;font-size:14px;
+                 font-weight:700;cursor:pointer;background:none;color:var(--muted);transition:all .15s;}
+  .tabbar button.active{background:var(--primary);color:#fff;}
+  .tabbar button i{margin-right:6px;}
+
+  /* vote tab */
+  .vote-session-form{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+                     background:var(--primary-soft);border:1px solid #c7d2fe;
+                     border-radius:12px;padding:14px 18px;margin-bottom:20px;}
+  .vote-session-form input{flex:1;min-width:180px;padding:9px 14px;border:1px solid var(--border);
+                           border-radius:9px;font-size:13px;outline:none;font-family:monospace;}
+  .vote-session-form input:focus{border-color:var(--primary);}
+  .vote-session-form button{padding:9px 18px;border:none;border-radius:9px;font-size:13px;
+                            font-weight:700;background:var(--primary);color:#fff;cursor:pointer;}
+  .agree-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;
+               border-radius:6px;background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;}
+  .disagree-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;
+                  border-radius:6px;background:var(--danger-soft);color:var(--danger);border:1px solid #fca5a5;}
+  .rank-arrow{font-size:12px;margin-left:4px;}
+  .rank-up{color:var(--ok);}
+  .rank-down{color:var(--danger);}
+
   /* loading */
   .loading{text-align:center;padding:80px 20px;color:var(--muted);}
   .loading i{font-size:36px;margin-bottom:12px;display:block;animation:spin 1s linear infinite;}
@@ -110,6 +135,19 @@
       <h1><i class="fa-solid fa-chart-bar" style="color:var(--primary);margin-right:8px;"></i>海報評審分析報告</h1>
       <div class="sub">藥學系 Pathophysiology Poster Review 2026 · 3 位評審 · 12 組 · 加權分 = 50% 面向均分 + 50% 整體印象</div>
     </div>
+
+    <!-- Tab bar -->
+    <div class="tabbar">
+      <button :class="{active:tab==='judge'}" @click="() => tab='judge'">
+        <i class="fa-solid fa-gavel"></i>評審分析
+      </button>
+      <button :class="{active:tab==='votes'}" @click="() => openVotesTab()">
+        <i class="fa-solid fa-square-poll-vertical"></i>學生票選
+      </button>
+    </div>
+
+    <!-- ═══ JUDGE TAB ═══ -->
+    <div v-show="tab==='judge'">
 
     <div v-if="state==='loading'" class="loading">
       <i class="fa-solid fa-circle-notch"></i>載入評分資料中…
@@ -369,11 +407,185 @@
       </div>
 
     </template>
+    </div><!-- end judge tab -->
+
+    <!-- ═══ VOTES TAB ═══ -->
+    <div v-show="tab==='votes'">
+
+      <!-- Session input -->
+      <div class="vote-session-form">
+        <i class="fa-solid fa-database" style="color:var(--primary);"></i>
+        <span style="font-size:13px;font-weight:700;color:var(--text2);">Firebase Session ID</span>
+        <input v-model="voteSessionInput" placeholder="例：20260611-9X9Y" @keyup.enter="() => connectVoteSession()">
+        <button @click="() => connectVoteSession()">
+          <i class="fa-solid fa-plug"></i> 連接
+        </button>
+        <span v-if="voteState==='ready'" style="font-size:12px;color:var(--ok);font-weight:700;">
+          <i class="fa-solid fa-circle" style="font-size:7px;"></i> 即時連接中 · {{ totalVoters }} 票
+        </span>
+      </div>
+
+      <div v-if="voteState==='idle'" class="loading" style="padding:40px 20px;">
+        <i class="fa-solid fa-square-poll-vertical" style="animation:none;opacity:.3;"></i>
+        <p>輸入 Session ID 後載入學生票選資料</p>
+      </div>
+      <div v-else-if="voteState==='loading'" class="loading" style="padding:40px 20px;">
+        <i class="fa-solid fa-circle-notch"></i><p>連接 Firebase…</p>
+      </div>
+      <div v-else-if="voteState==='error'" class="loading" style="padding:40px 20px;color:var(--danger);">
+        <i class="fa-solid fa-triangle-exclamation" style="animation:none;"></i>
+        <p>連接失敗，請確認 Session ID 及網路</p>
+      </div>
+
+      <template v-else-if="voteState==='ready'">
+
+        <!-- Vote stat cards -->
+        <div class="stat-row">
+          <div class="stat">
+            <div class="lbl">投票人數</div>
+            <div class="val" style="color:var(--primary);">{{ totalVoters }}</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">學生第一名</div>
+            <div class="val" style="color:var(--gold);">{{ voteRanked[0]?.zodiac }}</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">評審第一名</div>
+            <div class="val" style="color:var(--primary);">{{ ranked[0]?.zodiac }}</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">排名 Spearman ρ</div>
+            <div class="val" :style="spearmanRho>=0.7?'color:var(--ok)':spearmanRho>=0.4?'color:var(--accent-l)':'color:var(--danger)'">
+              {{ spearmanRho }}
+            </div>
+          </div>
+          <div class="stat">
+            <div class="lbl">排名完全一致</div>
+            <div class="val" style="color:var(--ok);">{{ exactMatchCount }}</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">差距 ≥ 3 名</div>
+            <div class="val" style="color:var(--danger);">{{ bigDiffCount }}</div>
+          </div>
+        </div>
+
+        <!-- Combined comparison table -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-arrows-up-down"></i>評審 vs 學生排名對照</div>
+          <table>
+            <thead>
+              <tr>
+                <th>組別</th>
+                <th class="r">評審加權分</th>
+                <th class="r">評審排名</th>
+                <th class="r">學生票數</th>
+                <th class="r">學生排名</th>
+                <th class="r">排名差距</th>
+                <th class="r">一致性</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="g in comparisonRows" :key="g.zodiac"
+                  :style="Math.abs(g.rankDiff)>=3?'background:var(--danger-soft)':Math.abs(g.rankDiff)===0?'background:var(--ok-soft)':''">
+                <td>
+                  <span class="zodiac-name">{{ g.zodiac }}</span>
+                  <span class="elem-badge" :class="'elem-'+g.element">{{ g.element }}</span>
+                </td>
+                <td class="r"><strong>{{ g.final }}</strong></td>
+                <td class="r" style="font-weight:800;">{{ g.judgeRank }}</td>
+                <td class="r">{{ g.votePoints }} 分</td>
+                <td class="r" style="font-weight:800;">{{ g.voteRank }}</td>
+                <td class="r">
+                  <span :style="Math.abs(g.rankDiff)>=3?'color:var(--danger);font-weight:800':Math.abs(g.rankDiff)===0?'color:var(--ok);font-weight:800':''">
+                    {{ g.rankDiff>0?'+':'' }}{{ g.rankDiff }}
+                    <i v-if="g.rankDiff>0" class="fa-solid fa-arrow-down rank-arrow rank-down"></i>
+                    <i v-else-if="g.rankDiff<0" class="fa-solid fa-arrow-up rank-arrow rank-up"></i>
+                  </span>
+                </td>
+                <td class="r">
+                  <span v-if="Math.abs(g.rankDiff)===0" class="agree-badge">一致</span>
+                  <span v-else-if="Math.abs(g.rankDiff)<=2" style="font-size:12px;color:var(--muted);">近似</span>
+                  <span v-else class="disagree-badge">差異大</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);">
+            排名差距 = 學生排名 − 評審排名。正值 = 學生排名較低；負值 = 學生排名較高。
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-grid">
+          <div class="chart-box full">
+            <div class="chart-title"><i class="fa-solid fa-chart-bar" style="color:var(--primary);margin-right:6px;"></i>評審分 vs 學生票數（學生票選排序）</div>
+            <canvas id="compareChart"></canvas>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title"><i class="fa-solid fa-circle-dot" style="color:var(--primary);margin-right:6px;"></i>散佈圖：評審加權分 vs 學生票數</div>
+            <canvas id="scatterChart"></canvas>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title"><i class="fa-solid fa-chart-bar" style="color:var(--ok);margin-right:6px;"></i>學生票選排名（票數）</div>
+            <canvas id="voteBarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Votes discussion -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart"></i>評審 vs 學生票選 — 討論</div>
+          <div class="discussion">
+            <h3>整體一致性</h3>
+            <div class="kv"><span class="k">Spearman ρ</span>
+              <span class="v" :style="spearmanRho>=0.7?'color:var(--ok)':spearmanRho>=0.4?'color:var(--accent-l)':'color:var(--danger)'">
+                {{ spearmanRho }}（{{ spearmanRho>=0.7?'強相關 ✓':spearmanRho>=0.4?'中等相關':'弱相關 ⚠' }}）
+              </span>
+            </div>
+            <div class="kv"><span class="k">排名完全一致組數</span><span class="v" style="color:var(--ok);">{{ exactMatchCount }} / {{ comparisonRows.length }}</span></div>
+            <div class="kv"><span class="k">差距 ≥ 3 名（顯著不一致）</span><span class="v" style="color:var(--danger);">{{ bigDiffCount }} 組</span></div>
+            <p style="margin-top:10px;font-size:12px;color:var(--muted);">
+              Spearman ρ 測量排名順序的一致性（不關心分數絕對值）。<br>
+              ρ &gt; 0.7：學生與評審對海報品質的判斷高度吻合。<br>
+              ρ &lt; 0.4：兩者評估標準明顯不同 — 可能反映學生偏好視覺衝擊、同學情誼（自組加分）或內容深度與外觀設計權重不同。
+            </p>
+
+            <h3>主要差異組</h3>
+            <div v-if="bigDiffGroups.length===0" style="color:var(--ok);">無顯著差異（所有組別排名差距 &lt; 3）</div>
+            <div v-for="g in bigDiffGroups" :key="g.zodiac" class="kv">
+              <span class="k">{{ g.zodiac }}</span>
+              <span class="v">
+                評審 #{{ g.judgeRank }} vs 學生 #{{ g.voteRank }}
+                （差 {{ Math.abs(g.rankDiff) }} 名，
+                <span :style="g.rankDiff<0?'color:var(--ok)':'color:var(--danger)'">
+                  {{ g.rankDiff<0?'學生評價較高':'評審評價較高' }}
+                </span>）
+              </span>
+            </div>
+
+            <h3>自組票偏差（同組相互投票）</h3>
+            <div class="kv"><span class="k">自組票總計</span><span class="v" style="color:var(--accent-l);">{{ selfVoteCount }} 票</span></div>
+            <div class="kv"><span class="k">佔總票數</span><span class="v" :style="selfVotePct>20?'color:var(--danger)':'color:var(--ok)'">{{ selfVotePct }}%（{{ selfVotePct>20?'⚠ 偏高，建議觀察':'正常範圍' }}）</span></div>
+            <p style="margin-top:8px;font-size:12px;color:var(--muted);">
+              若某組自組票比例過高，其學生排名可能被抬高。可對照評審排名交叉確認。
+            </p>
+
+            <h3>投票參與</h3>
+            <div class="kv"><span class="k">投票人數</span><span class="v">{{ totalVoters }}</span></div>
+            <div class="kv"><span class="k">1st choice 集中度</span><span class="v">{{ topVoteConcentration }}%（前三組票數佔比）</span></div>
+          </div>
+        </div>
+
+      </template>
+    </div><!-- end votes tab -->
+
   </div>
 </div>
 
 <script type="module">
 import { createApp, ref, computed, onMounted, nextTick } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
+import { initializeApp }                                  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref as dbRef, onValue as fbOnValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getAuth, signInAnonymously }                     from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const GAS_URL    = 'https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec';
@@ -383,6 +595,24 @@ const ELEM_COLORS = { '火':'#ef4444','水':'#3b82f6','木':'#22c55e','土':'#f5
 const CRITERIA_LABELS = ['選題需求','病生理深度','視覺表達','整體印象'];
 const CRITERIA_KEYS   = ['content','design','creativity','total'];
 const JUDGE_COLORS    = ['#4f46e5','#16a34a','#d97706'];
+
+const FIREBASE = {
+  apiKey:"AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
+  authDomain:"cmu-11402-pathophysiology.firebaseapp.com",
+  databaseURL:"https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"cmu-11402-pathophysiology",
+  storageBucket:"cmu-11402-pathophysiology.firebasestorage.app",
+  messagingSenderId:"367793212618",
+  appId:"1:367793212618:web:c11acedc50ce6fc3897833"
+};
+
+// ── Spearman rank correlation ─────────────────────────────────────────────
+function spearman(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return 0;
+  const d2 = xs.reduce((s,x,i) => s + (x - ys[i])**2, 0);
+  return +(1 - 6*d2 / (n*(n**2-1))).toFixed(2);
+}
 
 // ── Stats helpers ─────────────────────────────────────────────────────────
 function mean(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
@@ -404,10 +634,52 @@ function fmt2(n) { return isNaN(n)?'—':n.toFixed(2); }
 
 createApp({
   setup() {
+    const tab    = ref('judge');
     const state  = ref('loading');
     const raw    = ref([]);
     const judges = ref(['評審A','評審B','評審C']);
     const submitted = ref([false,false,false]);
+
+    // ── Vote tab state ────────────────────────────────────────────────────
+    const URL_SID        = new URLSearchParams(location.search).get('session') || '';
+    const voteSessionInput = ref(URL_SID);
+    const voteState      = ref('idle');
+    const voteRaw        = ref({});
+    let _voteUnsub = null, fbInited = false, fbApp, fbDb, fbAuth;
+
+    const loadVotes = async (sid) => {
+      if (!fbInited) {
+        fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp);
+        fbAuth=getAuth(fbApp); fbInited=true;
+      }
+      if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
+      if (_voteUnsub) { _voteUnsub(); _voteUnsub=null; }
+      voteState.value = 'loading';
+      _voteUnsub = fbOnValue(dbRef(fbDb, `classrooms/${sid}/posterVotes`), (snap) => {
+        voteRaw.value = snap.val() || {};
+        voteState.value = 'ready';
+        nextTick(() => buildVoteCharts());
+      }, () => { voteState.value='error'; });
+    };
+
+    const connectVoteSession = () => {
+      const sid = voteSessionInput.value.trim();
+      if (!sid) return;
+      try {
+        const u = new URL(location.href);
+        u.searchParams.set('session', sid);
+        history.replaceState(null,'',u.toString());
+      } catch(e) {}
+      loadVotes(sid).catch(() => { voteState.value='error'; });
+    };
+
+    const openVotesTab = () => {
+      tab.value = 'votes';
+      if (URL_SID && voteState.value === 'idle') {
+        voteSessionInput.value = URL_SID;
+        loadVotes(URL_SID).catch(() => { voteState.value='error'; });
+      }
+    };
 
     // judge weighted score per group
     const judgeWeighted = (g, j) => {
@@ -481,6 +753,70 @@ createApp({
       const dims=gs.map(g=>(g.avg.content+g.avg.design+g.avg.creativity)/3);
       const tots=gs.map(g=>g.avg.total);
       return dims.length ? fmt2(pearson(dims,tots)) : '—';
+    });
+
+    // ── Vote analytics ───────────────────────────────────────────────────
+    const ZODIAC_ORDER = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+
+    const voteTotals = computed(() => {
+      const pts = {};
+      ZODIAC_ORDER.forEach(z => { pts[z]={points:0,r1:0,r2:0,r3:0}; });
+      Object.values(voteRaw.value).forEach(v => {
+        if (v.rank1 && pts[v.rank1]!==undefined) { pts[v.rank1].points+=3; pts[v.rank1].r1++; }
+        if (v.rank2 && pts[v.rank2]!==undefined) { pts[v.rank2].points+=2; pts[v.rank2].r2++; }
+        if (v.rank3 && pts[v.rank3]!==undefined) { pts[v.rank3].points+=1; pts[v.rank3].r3++; }
+      });
+      // assign student rank
+      const entries = Object.entries(pts).sort(([,a],[,b])=>b.points-a.points);
+      entries.forEach(([z,],i) => { pts[z].rank=i+1; });
+      return pts;
+    });
+
+    const voteRanked = computed(() =>
+      ZODIAC_ORDER.map(z=>({zodiac:z,...voteTotals.value[z]})).sort((a,b)=>a.rank-b.rank)
+    );
+    const totalVoters = computed(() => Object.keys(voteRaw.value).length);
+
+    const comparisonRows = computed(() => {
+      if (!raw.value.length) return [];
+      return ZODIAC_ORDER.map(z => {
+        const g   = raw.value.find(x=>x.zodiac===z) || {};
+        const vt  = voteTotals.value[z] || {points:0,rank:99};
+        return {
+          zodiac: z, element: g.element||'',
+          final: g.final||0, judgeRank: g.rank||99,
+          votePoints: vt.points, voteRank: vt.rank,
+          rankDiff: vt.rank - (g.rank||0),
+        };
+      }).filter(r=>r.final>0 || r.votePoints>0);
+    });
+
+    const spearmanRho = computed(() => {
+      const rows = comparisonRows.value.filter(r=>r.judgeRank>0 && r.voteRank<99);
+      if (rows.length < 3) return '—';
+      return spearman(rows.map(r=>r.judgeRank), rows.map(r=>r.voteRank));
+    });
+
+    const exactMatchCount = computed(() => comparisonRows.value.filter(r=>r.rankDiff===0).length);
+    const bigDiffCount    = computed(() => comparisonRows.value.filter(r=>Math.abs(r.rankDiff)>=3).length);
+    const bigDiffGroups   = computed(() => comparisonRows.value.filter(r=>Math.abs(r.rankDiff)>=3).sort((a,b)=>Math.abs(b.rankDiff)-Math.abs(a.rankDiff)));
+
+    const selfVoteCount = computed(() => {
+      let c=0;
+      Object.values(voteRaw.value).forEach(v => {
+        if (!v.voterZodiac) return;
+        if (v.rank1===v.voterZodiac||v.rank2===v.voterZodiac||v.rank3===v.voterZodiac) c++;
+      });
+      return c;
+    });
+    const selfVotePct = computed(() => {
+      if (!totalVoters.value) return 0;
+      return +(selfVoteCount.value/totalVoters.value*100).toFixed(1);
+    });
+    const topVoteConcentration = computed(() => {
+      const sorted=[...voteRanked.value].slice(0,3);
+      const topPts=sorted.reduce((s,g)=>s+g.r1,0);
+      return totalVoters.value ? +(topPts/totalVoters.value*100).toFixed(1) : 0;
     });
 
     // ── Outlier detection ────────────────────────────────────────────────
@@ -599,6 +935,56 @@ createApp({
       });
     };
 
+    let voteCharts = {};
+    const buildVoteCharts = () => {
+      Object.values(voteCharts).forEach(c=>{try{c.destroy();}catch(e){}});
+      voteCharts = {};
+      const rows = [...comparisonRows.value].sort((a,b)=>a.voteRank-b.voteRank);
+      const labels = rows.map(r=>r.zodiac);
+
+      // 1. Side-by-side comparison bar
+      voteCharts.compare = new Chart(document.getElementById('compareChart'), {
+        type:'bar',
+        data:{ labels, datasets:[
+          { label:'評審加權分(×20)', data:rows.map(r=>+(r.final*20).toFixed(1)),
+            backgroundColor:'#4f46e580', borderColor:'#4f46e5', borderWidth:2, borderRadius:4 },
+          { label:'學生票數', data:rows.map(r=>r.votePoints),
+            backgroundColor:'#16a34a80', borderColor:'#16a34a', borderWidth:2, borderRadius:4 }
+        ]},
+        options:{ plugins:{legend:{position:'top'},
+          tooltip:{callbacks:{label:ctx=>ctx.datasetIndex===0?`評審: ${(ctx.raw/20).toFixed(2)}`:ctx.label+' 票數: '+ctx.raw}}},
+          scales:{y:{beginAtZero:true}}, responsive:true, maintainAspectRatio:true }
+      });
+
+      // 2. Scatter: judge score vs vote points
+      const scatterData = rows.map(r=>({x:r.final, y:r.votePoints, label:r.zodiac}));
+      voteCharts.scatter = new Chart(document.getElementById('scatterChart'), {
+        type:'scatter',
+        data:{ datasets:[{ label:'各組', data:scatterData,
+          backgroundColor: rows.map(r=>ELEM_COLORS[r.element]||'#6366f1'),
+          pointRadius:8, pointHoverRadius:10 }]},
+        options:{
+          plugins:{ legend:{display:false},
+            tooltip:{callbacks:{label:ctx=>`${ctx.raw.label}：評審${ctx.raw.x.toFixed(2)} / 學生${ctx.raw.y}分`}}},
+          scales:{
+            x:{title:{display:true,text:'評審加權分'},min:0,max:5},
+            y:{title:{display:true,text:'學生票數'},beginAtZero:true}
+          }, responsive:true, maintainAspectRatio:true }
+      });
+
+      // 3. Vote bar only
+      const vColors = rows.map(r=>ELEM_COLORS[r.element]||'#6366f1');
+      voteCharts.vbar = new Chart(document.getElementById('voteBarChart'), {
+        type:'bar',
+        data:{ labels, datasets:[{
+          label:'票數', data:rows.map(r=>r.votePoints),
+          backgroundColor:vColors.map(c=>c+'bb'), borderColor:vColors, borderWidth:2, borderRadius:5
+        }]},
+        options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}},
+                  responsive:true, maintainAspectRatio:true }
+      });
+    };
+
     onMounted(async ()=>{
       try {
         const res = await fetch(GAS_URL, {
@@ -616,11 +1002,16 @@ createApp({
     });
 
     return {
-      state, ranked, judges, submitted, submittedCount, judgeWeighted,
+      tab, state, ranked, judges, submitted, submittedCount, judgeWeighted,
       maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal, spreadLabel,
       corrAB, corrAC, corrBC, meanCorr, maxJudgeDiff, maxJudgeDiffGroup,
       criteriaAvgs, topCriteria, bottomCriteria, criteriaRange, corrDimTotal,
       outlierMap, flaggedGroups, OUTLIER_THRESHOLD,
+      // vote tab
+      voteSessionInput, voteState, voteRanked, totalVoters,
+      comparisonRows, spearmanRho, exactMatchCount, bigDiffCount, bigDiffGroups,
+      selfVoteCount, selfVotePct, topVoteConcentration,
+      openVotesTab, connectVoteSession,
       hmStyle,
     };
   }
