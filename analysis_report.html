@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zodiac Ops 2026 — 海報評審全數據報告</title>
+<style>
+:root{
+  --bg:#f8f9fb;--surface:#fff;--border:#e5e7eb;--text:#111827;--text2:#374151;--muted:#6b7280;--faint:#9ca3af;
+  --primary:#4f46e5;--ok:#15803d;--ok-soft:#f0fdf4;--danger:#dc2626;--danger-soft:#fef2f2;
+  --accent:#b45309;--accent-soft:#fffbeb;--gold:#ca8a04;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+.page{max-width:960px;margin:0 auto;padding:40px 24px 80px;}
+
+/* Cover */
+.cover{background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4338ca 100%);
+       color:#fff;padding:48px 40px;border-radius:16px;margin-bottom:36px;}
+.cover h1{font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:8px;}
+.cover .sub{font-size:14px;opacity:.75;margin-bottom:20px;}
+.cover-meta{display:flex;gap:24px;flex-wrap:wrap;}
+.cover-meta span{font-size:12px;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;}
+
+/* Section */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:20px;}
+.sec-title{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--border);padding-bottom:10px;}
+.sec-title .num{background:var(--primary);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;}
+
+/* Stat row */
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:110px;}
+.stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px;}
+.stat .val{font-size:22px;font-weight:800;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--bg);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;
+         letter-spacing:.05em;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+thead th.r{text-align:right;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--bg);}
+td{padding:9px 12px;vertical-align:middle;}
+td.r{text-align:right;}
+td.mono{font-family:monospace;font-size:12px;}
+
+/* Verdict badges */
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;}
+.badge-ok{background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;}
+.badge-warn{background:var(--accent-soft);color:var(--accent);border:1px solid #fde68a;}
+.badge-err{background:var(--danger-soft);color:var(--danger);border:1px solid #fca5a5;}
+.badge-primary{background:#eef2ff;color:var(--primary);border:1px solid #c7d2fe;}
+
+/* Highlight rows */
+.row-top{background:#f0fdf4;}
+.row-bot{background:#fef2f2;}
+.row-warn{background:#fffbeb;}
+
+/* 3-panel grid */
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.panel{padding:14px 16px;border-radius:10px;border:1px solid var(--border);}
+
+/* Bar */
+.bar-wrap{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:4px;}
+.bar{height:100%;border-radius:4px;}
+
+/* IRR matrix */
+.irr-cell{display:inline-block;padding:4px 10px;border-radius:6px;font-weight:800;font-size:13px;}
+
+/* Insight box */
+.insight{background:#eef2ff;border-left:4px solid var(--primary);padding:12px 16px;border-radius:0 10px 10px 0;
+         margin:12px 0;font-size:13px;line-height:1.7;color:var(--text2);}
+.insight strong{color:var(--primary);}
+.insight.warn{background:var(--accent-soft);border-color:var(--accent);}
+.insight.warn strong{color:var(--accent);}
+.insight.ok{background:var(--ok-soft);border-color:var(--ok);}
+.insight.ok strong{color:var(--ok);}
+
+/* Footer */
+.footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--faint);text-align:center;}
+
+@media print{
+  body{background:#fff;}
+  .page{padding:16px;}
+  .sec{break-inside:avoid;}
+}
+@media(max-width:640px){.grid3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Cover -->
+<div class="cover">
+  <h1>Zodiac Ops 2026 — 海報評審全數據報告</h1>
+  <div class="sub">藥學系 Pathophysiology · 期末海報展 · 完整分析紀錄</div>
+  <div class="cover-meta">
+    <span>📅 活動日期：2026-06-11</span>
+    <span>👥 投票人數：231</span>
+    <span>🏆 參賽組數：12</span>
+    <span>👩‍⚖️ 評審：3 位</span>
+    <span>🗄 Session：20260611-9X9Y</span>
+  </div>
+</div>
+
+<!-- 1. 系統架構 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">1</span>系統架構與評分設計</div>
+  <div class="grid3" style="margin-bottom:16px;">
+    <div class="panel">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">學生投票</div>
+      <div style="font-size:13px;line-height:1.7;">
+        每位學生選出 <strong>3 名次</strong>（#1=3分, #2=2分, #3=1分）<br>
+        不得投自己的組 · 不得重複<br>
+        <strong>Borda count</strong> 加總 = 組的海報票選分<br>
+        海報分<strong>直接計入個人成績</strong>，無上限
+      </div>
+    </div>
+    <div class="panel">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">外部評審</div>
+      <div style="font-size:13px;line-height:1.7;">
+        3 位老師各自評 12 組，4 個面向各 1–5 分<br>
+        <strong>加權分 = 50% 面向均分 + 50% 整體印象</strong><br>
+        三位均分後得出最終排名<br>
+        計入海報典禮獎項，<strong>不計入學生個人成績</strong>
+      </div>
+    </div>
+    <div class="panel">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">個人成績結構</div>
+      <div style="font-size:12px;line-height:1.8;font-family:monospace;">
+        calibration  +5<br>
+        rating       +10<br>
+        assignment   +15<br>
+        gallery      +15<br>
+        notebook     +5–15<br>
+        slido        +5–15<br>
+        forms        +10–25<br>
+        貢獻         +0–9<br>
+        <strong>海報票選  +63–169（實際）</strong>
+      </div>
+    </div>
+  </div>
+  <div class="insight">
+    <strong>設計決策：</strong>原計畫加入天花板校正機制（預期評審寬鬆傾向）。活動前決定改為原始分，以保留真實評分。本報告驗證這兩個決策的實際結果。
+  </div>
+</div>
+
+<!-- 2. 學生票選結果 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">2</span>學生票選結果（N = 231）</div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="lbl">投票人數</div><div class="val" style="color:var(--primary);">231</div></div>
+    <div class="stat"><div class="lbl">期望均分 (N/2)</div><div class="val">115.5</div></div>
+    <div class="stat"><div class="lbl">模擬 σ</div><div class="val">15.0</div></div>
+    <div class="stat"><div class="lbl">顯著門檻 z&gt;+2</div><div class="val" style="color:var(--ok);">≥ 146</div></div>
+    <div class="stat"><div class="lbl">顯著門檻 z&lt;−2</div><div class="val" style="color:var(--danger);">≤ 85</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>學生排名</th><th>組別</th>
+        <th class="r">票數</th><th class="r">🥇</th><th class="r">🥈</th><th class="r">🥉</th>
+        <th class="r">期望</th><th class="r">z-score</th><th>判定</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="row-top"><td>1</td><td><strong>戌狗</strong></td><td class="r"><strong>169</strong></td><td class="r">30</td><td class="r">27</td><td class="r">25</td><td class="r mono">115.5</td><td class="r" style="color:var(--ok);font-weight:800;">+3.56</td><td><span class="badge badge-ok">★ 極顯著超出</span></td></tr>
+      <tr class="row-top"><td>2</td><td><strong>丑牛</strong></td><td class="r"><strong>155</strong></td><td class="r">32</td><td class="r">19</td><td class="r">21</td><td class="r mono">115.5</td><td class="r" style="color:var(--ok);font-weight:800;">+2.63</td><td><span class="badge badge-ok">★ 顯著超出</span></td></tr>
+      <tr><td>3</td><td>寅虎</td><td class="r">139</td><td class="r">24</td><td class="r">22</td><td class="r">23</td><td class="r mono">115.5</td><td class="r">+1.57</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr><td>4</td><td>卯兔</td><td class="r">136</td><td class="r">24</td><td class="r">22</td><td class="r">20</td><td class="r mono">115.5</td><td class="r">+1.37</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr><td>5</td><td>辰龍</td><td class="r">135</td><td class="r">24</td><td class="r">23</td><td class="r">17</td><td class="r mono">115.5</td><td class="r">+1.30</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr><td>6</td><td>亥豬</td><td class="r">115</td><td class="r">21</td><td class="r">18</td><td class="r">16</td><td class="r mono">115.5</td><td class="r">−0.03</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr><td>7</td><td>巳蛇</td><td class="r">110</td><td class="r">18</td><td class="r">20</td><td class="r">16</td><td class="r mono">115.5</td><td class="r">−0.37</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr><td>8</td><td>未羊</td><td class="r">109</td><td class="r">16</td><td class="r">21</td><td class="r">19</td><td class="r mono">115.5</td><td class="r">−0.43</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr><td>9</td><td>酉雞</td><td class="r">91</td><td class="r">13</td><td class="r">17</td><td class="r">18</td><td class="r mono">115.5</td><td class="r">−1.63</td><td><span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">隨機範圍</span></td></tr>
+      <tr class="row-bot"><td>10</td><td>午馬</td><td class="r">85</td><td class="r">10</td><td class="r">16</td><td class="r">23</td><td class="r mono">115.5</td><td class="r" style="color:var(--danger);font-weight:800;">−2.03</td><td><span class="badge badge-err">★ 顯著低於</span></td></tr>
+      <tr class="row-bot"><td>11</td><td>子鼠</td><td class="r">79</td><td class="r">14</td><td class="r">11</td><td class="r">15</td><td class="r mono">115.5</td><td class="r" style="color:var(--danger);font-weight:800;">−2.43</td><td><span class="badge badge-err">★ 顯著低於</span></td></tr>
+      <tr class="row-bot"><td>12</td><td>申猴</td><td class="r">63</td><td class="r">5</td><td class="r">15</td><td class="r">18</td><td class="r mono">115.5</td><td class="r" style="color:var(--danger);font-weight:800;">−3.50</td><td><span class="badge badge-err">★ 極顯著低於</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight" style="margin-top:16px;">
+    <strong>解讀：</strong>排名 3–9（寅虎至酉雞）全落在 ±2σ 內，統計上無法區分。學生真正形成共識的只有兩端：前兩名（戌狗、丑牛）和後三名（午馬、子鼠、申猴）。中間七組的相對排名受隨機誤差主導。
+  </div>
+
+  <div style="margin-top:16px;">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;">全場共識：戌狗是唯一被 8+ 個組別列入 Top-2 的目標</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px;">
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">亥豬 → 戌狗 22% </span>
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">酉雞 → 戌狗 19%</span>
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">申猴 → 戌狗 18%</span>
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">卯兔 → 戌狗 14%</span>
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">寅虎 → 戌狗 14%</span>
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">未羊 → 戌狗 15%</span>
+      <span style="background:var(--bg);padding:3px 10px;border-radius:6px;border:1px solid var(--border);">巳蛇 → 戌狗 12%</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 評審評分結果 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">3</span>評審評分結果（評審 A / B / C）</div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="lbl">全體均分</div><div class="val" style="color:var(--ok);">3.51</div></div>
+    <div class="stat"><div class="lbl">標準差</div><div class="val">0.60</div></div>
+    <div class="stat"><div class="lbl">Range</div><div class="val" style="font-size:16px;">2.23–4.28</div></div>
+    <div class="stat"><div class="lbl">分佈判定</div><div class="val" style="font-size:13px;color:var(--ok);">健康 ✓</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>評審排名</th><th>組別</th>
+        <th class="r">加權分</th><th class="r">選題</th><th class="r">病理</th><th class="r">視覺</th><th class="r">整體</th>
+        <th class="r">A</th><th class="r">B</th><th class="r">C</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="row-top"><td>1</td><td><strong>酉雞</strong></td><td class="r"><strong>4.28</strong></td><td class="r">4.7</td><td class="r">4.3</td><td class="r">4.7</td><td class="r">4.0</td><td class="r">3.67</td><td class="r">4.17</td><td class="r" style="color:var(--ok);font-weight:800;">5.00</td></tr>
+      <tr><td>2</td><td>卯兔</td><td class="r">4.12</td><td class="r">3.7</td><td class="r">5.0</td><td class="r">4.0</td><td class="r">4.0</td><td class="r" style="color:var(--primary);font-weight:700;">4.83</td><td class="r" style="color:var(--danger);">3.33</td><td class="r">4.17</td></tr>
+      <tr><td>3</td><td>巳蛇</td><td class="r">4.07</td><td class="r">3.7</td><td class="r">5.0</td><td class="r">3.7</td><td class="r">4.0</td><td class="r">4.17</td><td class="r" style="color:var(--danger);">3.17</td><td class="r" style="color:var(--ok);font-weight:700;">4.83</td></tr>
+      <tr><td>4</td><td>戌狗</td><td class="r">3.92</td><td class="r">4.0</td><td class="r">4.7</td><td class="r">3.7</td><td class="r">3.7</td><td class="r">4.17</td><td class="r">3.50</td><td class="r">4.00</td></tr>
+      <tr><td>5</td><td>丑牛</td><td class="r">3.75</td><td class="r">4.0</td><td class="r">4.7</td><td class="r">2.7</td><td class="r">3.7</td><td class="r">3.67</td><td class="r">3.33</td><td class="r">4.17</td></tr>
+      <tr><td>6</td><td>未羊</td><td class="r">3.68</td><td class="r">4.0</td><td class="r">3.0</td><td class="r">4.0</td><td class="r">3.7</td><td class="r">3.83</td><td class="r">4.17</td><td class="r">3.00</td></tr>
+      <tr><td>7</td><td>寅虎</td><td class="r">3.60</td><td class="r">4.0</td><td class="r">4.0</td><td class="r">3.7</td><td class="r">3.3</td><td class="r">3.33</td><td class="r">4.17</td><td class="r">3.33</td></tr>
+      <tr><td>8</td><td>亥豬</td><td class="r">3.57</td><td class="r">4.0</td><td class="r">4.3</td><td class="r">2.0</td><td class="r">3.7</td><td class="r">3.00</td><td class="r">3.50</td><td class="r">4.17</td></tr>
+      <tr><td>9</td><td>午馬</td><td class="r">3.03</td><td class="r">3.3</td><td class="r">2.3</td><td class="r">2.7</td><td class="r">3.3</td><td class="r">3.33</td><td class="r">3.00</td><td class="r">2.83</td></tr>
+      <tr class="row-warn"><td>10</td><td>申猴</td><td class="r">3.02</td><td class="r">3.7</td><td class="r">3.0</td><td class="r">3.3</td><td class="r">2.7</td><td class="r">2.83</td><td class="r" style="color:var(--danger);font-weight:800;">1.83</td><td class="r" style="color:var(--ok);font-weight:800;">4.33</td></tr>
+      <tr><td>11</td><td>辰龍</td><td class="r">2.90</td><td class="r">3.0</td><td class="r">2.3</td><td class="r">4.0</td><td class="r">2.7</td><td class="r">2.67</td><td class="r">2.83</td><td class="r">3.17</td></tr>
+      <tr class="row-bot"><td>12</td><td>子鼠</td><td class="r">2.23</td><td class="r">2.7</td><td class="r">2.7</td><td class="r">2.0</td><td class="r">2.0</td><td class="r">1.67</td><td class="r">2.50</td><td class="r">2.50</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Per-judge stats + IRR -->
+  <div class="grid3" style="margin-top:20px;">
+    <div class="panel">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;">各評審風格</div>
+      <table style="font-size:12px;">
+        <tr><th></th><th class="r">均分</th><th class="r">SD</th><th class="r">極差</th></tr>
+        <tr><td style="color:var(--primary);font-weight:700;">評審A</td><td class="r">3.39</td><td class="r">0.78</td><td class="r">2.17</td></tr>
+        <tr><td style="color:var(--ok);font-weight:700;">評審B</td><td class="r">3.22</td><td class="r">0.78</td><td class="r">2.33</td></tr>
+        <tr><td style="color:var(--accent);font-weight:700;">評審C</td><td class="r">3.90</td><td class="r">0.93</td><td class="r">2.67</td></tr>
+      </table>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">C 評分整體偏高；B 整體偏低；A 居中</div>
+    </div>
+
+    <div class="panel" style="background:var(--danger-soft);border-color:#fca5a5;">
+      <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:10px;">評審一致性 — 低 ⚠</div>
+      <div style="font-size:13px;line-height:1.9;">
+        A↔B：<span class="irr-cell" style="background:#fef9c3;color:#92400e;">r = 0.491</span><br>
+        A↔C：<span class="irr-cell" style="background:#fef9c3;color:#92400e;">r = 0.534</span><br>
+        B↔C：<span class="irr-cell" style="background:var(--danger-soft);color:var(--danger);">r = 0.126 ⚠</span>
+      </div>
+      <div style="font-size:11px;color:var(--danger);margin-top:8px;font-weight:700;">平均 r = 0.38（低一致）</div>
+    </div>
+
+    <div class="panel" style="background:var(--accent-soft);border-color:#fde68a;">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;">離群偵測（差距 &gt; 1.0）</div>
+      <div style="font-size:12px;line-height:1.8;color:var(--text2);">
+        <strong>申猴</strong>：B=1.83 / C=4.33 <span class="badge badge-err">差 2.50</span><br>
+        巳蛇：B=3.17 / C=4.83 <span class="badge badge-warn">差 1.33</span><br>
+        卯兔：A=4.83 / B=3.33 <span class="badge badge-warn">差 1.17</span><br>
+        酉雞：A=3.67 / C=5.00 <span class="badge badge-warn">差 1.08</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight warn" style="margin-top:16px;">
+    <strong>B vs C 一致性極低（r = 0.126）：</strong>兩位評審的評分標準幾乎完全獨立。申猴是最極端案例——B 給 1.83（偏低），C 給 4.33（偏高），差距 2.50 分（1–5 量尺的一半）。平均後得 3.02 排第 10，但此分數的可信度在所有組中最低。三位評審平均能稀釋個別偏差，但整體一致性仍偏低。
+  </div>
+
+  <div class="insight ok" style="margin-top:10px;">
+    <strong>分佈驗證：無天花板效應。</strong>均分 3.51，SD 0.60，Range 2.23–4.28。原決定「不校正」正確——原始分數已具備足夠鑑別力，任何正規化都會是多餘的扭曲。
+  </div>
+</div>
+
+<!-- 4. 三方對照 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">4</span>三方排名對照（學生票 · PageRank · 評審）</div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="lbl">Spearman ρ（學生 vs 評審）</div><div class="val" style="color:var(--accent-l);">0.41</div></div>
+    <div class="stat"><div class="lbl">三方完全一致</div><div class="val" style="color:var(--ok);">2 組</div></div>
+    <div class="stat"><div class="lbl">顯著分歧（差距 ≥4）</div><div class="val" style="color:var(--danger);">4 組</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>組別</th>
+        <th class="r">學生 Borda</th>
+        <th class="r">PageRank</th>
+        <th class="r">評審</th>
+        <th class="r">平均排名</th>
+        <th>一致性</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>戌狗</strong></td><td class="r">1</td><td class="r">1 <span style="color:var(--muted);font-size:11px;"></span></td><td class="r">4 <span style="color:var(--danger);font-size:11px;">↓3</span></td><td class="r" style="color:var(--accent-l);">2.0</td><td><span class="badge badge-warn">中等</span></td></tr>
+      <tr><td><strong>卯兔</strong></td><td class="r">4</td><td class="r">2 <span style="color:var(--ok);font-size:11px;">↑2</span></td><td class="r">2 <span style="color:var(--ok);font-size:11px;">↑2</span></td><td class="r" style="color:var(--accent-l);">2.7</td><td><span class="badge badge-ok">一致 ✓</span></td></tr>
+      <tr class="row-warn"><td><strong>酉雞</strong> ★</td><td class="r">9</td><td class="r">4 <span style="color:var(--ok);font-size:11px;">↑5</span></td><td class="r">1 <span style="color:var(--ok);font-size:11px;">↑8</span></td><td class="r" style="color:var(--accent-l);">4.7</td><td><span class="badge badge-err">分歧 ⚠</span></td></tr>
+      <tr><td><strong>丑牛</strong></td><td class="r">2</td><td class="r">3 <span style="color:var(--danger);font-size:11px;">↓1</span></td><td class="r">5 <span style="color:var(--danger);font-size:11px;">↓3</span></td><td class="r" style="color:var(--accent-l);">3.3</td><td><span class="badge badge-warn">中等</span></td></tr>
+      <tr><td><strong>巳蛇</strong></td><td class="r">7</td><td class="r">5 <span style="color:var(--ok);font-size:11px;">↑2</span></td><td class="r">3 <span style="color:var(--ok);font-size:11px;">↑4</span></td><td class="r" style="color:var(--accent-l);">5.0</td><td><span class="badge badge-warn">中等</span></td></tr>
+      <tr><td><strong>未羊</strong></td><td class="r">8</td><td class="r">6 <span style="color:var(--ok);font-size:11px;">↑2</span></td><td class="r">6</td><td class="r" style="color:var(--accent-l);">6.7</td><td><span class="badge badge-ok">一致 ✓</span></td></tr>
+      <tr><td>寅虎</td><td class="r">3</td><td class="r">7 <span style="color:var(--danger);font-size:11px;">↓4</span></td><td class="r">7 <span style="color:var(--danger);font-size:11px;">↓4</span></td><td class="r" style="color:var(--accent-l);">5.7</td><td><span class="badge badge-warn">中等</span></td></tr>
+      <tr><td>亥豬</td><td class="r">6</td><td class="r">8 <span style="color:var(--danger);font-size:11px;">↓2</span></td><td class="r">8 <span style="color:var(--danger);font-size:11px;">↓2</span></td><td class="r" style="color:var(--accent-l);">7.3</td><td><span class="badge badge-warn">中等</span></td></tr>
+      <tr><td>午馬</td><td class="r">10</td><td class="r">9 <span style="color:var(--ok);font-size:11px;">↑1</span></td><td class="r">9 <span style="color:var(--ok);font-size:11px;">↑1</span></td><td class="r" style="color:var(--accent-l);">9.3</td><td><span class="badge badge-ok">一致 ✓</span></td></tr>
+      <tr class="row-warn"><td><strong>辰龍</strong> ★</td><td class="r">5</td><td class="r">10 <span style="color:var(--danger);font-size:11px;">↓5</span></td><td class="r">11 <span style="color:var(--danger);font-size:11px;">↓6</span></td><td class="r" style="color:var(--accent-l);">8.7</td><td><span class="badge badge-err">分歧 ⚠</span></td></tr>
+      <tr><td>子鼠</td><td class="r">11</td><td class="r">11</td><td class="r">12 <span style="color:var(--danger);font-size:11px;">↓1</span></td><td class="r" style="color:var(--accent-l);">11.3</td><td><span class="badge badge-ok">一致 ✓</span></td></tr>
+      <tr><td>申猴</td><td class="r">12</td><td class="r">12</td><td class="r">10 <span style="color:var(--ok);font-size:11px;">↑2</span></td><td class="r" style="color:var(--accent-l);">11.3</td><td><span class="badge badge-warn">中等</span></td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="panel" style="background:#fef3c7;border-color:#fde68a;">
+      <div style="font-weight:800;font-size:13px;margin-bottom:8px;">★ 酉雞：評審 #1 / 學生 #9（差 8 名）</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--text2);">
+        選題 4.7、病理 4.3、視覺 4.7，三維全高，評審C給滿分。但學生票只有 91（z = −1.63）。<br>
+        <strong>推論：</strong>內容深度極佳，但在 Padlet 圖文瀏覽格式中不易被非專業眼光快速識別。
+      </div>
+    </div>
+    <div class="panel" style="background:#fef3c7;border-color:#fde68a;">
+      <div style="font-weight:800;font-size:13px;margin-bottom:8px;">★ 辰龍：學生 #5 / 評審 #11（差 6 名）</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--text2);">
+        視覺 4.0（全場第三高），但病理 2.3（倒數第二）。學生票 135（z = +1.30）。<br>
+        <strong>推論：</strong>視覺設計強，Padlet 瀏覽時吸睛，但評審深入閱讀後發現病生理深度不足。
+      </div>
+    </div>
+  </div>
+
+  <!-- Dimension correlation -->
+  <div style="margin-top:20px;">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;">哪個面向最能預測學生票選？</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="min-width:80px;font-size:12px;color:var(--text2);">病生理深度</span>
+        <div class="bar-wrap" style="flex:1;"><div class="bar" style="width:53%;background:var(--ok);"></div></div>
+        <span style="font-weight:800;color:var(--ok);min-width:56px;">r = +0.53</span>
+        <span class="badge badge-ok">最強</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="min-width:80px;font-size:12px;color:var(--text2);">加權分</span>
+        <div class="bar-wrap" style="flex:1;"><div class="bar" style="width:46%;background:var(--accent-l);"></div></div>
+        <span style="font-weight:800;color:var(--accent-l);min-width:56px;">r = +0.46</span>
+        <span class="badge badge-warn">中等</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="min-width:80px;font-size:12px;color:var(--text2);">整體印象</span>
+        <div class="bar-wrap" style="flex:1;"><div class="bar" style="width:42%;background:var(--accent-l);"></div></div>
+        <span style="font-weight:800;color:var(--accent-l);min-width:56px;">r = +0.42</span>
+        <span class="badge badge-warn">中等</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="min-width:80px;font-size:12px;color:var(--text2);">選題需求</span>
+        <div class="bar-wrap" style="flex:1;"><div class="bar" style="width:23%;background:var(--muted);"></div></div>
+        <span style="font-weight:800;color:var(--muted);min-width:56px;">r = +0.23</span>
+        <span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">弱</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="min-width:80px;font-size:12px;color:var(--text2);">視覺表達</span>
+        <div class="bar-wrap" style="flex:1;"><div class="bar" style="width:20%;background:var(--muted);"></div></div>
+        <span style="font-weight:800;color:var(--muted);min-width:56px;">r = +0.20</span>
+        <span class="badge" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);">最弱</span>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:12px;">
+      <strong>反直覺發現：</strong>視覺表達相關性最低（r = 0.20），病生理深度最高（r = 0.53）。學生辨識的是內容品質，而非視覺包裝——但他們的「深度感受」與評審的深度判斷仍有落差（酉雞案例）。
+    </div>
+  </div>
+</div>
+
+<!-- 5. 成績鑑別力分析 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">5</span>海報分無上限設計的成績鑑別力分析</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>情境</th>
+        <th class="r">海報分範圍</th>
+        <th class="r">海報 SD</th>
+        <th class="r">成績差距</th>
+        <th>個人成績重疊？</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="row-top">
+        <td><strong>① 實際（無上限）</strong></td>
+        <td class="r">63–169</td><td class="r">32.3</td><td class="r" style="font-weight:800;">106 分</td>
+        <td><span class="badge badge-ok">無重疊 — 差距 66 分 ✓</span></td>
+      </tr>
+      <tr class="row-bot">
+        <td>② 上限 20 分（正規化）</td>
+        <td class="r">0–20</td><td class="r">6.1</td><td class="r">20 分</td>
+        <td><span class="badge badge-err">重疊 20 分 ✗</span></td>
+      </tr>
+      <tr class="row-bot">
+        <td>③ 名次制 #1=20/#2=15/餘=5</td>
+        <td class="r">5–20</td><td class="r">4.9</td><td class="r">15 分</td>
+        <td><span class="badge badge-err">重疊 25 分 ✗</span></td>
+      </tr>
+      <tr class="row-bot">
+        <td>④ 天花板情境（SD 壓縮到 3）</td>
+        <td class="r">105–126</td><td class="r">6.4</td><td class="r">21 分</td>
+        <td><span class="badge badge-err">重疊 19 分 ✗</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:14px;font-size:12px;color:var(--muted);">
+    「個人成績重疊」計算方式：假設學生 base 分（海報分以外的活動得分）在 ±20 範圍內浮動，
+    若第 1 名組最低成績 &lt; 第 12 名組最高成績，則兩組在個人成績上產生重疊，組別排名失去意義。
+  </div>
+
+  <div class="insight ok" style="margin-top:14px;">
+    <strong>結論：</strong>只有無上限設計（情境①）能確保第1名組的每位成員，在個人成績上必然高於第12名組的每位成員（差距 66 分）。任何形式的上限都會造成組別成績重疊，讓海報票選的評分意義消失。
+  </div>
+</div>
+
+<!-- 6. 關鍵發現摘要 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">6</span>關鍵發現摘要</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;">
+
+    <div class="insight ok">
+      <strong>發現 1 — 學生投票：兩端顯著，中段隨機。</strong>
+      231 人投票，戌狗（z=+3.56）和丑牛（z=+2.63）有真實統計顯著的人氣優勢。申猴（z=−3.50）、子鼠（z=−2.43）、午馬（z=−2.03）顯著低於預期。中間 7 組（排名 3–9）統計上無法可靠排序。
+    </div>
+
+    <div class="insight ok">
+      <strong>發現 2 — 評審分佈健康，無需校正。</strong>
+      均分 3.51，SD 0.60，Range 2.23–4.28。原先擔心的天花板效應並未出現，原始分數具備足夠鑑別度。當初決定不做校正是正確的。
+    </div>
+
+    <div class="insight warn">
+      <strong>發現 3 — 評審 B vs C 一致性極低（r = 0.126）。</strong>
+      兩位評審對海報品質的判斷幾乎完全獨立，申猴案例差距達 2.50 分。三位均分稀釋了個別偏差，但整體評審信度偏低。若下次使用，建議評審前進行對標討論（anchor 校準）。
+    </div>
+
+    <div class="insight warn">
+      <strong>發現 4 — 最大分歧：酉雞（評審 #1 / 學生 #9）。</strong>
+      評審一致認為最佳，但學生票數低於期望（z = −1.63）。病生理深度高，但 Padlet 圖文格式未能呈現深度優勢。辰龍反向：學生 #5、評審 #11，視覺強但內容薄。
+    </div>
+
+    <div class="insight">
+      <strong>發現 5 — 學生辨識的是病生理深度，不是視覺表達。</strong>
+      面向與學生票相關：病理 r=0.53 &gt; 整體印象 0.42 &gt; 選題 0.23 &gt; 視覺 0.20。學生能辨識內容品質，只是辨識方式與評審不同，導致 Spearman ρ = 0.41（中等）。
+    </div>
+
+    <div class="insight ok">
+      <strong>發現 6 — 無上限設計是正確的成績設計決策。</strong>
+      實際海報分範圍 63–169（差距 106 分），組別完全可在個人成績層面區分（差距 66 分，無重疊）。任何形式的上限都會讓個人成績重疊，使票選的評分意義消失。
+    </div>
+
+  </div>
+</div>
+
+<!-- 7. 系統工具索引 -->
+<div class="sec">
+  <div class="sec-title"><span class="num">7</span>分析工具索引</div>
+  <table>
+    <thead><tr><th>工具</th><th>用途</th><th>網址</th></tr></thead>
+    <tbody>
+      <tr><td><strong>score_report.html</strong></td><td>評審分析 + 學生票選對照 + ML 分析 + 模擬分析</td><td class="mono">jnynlin.github.io/cmurx-vote/score_report.html</td></tr>
+      <tr><td><strong>vote_report.html</strong></td><td>學生票選即時監控（排名/流向/未投票/影響力/進階）</td><td class="mono">jnynlin.github.io/cmurx-vote/vote_report.html</td></tr>
+      <tr><td><strong>poster_judge.html</strong></td><td>評審端評分工具（A/B/C 自動槽位、PIN 認證）</td><td class="mono">jnynlin.github.io/cmurx-vote/poster_judge.html</td></tr>
+      <tr><td><strong>login_report.html</strong></td><td>學生登入/登出統計報告（Session 20260611-9X9Y）</td><td class="mono">jnynlin.github.io/cmurx-vote/login_report.html</td></tr>
+      <tr><td><strong>index.html</strong></td><td>學生端（任務清單、票選、Debrief）</td><td class="mono">jnynlin.github.io/cmurx-vote/</td></tr>
+      <tr><td><strong>zzzzzz.html</strong></td><td>教師端（名單管理、GAS 同步、票選監控）</td><td class="mono">jnynlin.github.io/cmurx-vote/zzzzzz.html</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  Zodiac Ops 2026 · 藥學系 Pathophysiology · Session 20260611-9X9Y<br>
+  數據來源：Firebase Realtime DB + Google Apps Script · 分析日期：2026-06-13
+</div>
+
+</div>
+</body>
+</html>
