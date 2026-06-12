@@ -400,7 +400,7 @@
                                 <th class="p-4 text-center">總分</th>
                                 <th class="p-4">Group A (Learning)</th>
                                 <th class="p-4 border-l border-slate-700">Group B (Project)</th>
-                                <th class="p-4 text-right pr-6">連線狀態</th>
+                                <th class="p-4 text-right pr-6">連線 / 登入登出</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-700 text-base font-mono">
@@ -444,7 +444,16 @@
                                         <span v-if="s.tasks?.assignment?.contributions?.length" class="text-[9px] text-emerald-400 font-mono ml-1" :title="s.tasks.assignment.contributions.join('\n')">+{{ s.tasks.assignment.contributions.length }}</span>
                                     </div>
                                 </td>
-                                <td class="p-4 text-right pr-6"><span class="status-dot" :class="getStatusColor(s)"></span></td>
+                                <td class="p-4 text-right pr-6">
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="status-dot" :class="getStatusColor(s)"></span>
+                                        <span class="text-[10px] font-mono text-slate-400 whitespace-nowrap">
+                                            <i class="fa-solid fa-right-to-bracket text-emerald-500"></i> {{ s.auth?.loginCount || 0 }}
+                                            &nbsp;
+                                            <i class="fa-solid fa-right-from-bracket text-slate-500"></i> {{ s.auth?.logoutCount || 0 }}
+                                        </span>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

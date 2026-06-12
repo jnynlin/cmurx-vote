@@ -809,7 +809,7 @@ function useIdentity(sessionId, addToast, changeView, playSFX) {
                 return false;
             }
             const t = crypto.randomUUID();
-            await update(dbRef(db, `classrooms/${sessionId.value}/students/${uid}/auth`), { isActive: true, token: t, pin, failedAttempts: 0, lockUntil: null, firebaseUid: firebaseUser?.uid || null, loginAt: Date.now() });
+            await update(dbRef(db, `classrooms/${sessionId.value}/students/${uid}/auth`), { isActive: true, token: t, pin, failedAttempts: 0, lockUntil: null, firebaseUid: firebaseUser?.uid || null, loginAt: Date.now(), loginCount: (aD.loginCount || 0) + 1 });
             const ud = { uid, token: t, name: claimingUser.value.profile.Name, zodiac: claimingUser.value.profile.Zodiac, studentId: claimingUser.value.profile.StudentId, role: claimingUser.value.profile.Role || 'member' };
             localStorage.setItem('zodiac_identity', JSON.stringify(ud));
             Object.assign(myProfile, ud); myProfile.zodiac = CONFIG.ZODIAC.find(z=>z.label===ud.zodiac);
@@ -837,7 +837,9 @@ function useIdentity(sessionId, addToast, changeView, playSFX) {
     };
     const logout = async () => {
         if(myProfile.uid) {
-            await update(dbRef(db, `classrooms/${sessionId.value}/students/${myProfile.uid}/auth`), { isActive: false });
+            const aSnap = await get(dbRef(db, `classrooms/${sessionId.value}/students/${myProfile.uid}/auth`));
+            const aD = aSnap.val() || {};
+            await update(dbRef(db, `classrooms/${sessionId.value}/students/${myProfile.uid}/auth`), { isActive: false, logoutCount: (aD.logoutCount || 0) + 1 });
             await update(dbRef(db, `classrooms/${sessionId.value}/students/${myProfile.uid}`), { status: 'offline' });
         }
         localStorage.removeItem('zodiac_identity'); location.reload();
