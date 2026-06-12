@@ -504,6 +504,144 @@
           </div>
         </div>
 
+        <!-- ── Merged advanced analytics ── -->
+
+        <!-- 3-way ranking table -->
+        <div class="sec" v-if="threeWayRanks.length">
+          <div class="sec-title"><i class="fa-solid fa-arrows-up-down" style="color:var(--primary);"></i>三方排名對照（Borda · PageRank · 評審）</div>
+          <table>
+            <thead>
+              <tr>
+                <th>組別</th>
+                <th class="r">Borda</th>
+                <th class="r">PageRank</th>
+                <th class="r">評審</th>
+                <th class="r">平均排名</th>
+                <th class="r">最大落差</th>
+                <th>一致性</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in threeWayRanks" :key="r.zodiac"
+                  :style="r.maxSpread<=1?'background:var(--ok-soft)':r.maxSpread>=4?'background:var(--danger-soft)':''">
+                <td>
+                  <span class="zodiac-name">{{ r.zodiac }}</span>
+                  <span class="elem-badge" :class="'elem-'+r.element">{{ r.element }}</span>
+                </td>
+                <td class="r" style="font-weight:800;">{{ r.borda }}</td>
+                <td class="r">
+                  {{ r.pr }}
+                  <span style="font-size:11px;margin-left:3px;"
+                    :style="r.pr<r.borda?'color:var(--ok)':r.pr>r.borda?'color:var(--danger)':'color:var(--muted)'">
+                    {{ r.pr<r.borda?'↑'+(r.borda-r.pr):r.pr>r.borda?'↓'+(r.pr-r.borda):'' }}
+                  </span>
+                </td>
+                <td class="r">
+                  {{ r.judge }}
+                  <span style="font-size:11px;margin-left:3px;"
+                    :style="r.judge<r.borda?'color:var(--ok)':r.judge>r.borda?'color:var(--danger)':'color:var(--muted)'">
+                    {{ r.judge<r.borda?'↑'+(r.borda-r.judge):r.judge>r.borda?'↓'+(r.judge-r.borda):'' }}
+                  </span>
+                </td>
+                <td class="r" style="font-weight:800;color:var(--accent-l);">{{ r.avg }}</td>
+                <td class="r">{{ r.maxSpread }}</td>
+                <td>
+                  <span v-if="r.maxSpread<=1" style="background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">一致 ✓</span>
+                  <span v-else-if="r.maxSpread<=3" style="font-size:11px;color:var(--muted);">中等</span>
+                  <span v-else style="background:var(--danger-soft);color:var(--danger);border:1px solid #fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">分歧 ⚠</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+            平均排名 = (Borda + PageRank + 評審) ÷ 3，由小到大排列。PageRank ↑ = 票來自高人氣組，品質加成。
+          </div>
+        </div>
+
+        <!-- PageRank -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-circle-nodes" style="color:var(--primary);"></i>PageRank — 品質加權排名</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px;">PR排</th><th>組別</th>
+                <th class="r">PR 分</th><th class="r">Borda 排</th><th class="r">位移</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r,i) in prRanked" :key="r.zodiac">
+                <td><span class="rank-num" :class="'rank-'+(i+1)">{{ i+1 }}</span></td>
+                <td>
+                  <span class="zodiac-name">{{ r.zodiac }}</span>
+                </td>
+                <td class="r" style="font-family:monospace;color:var(--primary);">{{ r.score }}</td>
+                <td class="r" style="color:var(--muted);">{{ r.bordaRank }}</td>
+                <td class="r">
+                  <span v-if="r.delta>0" style="color:var(--ok);font-weight:700;">↑ {{ r.delta }}</span>
+                  <span v-else-if="r.delta<0" style="color:var(--danger);font-weight:700;">↓ {{ -r.delta }}</span>
+                  <span v-else style="color:var(--faint);">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+            PR排 > Borda排（↑）= 票來自高人氣組，品質高於數量。PR排 < Borda排（↓）= 票多但來源人氣低。
+          </div>
+        </div>
+
+        <!-- Lift matrix -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-table-cells" style="color:var(--primary);"></i>Lift 矩陣 — 真實偏好強度</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+            lift = 實際 ÷ 純隨機期望。&gt;2 = 強烈真實偏好；≈1 = 符合預期；&lt;0.5 = 低於預期。
+          </div>
+          <div class="heatmap">
+            <table class="hm-table" style="font-size:11px;">
+              <thead>
+                <tr>
+                  <th class="lh">投↓ / 被投→</th>
+                  <th v-for="t in ZODIAC_ORDER" :key="t" style="font-size:12px;">
+                    {{ t.slice(0,1) }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="f in ZODIAC_ORDER" :key="f">
+                  <td style="font-weight:700;font-size:11px;white-space:nowrap;">{{ f }}</td>
+                  <td v-for="t in ZODIAC_ORDER" :key="t"
+                      :style="f===t
+                        ? 'background:var(--surface2);color:var(--faint);'
+                        : liftMatrix[f]?.[t]>0
+                          ? liftStyle(liftMatrix[f][t])
+                          : 'background:var(--surface);color:var(--border);'">
+                    {{ f===t ? '—' : liftMatrix[f]?.[t]>0 ? liftMatrix[f][t] : '' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:6px;display:flex;gap:14px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:#4ade80;font-weight:700;">■ ≥2 強烈偏好</span>
+            <span style="color:#86efac;">■ 1.5–2</span>
+            <span style="color:var(--muted);">■ 0.8–1.5 隨機範圍</span>
+            <span style="color:var(--danger);">■ &lt;0.5 低於預期</span>
+          </div>
+        </div>
+
+        <!-- Temporal trajectory -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-timeline" style="color:var(--primary);"></i>投票時序：前 6 組票數演變</div>
+          <div v-if="!temporalData" style="color:var(--muted);font-size:12px;padding:8px 0;">
+            資料中缺少 submittedAt 時間戳，無法繪製時序圖。
+          </div>
+          <template v-else>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+              依投票送出時間排序，追蹤前 6 組累積 Borda 票數。早早拉開 = 早期共識；後段追上 = 晚投者偏好不同。
+            </div>
+            <canvas id="temporalChartV" style="max-height:340px;"></canvas>
+          </template>
+        </div>
+
       </template>
     </div><!-- end votes tab -->
 
@@ -950,6 +1088,26 @@ function simulateVoting(voterGroups, allGroups, nSims) {
 }
 
 // Chart.js plugin: draw zodiac labels next to each scatter point
+// ── PageRank ──────────────────────────────────────────────────────────────
+function pageRankCalc(flowMatrix, groups, damping=0.85, iters=60) {
+  const n=groups.length;
+  let pr={};
+  groups.forEach(g=>{pr[g]=1/n;});
+  for(let it=0;it<iters;it++){
+    const np={};
+    groups.forEach(t=>{
+      let s=0;
+      groups.forEach(f=>{
+        const out=groups.reduce((a,x)=>a+(flowMatrix[f]?.[x]||0),0);
+        if(out>0) s+=pr[f]*(flowMatrix[f]?.[t]||0)/out;
+      });
+      np[t]=(1-damping)/n+damping*s;
+    });
+    pr=np;
+  }
+  return pr;
+}
+
 const pointLabelPlugin = {
   id:'pointLabels',
   afterDatasetsDraw(chart){
@@ -1006,6 +1164,7 @@ createApp({
         voteState.value = 'ready';
         nextTick(() => {
           buildVoteCharts();
+          buildTemporalChart();
           if (tab.value==='ml')  buildMLCharts();
           if (tab.value==='sim') { simN.value=totalVoters.value; buildSimChart(); }
         });
@@ -1253,6 +1412,96 @@ createApp({
       return totalVoters.value ? +(topPts/totalVoters.value*100).toFixed(1) : 0;
     });
 
+    // ── Merged advanced analytics (from vote_report 進階 tab) ────────────
+    const flowMatrix = computed(()=>{
+      const m={};
+      ZODIAC_ORDER.forEach(z=>{m[z]={};ZODIAC_ORDER.forEach(t=>{m[z][t]=0;});});
+      Object.values(voteRaw.value).forEach(v=>{
+        const f=v.voterZodiac; if(!f||!m[f]) return;
+        if(v.rank1&&m[f][v.rank1]!==undefined) m[f][v.rank1]+=3;
+        if(v.rank2&&m[f][v.rank2]!==undefined) m[f][v.rank2]+=2;
+        if(v.rank3&&m[f][v.rank3]!==undefined) m[f][v.rank3]+=1;
+      });
+      return m;
+    });
+
+    const prScores = computed(()=>{
+      if(voteState.value!=='ready') return {};
+      return pageRankCalc(flowMatrix.value, ZODIAC_ORDER);
+    });
+
+    const prRanked = computed(()=>{
+      const bordaMap={};
+      voteRanked.value.forEach(g=>{bordaMap[g.zodiac]=g.rank;});
+      return Object.entries(prScores.value)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([z,s],i)=>({zodiac:z,score:s.toFixed(4),prRank:i+1,bordaRank:bordaMap[z]||99,delta:(bordaMap[z]||99)-(i+1)}));
+    });
+
+    const threeWayRanks = computed(()=>{
+      if(!raw.value.length||voteState.value!=='ready') return [];
+      const bordaMap={},prMap={},judgeMap={};
+      voteRanked.value.forEach(g=>{bordaMap[g.zodiac]=g.rank;});
+      prRanked.value.forEach(r=>{prMap[r.zodiac]=r.prRank;});
+      ranked.value.forEach(g=>{judgeMap[g.zodiac]=g.rank;});
+      return ZODIAC_ORDER.map(z=>{
+        const borda=bordaMap[z]||99, pr=prMap[z]||99, judge=judgeMap[z]||99;
+        const avg=+((borda+pr+judge)/3).toFixed(1);
+        const maxSpread=Math.max(borda,pr,judge)-Math.min(borda,pr,judge);
+        const g=raw.value.find(x=>x.zodiac===z);
+        return {zodiac:z,element:g?.element||'',borda,pr,judge,avg,maxSpread};
+      }).filter(r=>r.borda<99||r.judge<99).sort((a,b)=>a.avg-b.avg);
+    });
+
+    const liftMatrix = computed(()=>{
+      if(voteState.value!=='ready') return {};
+      const m=flowMatrix.value, labels=ZODIAC_ORDER;
+      const outS={},inS={};
+      let total=0;
+      labels.forEach(f=>{outS[f]=labels.reduce((s,t)=>s+(m[f]?.[t]||0),0);});
+      labels.forEach(t=>{inS[t]=labels.reduce((s,f)=>s+(m[f]?.[t]||0),0);total+=inS[t];});
+      const lift={};
+      labels.forEach(f=>{
+        lift[f]={};
+        labels.forEach(t=>{
+          if(f===t){lift[f][t]=0;return;}
+          const exp=(outS[f]*inS[t])/(total||1), act=m[f]?.[t]||0;
+          lift[f][t]=exp>0?+(act/exp).toFixed(1):0;
+        });
+      });
+      return lift;
+    });
+
+    const liftStyle = (v) => {
+      const n=parseFloat(v);
+      if(n>=3)   return 'background:#14532d;color:#4ade80;';
+      if(n>=2)   return 'background:#166534;color:#86efac;';
+      if(n>=1.5) return 'background:#1c3a28;color:#86efac;';
+      if(n>=0.8) return 'background:#1e293b;color:#64748b;';
+      if(n>=0.5) return 'background:#2a1f1f;color:#fca5a5;';
+      return             'background:#450a0a;color:#f87171;';
+    };
+
+    const temporalData = computed(()=>{
+      if(voteState.value!=='ready') return null;
+      const all=Object.values(voteRaw.value).filter(v=>v.submittedAt).sort((a,b)=>a.submittedAt-b.submittedAt);
+      if(all.length<5) return null;
+      const running={};
+      ZODIAC_ORDER.forEach(z=>{running[z]=0;});
+      const snaps=[];
+      const step=Math.max(1,Math.floor(all.length/30));
+      all.forEach((v,i)=>{
+        if(v.rank1) running[v.rank1]=(running[v.rank1]||0)+3;
+        if(v.rank2) running[v.rank2]=(running[v.rank2]||0)+2;
+        if(v.rank3) running[v.rank3]=(running[v.rank3]||0)+1;
+        if(i%step===0||i===all.length-1){
+          const t=new Date(v.submittedAt);
+          snaps.push({label:`${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`,scores:{...running}});
+        }
+      });
+      return snaps;
+    });
+
     // ── Outlier detection ────────────────────────────────────────────────
     // For each group: compare every judge to mean of the other two.
     // Flag if deviation > OUTLIER_THRESHOLD. With 3 judges this is more
@@ -1495,6 +1744,35 @@ createApp({
       a.click();
     };
 
+    let temporalChart = null;
+    const buildTemporalChart = () => {
+      const el = document.getElementById('temporalChartV');
+      if (!temporalData.value || !el) return;
+      if (temporalChart) { try{temporalChart.destroy();}catch(e){} temporalChart=null; }
+      const snaps = temporalData.value;
+      const labels = snaps.map(s=>s.label);
+      const finalSnap = snaps[snaps.length-1].scores;
+      const top6 = Object.entries(finalSnap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([z])=>z);
+      const COLORS = ['#f59e0b','#4f46e5','#16a34a','#ef4444','#a78bfa','#06b6d4'];
+      temporalChart = new Chart(el, {
+        type:'line',
+        data:{ labels, datasets: top6.map((z,i)=>({
+          label:z, data:snaps.map(s=>s.scores[z]||0),
+          borderColor:COLORS[i], backgroundColor:'transparent',
+          borderWidth:2.5, pointRadius:0, tension:0.3
+        }))},
+        options:{
+          plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+          scales:{
+            x:{ticks:{maxTicksLimit:12,color:'var(--muted)'},grid:{color:'var(--border)'}},
+            y:{beginAtZero:true,ticks:{color:'var(--muted)'},grid:{color:'var(--border)'},
+               title:{display:true,text:'累積 Borda 票數',color:'var(--muted)'}}
+          },
+          responsive:true, maintainAspectRatio:true
+        }
+      });
+    };
+
     let voteCharts = {};
     const buildVoteCharts = () => {
       Object.values(voteCharts).forEach(c=>{try{c.destroy();}catch(e){}});
@@ -1567,7 +1845,9 @@ createApp({
       outlierMap, flaggedGroups, OUTLIER_THRESHOLD,
       // vote tab
       voteSessionInput, voteState, voteRanked, totalVoters,
+      ZODIAC_ORDER,
       comparisonRows, spearmanRho, exactMatchCount, bigDiffCount,
+      threeWayRanks, prRanked, liftMatrix, liftStyle, temporalData,
       openVotesTab, connectVoteSession,
       // ml tab
       mlResults, corrMatrix, corrMatHeaders, hmStyleCorr,
