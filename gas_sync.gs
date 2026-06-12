@@ -1,5 +1,9 @@
 /**
- * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.13
+ * ZODIAC OPS CENTER - DATA SYNC SERVICE v5.14
+ *
+ * Changes from v5.13:
+ *   - Confirmation email now includes a clickable Padlet button (PADLET_GALLERY)
+ *     inviting judges to comment on student work.
  *
  * Changes from v5.12:
  *   - Judge actions (loginJudge/judgeScore) also verify client-sent origin
@@ -187,6 +191,7 @@ function doPost(e) {
 }
 
 // ── Shared sheet constants ─────────────────────────────────────────────
+var PADLET_GALLERY = "https://padlet.com/jnynlin/cmurx";  // 海報展覽（評審留言用）— 與 poster_judge.html GALLERY_URL 一致
 var JUDGE_SHEET   = "海報評審";
 var ZODIAC_ORDER  = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
 var ZODIAC_ELEM   = {'子鼠':'水','丑牛':'土','寅虎':'木','卯兔':'木','辰龍':'土','巳蛇':'火','午馬':'火','未羊':'土','申猴':'氣','酉雞':'氣','戌狗':'土','亥豬':'水'};
@@ -419,10 +424,15 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
     '<tbody>' + tableRows + '</tbody>' +
     '</table>' +
 
-    '<div style="background:#172032;border-left:3px solid #3b82f6;border-radius:8px;padding:14px 16px;margin-bottom:24px;font-size:12px;color:#94a3b8;line-height:1.7;">' +
+    '<div style="background:#172032;border-left:3px solid #3b82f6;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12px;color:#94a3b8;line-height:1.7;">' +
     '如需修改評分，請以原姓名及識別碼重新登入系統。<br>' +
-    '評分資料已同步至主辦單位 Google Sheets。<br>' +
-    '亦歡迎您於 Padlet 海報下方留言，給予同學鼓勵與回饋。' +
+    '評分資料已同步至主辦單位 Google Sheets。' +
+    '</div>' +
+
+    '<div style="background:#0c1f17;border:1px solid #14532d;border-radius:10px;padding:16px;margin-bottom:24px;text-align:center;">' +
+    '<div style="font-size:13px;color:#86efac;margin-bottom:12px;line-height:1.7;">💬 也誠摯邀請您到學生作品下方<b style="color:#bbf7d0;">留言鼓勵與回饋</b></div>' +
+    '<a href="' + PADLET_GALLERY + '" target="_blank" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:11px 22px;border-radius:8px;">前往 Padlet 海報留言 →</a>' +
+    '<div style="font-size:10px;color:#475569;margin-top:10px;word-break:break-all;">' + PADLET_GALLERY + '</div>' +
     '</div>' +
 
     '<p style="color:#475569;font-size:11px;text-align:center;margin:0;line-height:1.8;">' +
