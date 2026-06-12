@@ -193,6 +193,45 @@
         </div>
       </div>
 
+      <!-- Analysis summary -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--primary);"></i>評審分析摘要</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;flex-wrap:wrap;">
+
+          <!-- Distribution -->
+          <div :style="`padding:14px;border-radius:10px;border:1px solid ${distVerdict?.borderColor||'var(--border)'};background:${distVerdict?.bgColor||'var(--surface2)'};`">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;">分數分佈</div>
+            <div style="font-size:14px;font-weight:800;margin-bottom:6px;" :style="{color:distVerdict?.color}">{{ distVerdict?.label }}</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;">
+              均 {{ meanFinal }} · SD {{ stdFinal }}<br>
+              Range {{ minFinal }}–{{ maxFinal }}
+            </div>
+          </div>
+
+          <!-- Inter-rater -->
+          <div :style="`padding:14px;border-radius:10px;border:1px solid ${irrVerdict?.level==='ok'?'#bbf7d0':irrVerdict?.level==='mild'?'#fde68a':'#fca5a5'};background:${irrVerdict?.level==='ok'?'var(--ok-soft)':irrVerdict?.level==='mild'?'var(--accent-soft)':'var(--danger-soft)'};`">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;">評審一致性</div>
+            <div style="font-size:14px;font-weight:800;margin-bottom:6px;" :style="{color:irrVerdict?.level==='ok'?'var(--ok)':irrVerdict?.level==='mild'?'var(--accent-l)':'var(--danger)'}">{{ irrVerdict?.label }}（均 r = {{ irrVerdict?.mean }}）</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.6;">
+              A↔B {{ corrAB }} · A↔C {{ corrAC }} · B↔C {{ corrBC }}<br>
+              <span :style="parseFloat(corrBC)<0.3?'color:var(--danger);font-weight:700;':''">{{ irrVerdict?.note }}</span>
+            </div>
+          </div>
+
+          <!-- Per-judge stats -->
+          <div style="padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;">各評審風格</div>
+            <div v-for="js in judgeStatRows" :key="js.label" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;">
+              <span style="font-weight:700;min-width:44px;" :style="js.style">{{ js.label }}</span>
+              <span style="color:var(--text2);">均 {{ js.mean }}</span>
+              <span style="color:var(--muted);">SD {{ js.sd }}</span>
+              <span style="color:var(--faint);">±{{ js.range }}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- Ranking table -->
       <div class="sec">
         <div class="sec-title"><i class="fa-solid fa-trophy"></i>最終排名</div>
@@ -555,6 +594,59 @@
           </table>
           <div style="margin-top:8px;font-size:11px;color:var(--muted);">
             平均排名 = (Borda + PageRank + 評審) ÷ 3，由小到大排列。PageRank ↑ = 票來自高人氣組，品質加成。
+          </div>
+        </div>
+
+        <!-- Divergence highlights -->
+        <div class="sec" v-if="threeWayRanks.filter(r=>r.maxSpread>=4).length">
+          <div class="sec-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-l);"></i>顯著分歧組解讀</div>
+          <div v-for="r in threeWayRanks.filter(x=>x.maxSpread>=4).slice(0,4)" :key="r.zodiac"
+               style="padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+              <span style="font-weight:800;font-size:14px;">{{ r.zodiac }}</span>
+              <span class="elem-badge" :class="'elem-'+r.element">{{ r.element }}</span>
+              <span style="font-size:12px;color:var(--muted);">學生 #{{ r.borda }} · PageRank #{{ r.pr }} · 評審 #{{ r.judge }}</span>
+              <span style="background:var(--accent-soft);color:var(--accent);border:1px solid #fde68a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">
+                最大落差 {{ r.maxSpread }} 名
+              </span>
+            </div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7;">
+              <span v-if="r.judge < r.borda">
+                <strong>評審 > 學生</strong>：評審給 #{{ r.judge }}，但學生票只有 #{{ r.borda }}。
+                評審重視的面向（選題深度、病理正確性）在 Padlet 瀏覽時不易被學生察覺。
+              </span>
+              <span v-else>
+                <strong>學生 > 評審</strong>：學生票 #{{ r.borda }}，但評審只給 #{{ r.judge }}。
+                視覺設計或展示形式強，吸引學生目光，但內容深度未達評審標準。
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dimension correlation with student votes -->
+        <div class="sec" v-if="dimVoteCorr.length">
+          <div class="sec-title"><i class="fa-solid fa-sliders" style="color:var(--primary);"></i>哪個面向最能預測學生票選？</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            Pearson r（各組面向均分 vs 學生票數）。正值越大 = 該面向強的組，學生也更喜歡。
+          </div>
+          <div v-for="d in dimVoteCorr" :key="d.key" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <span style="min-width:80px;font-size:13px;font-weight:700;color:var(--text2);">{{ d.label }}</span>
+            <div style="flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;">
+              <div :style="{
+                width:Math.abs(parseFloat(d.r))*100+'%',
+                height:'100%',
+                borderRadius:'5px',
+                background:parseFloat(d.r)>=0.5?'var(--ok)':parseFloat(d.r)>=0.3?'var(--accent-l)':'var(--muted)'
+              }"></div>
+            </div>
+            <span style="min-width:48px;font-weight:800;font-size:13px;"
+                  :style="{color:parseFloat(d.r)>=0.5?'var(--ok)':parseFloat(d.r)>=0.3?'var(--accent-l)':'var(--muted)'}">
+              r = {{ d.r }}
+            </span>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6;">
+            r 最高的面向 = 學生共鳴最強的評分維度。
+            若「視覺表達」r 低但「病生理深度」r 高，代表學生辨識的是內容品質，不只是視覺包裝。
           </div>
         </div>
 
@@ -1264,6 +1356,55 @@ createApp({
       return dims.length ? fmt2(pearson(dims,tots)) : '—';
     });
 
+    // ── Analysis summary computeds ───────────────────────────────────────
+    const judgeStatRows = computed(()=>
+      ['A','B','C'].map((j,i)=>{
+        const sc=ranked.value.map(g=>judgeWeighted(g,j)).filter(x=>x>0);
+        return {
+          label:judges.value[i]||('評審'+j),
+          mean:sc.length?fmt2(mean(sc)):'—',
+          sd:  sc.length>1?fmt2(std(sc)):'—',
+          range:sc.length?fmt2(Math.max(...sc)-Math.min(...sc)):'—',
+          style:['color:var(--primary)','color:var(--ok)','color:var(--accent-l)'][i]
+        };
+      })
+    );
+
+    const irrVerdict = computed(()=>{
+      const vals=[corrAB.value,corrAC.value,corrBC.value].map(parseFloat).filter(x=>!isNaN(x));
+      if(!vals.length) return null;
+      const m=+(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+      const worst=+Math.min(...vals).toFixed(2);
+      return {
+        mean:m, worst,
+        level: m>=0.7?'ok': m>=0.5?'mild':'low',
+        label: m>=0.7?'高度一致': m>=0.5?'中等一致':'低一致',
+        note: worst<0.2?`最低對 r=${worst}，有評審評分標準顯著不同`:
+              worst<0.4?`最低對 r=${worst}，部分評審標準有分歧`:`各評審標準接近`
+      };
+    });
+
+    const distVerdict = computed(()=>{
+      const m=parseFloat(meanFinal.value), s=parseFloat(stdFinal.value);
+      if(isNaN(m)) return null;
+      if(m>4.0&&s<0.4) return {label:'天花板效應 ⚠',color:'var(--danger)',bgColor:'var(--danger-soft)',borderColor:'#fca5a5'};
+      if(s>=0.5)        return {label:'分佈健康 ✓', color:'var(--ok)', bgColor:'var(--ok-soft)',  borderColor:'#bbf7d0'};
+      return              {label:'略偏集中',      color:'var(--accent-l)',bgColor:'var(--accent-soft)',borderColor:'#fde68a'};
+    });
+
+    const dimVoteCorr = computed(()=>{
+      if(voteState.value!=='ready'||!raw.value.length) return [];
+      const rows=comparisonRows.value.filter(r=>r.judgeRank>0&&r.voteRank<99);
+      if(rows.length<4) return [];
+      const grps=rows.map(r=>raw.value.find(g=>g.zodiac===r.zodiac)).filter(Boolean);
+      const vRanks=rows.map(r=>r.voteRank);
+      return ['content','design','creativity','total'].map((k,i)=>{
+        const scores=grps.map(g=>g.avg[k]);
+        const r=-pearson(scores,vRanks);
+        return {label:['選題需求','病生理深度','視覺表達','整體印象'][i],key:k,r:fmt2(r)};
+      }).sort((a,b)=>parseFloat(b.r)-parseFloat(a.r));
+    });
+
     // ── ML: PCA + K-means + OLS ──────────────────────────────────────────
     const mlResults = computed(() => {
       const gs=ranked.value.filter(g=>g.final>0);
@@ -1831,7 +1972,7 @@ createApp({
         const json = await res.json();
         if (json.status!=='success') throw new Error(json.message||'GAS error');
         raw.value       = json.groups;
-        judges.value    = json.judges;
+        judges.value    = ['評審A','評審B','評審C'];   // display as A/B/C, not real names
         submitted.value = json.submitted;
         state.value     = 'ready';
         await nextTick();
@@ -1842,12 +1983,15 @@ createApp({
     return {
       tab, state, ranked, judges, submitted, submittedCount, judgeWeighted,
       maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal,
+      distVerdict, irrVerdict, judgeStatRows,
+      corrAB, corrAC, corrBC,
       outlierMap, flaggedGroups, OUTLIER_THRESHOLD,
       // vote tab
       voteSessionInput, voteState, voteRanked, totalVoters,
       ZODIAC_ORDER,
       comparisonRows, spearmanRho, exactMatchCount, bigDiffCount,
       threeWayRanks, prRanked, liftMatrix, liftStyle, temporalData,
+      dimVoteCorr,
       openVotesTab, connectVoteSession,
       // ml tab
       mlResults, corrMatrix, corrMatHeaders, hmStyleCorr,
