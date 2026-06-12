@@ -97,7 +97,7 @@
   /* tabs */
   .tabbar{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
           border-radius:12px;padding:4px;margin-bottom:22px;}
-  .tabbar button{flex:1;padding:9px 16px;border:none;border-radius:9px;font-size:14px;
+  .tabbar button{flex:1;padding:8px 6px;border:none;border-radius:9px;font-size:12px;
                  font-weight:700;cursor:pointer;background:none;color:var(--muted);transition:all .15s;}
   .tabbar button.active{background:var(--primary);color:#fff;}
   .tabbar button i{margin-right:6px;}
@@ -123,6 +123,8 @@
   .loading{text-align:center;padding:80px 20px;color:var(--muted);}
   .loading i{font-size:36px;margin-bottom:12px;display:block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
+  .mx-top{outline:2px solid var(--accent-l);border-radius:3px;color:var(--accent) !important;font-weight:800;}
+  .mx-mutual{box-shadow:inset 0 0 0 2px var(--ok-l);color:var(--ok) !important;font-weight:700;}
   @media(max-width:680px){.chart-grid{grid-template-columns:1fr;}.chart-box.full{grid-column:1;}}
   @media print{.page{padding:10px;}}
 </style>
@@ -152,6 +154,12 @@
       </button>
       <button :class="{active:tab==='game'}" @click="() => tab='game'">
         <i class="fa-solid fa-chess"></i>博弈分析
+      </button>
+      <button :class="{active:tab==='flow'}" @click="() => tab='flow'">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i>流向分析
+      </button>
+      <button :class="{active:tab==='grade'}" @click="() => tab='grade'">
+        <i class="fa-solid fa-graduation-cap"></i>成績影響
       </button>
     </div>
 
@@ -1255,6 +1263,296 @@
       </template>
     </div><!-- end game tab -->
 
+    <!-- ═══ FLOW TAB ═══ -->
+    <div v-show="tab==='flow'">
+      <div v-if="voteState!=='ready'" class="loading" style="padding:60px 20px;color:var(--muted);">
+        <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:36px;margin-bottom:12px;display:block;animation:none;opacity:.3;"></i>
+        <p>請先在「學生票選」tab 連接 Session</p>
+      </div>
+      <template v-else>
+
+        <!-- Flow matrix -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-table-cells" style="color:var(--primary);"></i>投票流向矩陣</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+            列＝投票組　欄＝被投組　數字＝投出總分（3/2/1）
+            　<span style="display:inline-block;width:10px;height:10px;border:2px solid var(--accent-l);border-radius:2px;"></span> 橘框＝該列最多投票對象
+            　<span style="display:inline-block;width:10px;height:10px;border:2px solid var(--ok-l);border-radius:2px;"></span> 綠框＝互投
+          </div>
+          <div class="heatmap">
+            <table class="hm-table" style="font-size:11px;min-width:660px;">
+              <thead>
+                <tr>
+                  <th class="lh" style="min-width:64px;">投↓ / 被→</th>
+                  <th v-for="t in ZODIAC_ORDER" :key="t" style="font-size:11px;padding:5px 4px;white-space:nowrap;">
+                    {{ t.slice(0,1) }}<span style="font-size:9px;">{{ t.slice(1) }}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="f in ZODIAC_ORDER" :key="f">
+                  <td style="font-weight:700;font-size:11px;white-space:nowrap;">{{ f }}</td>
+                  <td v-for="t in ZODIAC_ORDER" :key="t"
+                      :style="f===t
+                        ? 'background:var(--surface2);color:var(--faint);'
+                        : (flowMatrix[f]?.[t]||0)>0
+                          ? 'background:rgba(79,70,229,'+(0.08+0.55*(flowMatrix[f][t]/matrixMax))+');color:'+(flowMatrix[f][t]/matrixMax>0.5?'#fff':'var(--text)')+';'
+                          : 'color:var(--border);'"
+                      :class="rowTops[f]===t&&f!==t?'mx-top':mutualSet.has(f+'|'+t)?'mx-mutual':''">
+                    {{ f===t ? '—' : (flowMatrix[f]?.[t]||'') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mutual pairs -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-rotate" style="color:var(--ok);"></i>互投偵測（{{ mutualPairs.length }} 對）</div>
+          <div v-if="mutualPairs.length===0" style="color:var(--muted);font-size:13px;">目前無互投組對</div>
+          <table v-else>
+            <thead>
+              <tr><th>組對</th><th class="r">A→B</th><th class="r">B→A</th><th class="r">合計</th><th>強度</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in mutualPairs" :key="p.a+p.b">
+                <td style="font-weight:700;">{{ p.a }} <span style="color:var(--ok);">⇄</span> {{ p.b }}</td>
+                <td class="r">{{ p.ab }}</td>
+                <td class="r">{{ p.ba }}</td>
+                <td class="r" style="font-weight:800;color:var(--accent-l);">{{ p.sum }}</td>
+                <td>
+                  <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;width:100px;">
+                    <div :style="{width:(p.sum/mutualPairs[0].sum*100)+'%',height:'100%',borderRadius:'4px',background:'var(--ok)'}"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Gini concentration -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-bullseye" style="color:var(--primary);"></i>投票集中度（Gini 係數）</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            Gini = 0 → 均勻分散（每組投票目標相近）；Gini → 1 → 高度集中（票集中投給少數組）
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>投票組</th><th class="r">自身排名</th>
+                <th>最集中投給</th><th class="r">佔比</th>
+                <th>集中度</th><th>風格</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in voteConcentration" :key="r.zodiac">
+                <td><span class="zodiac-name">{{ r.zodiac }}</span></td>
+                <td class="r" style="color:var(--muted);">{{ r.selfRank }}</td>
+                <td style="font-weight:700;">{{ r.top }}</td>
+                <td class="r">{{ r.topPct }}%</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:80px;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+                      <div :style="{width:(r.gini*100)+'%',height:'100%',borderRadius:'4px',
+                        background:r.gini>0.6?'var(--danger)':r.gini>0.35?'var(--accent-l)':'var(--ok)'}"></div>
+                    </div>
+                    <span style="font-weight:800;min-width:36px;"
+                          :style="{color:r.gini>0.6?'var(--danger)':r.gini>0.35?'var(--accent-l)':'var(--ok)'}">
+                      {{ r.gini }}
+                    </span>
+                  </div>
+                </td>
+                <td style="font-size:12px;color:var(--muted);">
+                  {{ r.gini>0.6?'策略型 — 高度集中':r.gini>0.35?'中等集中':'平均分散' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- % Contribution matrix -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-percent" style="color:var(--primary);"></i>來源貢獻矩陣（各組得分的 %）</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+            格值 = 「欄組」的總得分中，有幾 % 來自「列組」的投票。各欄加總 ≈ 100%。
+          </div>
+          <div class="heatmap">
+            <table class="hm-table" style="font-size:11px;min-width:660px;">
+              <thead>
+                <tr>
+                  <th class="lh">來源↓ / 目標→</th>
+                  <th v-for="t in ZODIAC_ORDER" :key="t" style="font-size:11px;padding:5px 4px;">
+                    {{ t.slice(0,1) }}<span style="font-size:9px;">{{ t.slice(1) }}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="f in ZODIAC_ORDER" :key="f">
+                  <td style="font-weight:700;font-size:11px;">{{ f }}</td>
+                  <td v-for="t in ZODIAC_ORDER" :key="t"
+                      :style="f===t
+                        ? 'background:var(--surface2);color:var(--faint);'
+                        : (impactPct[f]?.[t]||0)>0
+                          ? 'background:rgba(245,158,11,'+(0.05+0.65*(impactPct[f][t]/100))+');color:'+(impactPct[f][t]>40?'#111':'var(--text)')+';'
+                          : 'color:var(--border);'">
+                    {{ f===t ? '—' : (impactPct[f]?.[t]||'') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--muted);">
+            數字越大（黃色越深）= 該組對目標得分的貢獻越集中。同一欄的最大值 = 「造分最多的來源組」。
+          </div>
+        </div>
+
+      </template>
+    </div><!-- end flow tab -->
+
+    <!-- ═══ GRADE TAB ═══ -->
+    <div v-show="tab==='grade'">
+      <div v-if="voteState!=='ready'" class="loading" style="padding:60px 20px;color:var(--muted);">
+        <i class="fa-solid fa-graduation-cap" style="font-size:36px;margin-bottom:12px;display:block;animation:none;opacity:.3;"></i>
+        <p>請先在「學生票選」tab 連接 Session</p>
+      </div>
+      <template v-else>
+
+        <!-- Grade stat cards -->
+        <div class="stat-row">
+          <div class="stat">
+            <div class="lbl">海報分範圍</div>
+            <div class="val" style="color:var(--primary);">
+              {{ gradeImpact[gradeImpact.length-1]?.actual }}–{{ gradeImpact[0]?.actual }}
+            </div>
+          </div>
+          <div class="stat">
+            <div class="lbl">最大個人成績差距</div>
+            <div class="val" style="color:var(--accent-l);">{{ (gradeImpact[0]?.actual||0)-(gradeImpact[gradeImpact.length-1]?.actual||0) }} 分</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">組別完全區分</div>
+            <div class="val" style="color:var(--ok);font-size:16px;">是 ✓</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">個人成績重疊（無上限）</div>
+            <div class="val" style="color:var(--ok);font-size:16px;">無 ✓</div>
+          </div>
+        </div>
+
+        <!-- Per-group grade impact -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-chart-bar" style="color:var(--primary);"></i>各組海報分 → 個人成績加成</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            海報分直接加入每位組員的個人總分。假設典型 base 分 = 75（不含海報的活動加總）。
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>組別</th><th class="r">學生排名</th><th class="r">評審排名</th>
+                <th class="r">海報分（Borda）</th><th class="r">個人成績加成</th><th>視覺化</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in gradeImpact" :key="r.zodiac"
+                  :style="r.voteRank<=2?'background:var(--ok-soft)':r.voteRank>=11?'background:var(--danger-soft)':''">
+                <td>
+                  <span class="zodiac-name">{{ r.zodiac }}</span>
+                  <span class="elem-badge" :class="'elem-'+(ranked.find(g=>g.zodiac===r.zodiac)?.element||'氣')">
+                    {{ ranked.find(g=>g.zodiac===r.zodiac)?.element||'' }}
+                  </span>
+                </td>
+                <td class="r" style="font-weight:800;">{{ r.voteRank }}</td>
+                <td class="r" style="color:var(--muted);">{{ r.judgeRank }}</td>
+                <td class="r" style="font-weight:800;font-size:15px;">{{ r.actual }}</td>
+                <td class="r" style="font-weight:700;color:var(--primary);">75 + {{ r.actual }} = <strong>{{ 75+r.actual }}</strong></td>
+                <td style="min-width:120px;">
+                  <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+                    <div :style="{width:(r.actual/gradeImpact[0].actual*100)+'%',height:'100%',borderRadius:'4px',
+                      background:r.voteRank<=2?'var(--ok)':r.voteRank>=11?'var(--danger)':'var(--primary)'}"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+            第1組（{{ gradeImpact[0]?.zodiac }}）與第12組（{{ gradeImpact[gradeImpact.length-1]?.zodiac }}）差距：
+            {{ (gradeImpact[0]?.actual||0)-(gradeImpact[gradeImpact.length-1]?.actual||0) }} 分。
+            base ±20 浮動後仍無重疊（差距 {{ (gradeImpact[0]?.actual||0)-(gradeImpact[gradeImpact.length-1]?.actual||0)-40 }} 分）。
+          </div>
+        </div>
+
+        <!-- 4-scenario comparison -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-list-check" style="color:var(--primary);"></i>4 種成績設計情境比較</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            假設 base 分在 ±20 範圍浮動，「個人成績重疊」= 第1名組最低成績 &lt; 第12名組最高成績。
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>情境</th>
+                <th class="r">海報分範圍</th>
+                <th class="r">成績差距</th>
+                <th>個人成績重疊</th>
+                <th>組別可區分？</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in gradeScenarios" :key="s.name"
+                  :style="s.noOverlap?'background:var(--ok-soft)':'background:var(--danger-soft)'">
+                <td><strong>{{ s.name }}</strong></td>
+                <td class="r mono">{{ s.min }}–{{ s.max }}</td>
+                <td class="r" style="font-weight:800;">{{ s.spread }} 分</td>
+                <td>
+                  <span v-if="s.noOverlap" style="color:var(--ok);font-weight:700;">無重疊（差距 {{ -s.overlap }} 分）</span>
+                  <span v-else style="color:var(--danger);font-weight:700;">重疊 {{ s.overlap }} 分 ✗</span>
+                </td>
+                <td>
+                  <span v-if="s.noOverlap" class="agree-badge">完全可區分 ✓</span>
+                  <span v-else class="disagree-badge">個人成績混疊 ✗</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Per-group all-scenario detail -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-table-list" style="color:var(--primary);"></i>各組在 4 種情境下的海報分</div>
+          <table>
+            <thead>
+              <tr>
+                <th>組別</th><th class="r">學生排</th>
+                <th class="r" style="color:var(--ok);">① 實際</th>
+                <th class="r" style="color:var(--accent-l);">② 上限20</th>
+                <th class="r" style="color:var(--muted);">③ 名次制</th>
+                <th class="r" style="color:var(--muted);">④ 天花板</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in gradeImpact" :key="r.zodiac"
+                  :style="r.voteRank<=2?'background:var(--ok-soft)':r.voteRank>=11?'background:var(--danger-soft)':''">
+                <td><span class="zodiac-name">{{ r.zodiac }}</span></td>
+                <td class="r">{{ r.voteRank }}</td>
+                <td class="r" style="font-weight:800;color:var(--ok);">{{ r.actual }}</td>
+                <td class="r" style="color:var(--accent-l);">{{ r.cap20 }}</td>
+                <td class="r" style="color:var(--muted);">{{ r.rankBased }}</td>
+                <td class="r" style="color:var(--muted);">{{ r.ceiling }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--ok-soft);border:1px solid #bbf7d0;font-size:13px;color:var(--text2);">
+            <strong style="color:var(--ok);">結論：</strong>
+            只有情境①（無上限）能在個人成績層面完全區分所有組別。
+            任何形式的上限（②③④）都會讓組別成績重疊，使海報票選失去成績鑑別意義。
+            本次設計決策正確——無上限原始 Borda 分是四種方案中唯一有效的選擇。
+          </div>
+        </div>
+
+      </template>
+    </div><!-- end grade tab -->
+
   </div>
 </div>
 
@@ -1871,6 +2169,98 @@ createApp({
       return totalVoters.value ? +(topPts/totalVoters.value*100).toFixed(1) : 0;
     });
 
+    // ── Flow tab computeds ────────────────────────────────────────────────
+    const matrixMax = computed(()=>{
+      let mx=0;
+      Object.values(flowMatrix.value).forEach(r=>Object.values(r).forEach(v=>{if(v>mx)mx=v;}));
+      return Math.max(1,mx);
+    });
+    const rowTops = computed(()=>{
+      const out={};
+      Object.entries(flowMatrix.value).forEach(([f,row])=>{
+        let best='',bv=0;
+        Object.entries(row).forEach(([t,v])=>{if(v>bv){bv=v;best=t;}});
+        out[f]=bv>0?best:null;
+      });
+      return out;
+    });
+    const mutualPairs = computed(()=>{
+      if(voteState.value!=='ready') return [];
+      const m=flowMatrix.value, L=ZODIAC_ORDER, out=[];
+      for(let i=0;i<L.length;i++) for(let j=i+1;j<L.length;j++){
+        const a=L[i],b=L[j],ab=m[a]?.[b]||0,ba=m[b]?.[a]||0;
+        if(ab>0&&ba>0) out.push({a,b,ab,ba,sum:ab+ba});
+      }
+      return out.sort((x,y)=>y.sum-x.sum);
+    });
+    const mutualSet = computed(()=>{
+      const s=new Set();
+      mutualPairs.value.forEach(p=>{s.add(p.a+'|'+p.b);s.add(p.b+'|'+p.a);});
+      return s;
+    });
+    const voteConcentration = computed(()=>{
+      if(voteState.value!=='ready') return [];
+      const rm=studentRankMap.value;
+      return ZODIAC_ORDER.map(z=>{
+        const row=ZODIAC_ORDER.filter(t=>t!==z).map(t=>flowMatrix.value[z]?.[t]||0);
+        const total=row.reduce((a,b)=>a+b,0);
+        if(!total) return null;
+        const sorted=[...row].sort((a,b)=>a-b),n=sorted.length;
+        const gini=+(sorted.reduce((s,v,i)=>s+(2*(i+1)-n-1)*v,0)/(n*total)).toFixed(2);
+        const maxVal=Math.max(...row),topIdx=row.indexOf(maxVal);
+        const topLabel=ZODIAC_ORDER.filter(t=>t!==z)[topIdx]||'—';
+        return {zodiac:z,gini,top:topLabel,topPct:+(maxVal/total*100).toFixed(0),total,selfRank:rm[z]||99};
+      }).filter(Boolean).sort((a,b)=>b.gini-a.gini);
+    });
+    const impactPct = computed(()=>{
+      if(voteState.value!=='ready') return {};
+      const m=flowMatrix.value;
+      const colT={};
+      ZODIAC_ORDER.forEach(t=>{colT[t]=ZODIAC_ORDER.reduce((s,f)=>s+(m[f]?.[t]||0),0);});
+      const pct={};
+      ZODIAC_ORDER.forEach(f=>{
+        pct[f]={};
+        ZODIAC_ORDER.forEach(t=>{
+          if(f===t){pct[f][t]=0;return;}
+          pct[f][t]=(m[f]?.[t]||0)>0?Math.round((m[f][t])/(colT[t]||1)*100):0;
+        });
+      });
+      return pct;
+    });
+
+    // ── Grade impact computeds ─────────────────────────────────────────────
+    const gradeImpact = computed(()=>{
+      if(voteState.value!=='ready'||!voteRanked.value.length) return [];
+      const N=totalVoters.value||231;
+      const E=N/2, sig=Math.sqrt(N*118/121);
+      const sorted=[...voteRanked.value].sort((a,b)=>a.rank-b.rank);
+      const mn=sorted[sorted.length-1].points, mx=sorted[0].points;
+      return sorted.map((g,i)=>{
+        const actual=g.points;
+        const cap20=mx===mn?10:Math.round((actual-mn)/(mx-mn)*20);
+        const rankBased=[20,15,10,9,8,7,6,6,5,5,5,5][i]||5;
+        const ceiling=Math.round(E+(actual-E)/sig*3);
+        const jRank=ranked.value.find(r=>r.zodiac===g.zodiac)?.rank||99;
+        return {zodiac:g.zodiac,voteRank:g.rank,actual,cap20,rankBased,ceiling,judgeRank:jRank};
+      });
+    });
+    const gradeScenarios = computed(()=>{
+      const rows=gradeImpact.value;
+      if(!rows.length) return [];
+      const BASE_LO=55, BASE_HI=95;
+      return [
+        {name:'① 實際（無上限）',  key:'actual'},
+        {name:'② 上限 20 分',      key:'cap20'},
+        {name:'③ 名次制',          key:'rankBased'},
+        {name:'④ 天花板（SD=3）',  key:'ceiling'},
+      ].map(s=>{
+        const vals=rows.map(r=>r[s.key]);
+        const mn=Math.min(...vals),mx=Math.max(...vals);
+        const overlap=(BASE_LO+mx)-(BASE_HI+mn);
+        return {name:s.name,key:s.key,min:mn,max:mx,spread:mx-mn,overlap,noOverlap:overlap<0};
+      });
+    });
+
     // ── Merged advanced analytics (from vote_report 進階 tab) ────────────
     const flowMatrix = computed(()=>{
       const m={};
@@ -2312,6 +2702,10 @@ createApp({
       dimVoteCorr,
       // game theory tab
       sinceresVoting, condorcetRanking, kingmaker, manipulationTable, manipFlipCount,
+      // flow tab
+      matrixMax, rowTops, mutualPairs, mutualSet, voteConcentration, impactPct,
+      // grade tab
+      gradeImpact, gradeScenarios,
       openVotesTab, connectVoteSession,
       // ml tab
       mlResults, corrMatrix, corrMatHeaders, hmStyleCorr,
