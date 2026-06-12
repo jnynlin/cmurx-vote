@@ -80,6 +80,11 @@ function doPost(e) {
       return handleJudgeScore(data);
     }
 
+    // ── Read back all judge scores for analysis page ────────────────────
+    if (data.action === 'getScores') {
+      return handleGetScores();
+    }
+
     var sessionId = data.sessionId;
     var rowsPayload = data.rows || [];
     if (!sessionId) throw new Error("Missing session ID");
@@ -448,6 +453,35 @@ function sendConfirmationEmail_(email, name, rows, timestamp) {
     '</div></div>';
 
   MailApp.sendEmail({ to: email, subject: subject, htmlBody: html });
+}
+
+// ── Read all judge scores for analysis page ────────────────────────────
+function handleGetScores() {
+  var sheet = getOrCreateJudgeSheet_();
+  var vals  = sheet.getRange(2, 1, 12, 20).getValues();
+  var names = ['A','B','C'].map(function(s) {
+    return (sheet.getRange(NAME_ROW, JUDGE_COL[s]).getValue() || '').toString().replace(/^✍ /,'').trim() || ('評審' + s);
+  });
+  var submitted = ['A','B','C'].map(function(s) {
+    var col = JUDGE_COL[s];
+    var block = sheet.getRange(2, col, 12, 4).getValues();
+    return block.some(function(r) { return Number(r[3]) > 0; });
+  });
+  var groups = vals.map(function(row) {
+    return {
+      zodiac:   String(row[0]),
+      element:  String(row[1]),
+      A: { content: Number(row[2])||0, design: Number(row[3])||0, creativity: Number(row[4])||0, total: Number(row[5])||0 },
+      B: { content: Number(row[6])||0, design: Number(row[7])||0, creativity: Number(row[8])||0, total: Number(row[9])||0 },
+      C: { content: Number(row[10])||0, design: Number(row[11])||0, creativity: Number(row[12])||0, total: Number(row[13])||0 },
+      avg: { content: Number(row[14])||0, design: Number(row[15])||0, creativity: Number(row[16])||0, total: Number(row[17])||0 },
+      final: Number(row[18])||0,
+      rank:  Number(row[19])||0
+    };
+  });
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'success', groups: groups, judges: names, submitted: submitted
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 // ── Teacher utility: reset one judge slot (run in Apps Script editor) ──

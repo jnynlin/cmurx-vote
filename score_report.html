@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>海報評審 · 分數報告</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f4f5;--surface:#fff;--surface2:#fafafa;--border:#e4e4e7;
+    --text:#18181b;--text2:#3f3f46;--muted:#71717a;--faint:#a1a1aa;
+    --primary:#4f46e5;--primary-d:#4338ca;--primary-soft:#eef2ff;
+    --ok:#15803d;--ok-l:#16a34a;--ok-soft:#f0fdf4;
+    --danger:#dc2626;--danger-soft:#fef2f2;
+    --accent:#b45309;--accent-l:#d97706;--accent-soft:#fffbeb;
+    --gold:#ca8a04;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+  .page{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+
+  .hd{margin-bottom:24px;}
+  .hd h1{font-size:22px;font-weight:800;}
+  .hd .sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+  /* stat cards */
+  .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+        padding:14px 18px;min-width:130px;}
+  .stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px;}
+  .stat .val{font-size:26px;font-weight:800;}
+
+  /* section */
+  .sec{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+       padding:20px 22px;margin-bottom:20px;}
+  .sec-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .sec-title i{color:var(--primary);}
+
+  /* ranking table */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;
+           text-transform:uppercase;letter-spacing:.04em;padding:9px 12px;
+           border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+  thead th.r{text-align:right;}
+  tbody tr{border-bottom:1px solid var(--border);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface2);}
+  td{padding:10px 12px;vertical-align:middle;}
+  td.r{text-align:right;}
+  .rank-num{font-size:18px;font-weight:800;width:32px;text-align:center;}
+  .rank-1{color:var(--gold);}
+  .rank-2{color:var(--faint);}
+  .rank-3{color:var(--accent-l);}
+  .zodiac-name{font-weight:700;font-size:14px;}
+  .elem-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;
+              border-radius:6px;margin-left:6px;}
+  .elem-火{background:#fef2f2;color:#b91c1c;}
+  .elem-水{background:#eff6ff;color:#1d4ed8;}
+  .elem-木{background:#f0fdf4;color:#15803d;}
+  .elem-土{background:#fffbeb;color:#92400e;}
+  .elem-氣{background:#f5f3ff;color:#6d28d9;}
+  .score-bar{height:8px;border-radius:4px;background:var(--primary);display:inline-block;vertical-align:middle;margin-left:8px;}
+  .judge-scores{font-size:11px;color:var(--muted);font-family:monospace;margin-top:2px;}
+
+  /* chart containers */
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .chart-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+  .chart-box.full{grid-column:1/-1;}
+  .chart-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text2);}
+  canvas{max-height:320px;}
+
+  /* heatmap */
+  .heatmap{overflow-x:auto;}
+  .hm-table{border-collapse:collapse;font-size:12px;width:100%;}
+  .hm-table th{background:var(--surface2);color:var(--muted);font-size:10px;font-weight:700;
+               text-transform:uppercase;padding:6px 10px;white-space:nowrap;text-align:center;}
+  .hm-table th.lh{text-align:left;}
+  .hm-table td{padding:6px 10px;text-align:center;font-weight:700;font-size:13px;}
+  .hm-table tr:hover td{opacity:.85;}
+  .hm-0{background:#f4f4f5;color:#a1a1aa;}
+
+  /* discussion */
+  .discussion{font-size:13px;line-height:1.7;color:var(--text2);}
+  .discussion h3{font-size:14px;font-weight:700;color:var(--text);margin:16px 0 6px;}
+  .discussion h3:first-child{margin-top:0;}
+  .discussion ul{padding-left:18px;margin:4px 0;}
+  .kv{display:flex;gap:8px;align-items:baseline;margin:3px 0;}
+  .kv .k{min-width:130px;color:var(--muted);font-size:12px;}
+  .kv .v{font-weight:700;}
+
+  /* loading */
+  .loading{text-align:center;padding:80px 20px;color:var(--muted);}
+  .loading i{font-size:36px;margin-bottom:12px;display:block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media(max-width:680px){.chart-grid{grid-template-columns:1fr;}.chart-box.full{grid-column:1;}}
+  @media print{.page{padding:10px;}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="page">
+
+    <div class="hd">
+      <h1><i class="fa-solid fa-chart-bar" style="color:var(--primary);margin-right:8px;"></i>海報評審分析報告</h1>
+      <div class="sub">藥學系 Pathophysiology Poster Review 2026 · 3 位評審 · 12 組 · 加權分 = 50% 面向均分 + 50% 整體印象</div>
+    </div>
+
+    <div v-if="state==='loading'" class="loading">
+      <i class="fa-solid fa-circle-notch"></i>載入評分資料中…
+    </div>
+    <div v-else-if="state==='error'" class="loading" style="color:var(--danger);">
+      <i class="fa-solid fa-triangle-exclamation" style="animation:none;"></i>
+      無法讀取資料，請確認 GAS_URL 設定及 GAS 已部署最新版本。
+    </div>
+
+    <template v-else>
+
+      <!-- Stat cards -->
+      <div class="stat-row">
+        <div class="stat">
+          <div class="lbl">評審人數</div>
+          <div class="val" style="color:var(--primary);">{{ submittedCount }} / 3</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">最高分</div>
+          <div class="val" style="color:var(--gold);">{{ maxFinal }}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">最低分</div>
+          <div class="val" style="color:var(--muted);">{{ minFinal }}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">全體均分</div>
+          <div class="val" style="color:var(--ok);">{{ meanFinal }}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">標準差</div>
+          <div class="val">{{ stdFinal }}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">評分落差</div>
+          <div class="val" style="color:var(--accent-l);">{{ rangeFinal }}</div>
+        </div>
+      </div>
+
+      <!-- Ranking table -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-trophy"></i>最終排名</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:42px;">排名</th>
+              <th>組別</th>
+              <th class="r">★ 最終加權分</th>
+              <th class="r">面向均分</th>
+              <th class="r">整體印象均</th>
+              <th class="r">評審A</th>
+              <th class="r">評審B</th>
+              <th class="r">評審C</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="g in ranked" :key="g.zodiac">
+              <td>
+                <span class="rank-num" :class="'rank-'+g.rank">
+                  {{ g.rank===1?'🥇':g.rank===2?'🥈':g.rank===3?'🥉':g.rank }}
+                </span>
+              </td>
+              <td>
+                <span class="zodiac-name">{{ g.zodiac }}</span>
+                <span class="elem-badge" :class="'elem-'+g.element">{{ g.element }}</span>
+                <div class="judge-scores">
+                  <span style="color:var(--primary);font-weight:700;">A</span> {{ judgeWeighted(g,'A').toFixed(1) }}
+                  &nbsp;
+                  <span style="color:var(--ok);font-weight:700;">B</span> {{ judgeWeighted(g,'B').toFixed(1) }}
+                  &nbsp;
+                  <span style="color:var(--accent-l);font-weight:700;">C</span> {{ judgeWeighted(g,'C').toFixed(1) }}
+                </div>
+              </td>
+              <td class="r">
+                <strong style="font-size:16px;">{{ g.final.toFixed(2) }}</strong>
+                <div style="margin-top:4px;">
+                  <span class="score-bar" :style="{width: (g.final/5*80)+'px', opacity:0.7}"></span>
+                </div>
+              </td>
+              <td class="r">{{ g.avg.dimAvg }}</td>
+              <td class="r">{{ g.avg.total }}</td>
+              <td class="r" style="color:var(--primary);">{{ g.A.total>0 ? judgeWeighted(g,'A').toFixed(1) : '—' }}</td>
+              <td class="r" style="color:var(--ok);">{{ g.B.total>0 ? judgeWeighted(g,'B').toFixed(1) : '—' }}</td>
+              <td class="r" style="color:var(--accent-l);">{{ g.C.total>0 ? judgeWeighted(g,'C').toFixed(1) : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-grid">
+        <div class="chart-box full">
+          <div class="chart-title"><i class="fa-solid fa-ranking-star" style="color:var(--primary);margin-right:6px;"></i>各組最終加權分（排名順序）</div>
+          <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-chart-simple" style="color:var(--primary);margin-right:6px;"></i>評分分布（所有最終分）</div>
+          <canvas id="histChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-user-group" style="color:var(--primary);margin-right:6px;"></i>三位評審加權分比較</div>
+          <canvas id="judgeChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-spider" style="color:var(--primary);margin-right:6px;"></i>均分四大面向</div>
+          <canvas id="radarChart"></canvas>
+        </div>
+        <div class="chart-box full">
+          <div class="chart-title"><i class="fa-solid fa-layer-group" style="color:var(--primary);margin-right:6px;"></i>各面向均分分組比較</div>
+          <canvas id="criteriaChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Per-judge heatmap -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-table-cells"></i>評分熱力圖（各評審各面向）</div>
+        <div class="heatmap">
+          <table class="hm-table">
+            <thead>
+              <tr>
+                <th class="lh">組別</th>
+                <th v-for="j in ['A','B','C']" :key="j" colspan="4"
+                    :style="j==='A'?'color:#4f46e5':j==='B'?'color:#15803d':'color:#b45309'">
+                  {{ judges[j==='A'?0:j==='B'?1:2] }}
+                </th>
+                <th colspan="4" style="color:var(--text);">均分</th>
+              </tr>
+              <tr>
+                <th class="lh"></th>
+                <template v-for="_ in 4">
+                  <th>選題</th><th>病理</th><th>視覺</th><th>整體</th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="g in ranked" :key="g.zodiac">
+                <td style="font-weight:700;white-space:nowrap;">{{ g.zodiac }}</td>
+                <template v-for="judge in ['A','B','C']">
+                  <td v-for="k in ['content','design','creativity','total']" :key="judge+k"
+                      :style="g[judge][k]>0 ? hmStyle(g[judge][k]) : ''"
+                      :class="g[judge][k]===0?'hm-0':''">
+                    {{ g[judge][k]||'—' }}
+                  </td>
+                </template>
+                <td v-for="k in ['content','design','creativity','total']" :key="'avg'+k"
+                    :style="g.avg[k]>0 ? hmStyle(g.avg[k]) : ''"
+                    :class="g.avg[k]===0?'hm-0':''">
+                  {{ g.avg[k]||'—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Distribution discussion -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-magnifying-glass-chart"></i>分佈討論</div>
+        <div class="discussion">
+          <h3>整體分佈</h3>
+          <div class="kv"><span class="k">評分範圍</span><span class="v">{{ minFinal }} – {{ maxFinal }}（滿分 5.00）</span></div>
+          <div class="kv"><span class="k">全體均分</span><span class="v">{{ meanFinal }}</span></div>
+          <div class="kv"><span class="k">標準差</span><span class="v">{{ stdFinal }}（{{ spreadLabel }}）</span></div>
+          <div class="kv"><span class="k">四分位距 (IQR)</span><span class="v">{{ iqrFinal }}</span></div>
+
+          <h3>評審一致性（Inter-rater）</h3>
+          <div class="kv"><span class="k">A vs B 相關</span><span class="v">{{ corrAB }}</span></div>
+          <div class="kv"><span class="k">A vs C 相關</span><span class="v">{{ corrAC }}</span></div>
+          <div class="kv"><span class="k">B vs C 相關</span><span class="v">{{ corrBC }}</span></div>
+          <div class="kv"><span class="k">平均評審相關</span><span class="v" :style="meanCorr>=0.7?'color:var(--ok)':meanCorr>=0.5?'color:var(--accent-l)':'color:var(--danger)'">
+            {{ meanCorr }}（{{ meanCorr>=0.7?'高度一致 ✓':meanCorr>=0.5?'中等一致':'低一致 ⚠' }}）
+          </span></div>
+          <div class="kv"><span class="k">各組最大評分落差</span><span class="v">{{ maxJudgeDiff }} 分（{{ maxJudgeDiffGroup }}）</span></div>
+
+          <h3>面向分析</h3>
+          <div class="kv"><span class="k">最高均分面向</span><span class="v">{{ topCriteria }}</span></div>
+          <div class="kv"><span class="k">最低均分面向</span><span class="v">{{ bottomCriteria }}</span></div>
+          <div class="kv"><span class="k">面向間落差</span><span class="v">{{ criteriaRange }}</span></div>
+
+          <h3>加權公式效果</h3>
+          <div class="kv"><span class="k">面向均分與整體印象相關</span><span class="v">{{ corrDimTotal }}</span></div>
+          <p style="margin-top:8px;font-size:12px;color:var(--muted);">
+            若相關 &gt; 0.8，整體印象與面向均分高度線性 → 50/50 加權效果近似直接用整體印象。<br>
+            若相關 &lt; 0.6，整體印象提供獨立資訊 → 加權公式有實質貢獻。
+          </p>
+        </div>
+      </div>
+
+    </template>
+  </div>
+</div>
+
+<script type="module">
+import { createApp, ref, computed, onMounted, nextTick } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
+
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const GAS_URL    = 'https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec';
+const GAS_SECRET = 'zodiac-2026-cmuh';
+
+const ELEM_COLORS = { '火':'#ef4444','水':'#3b82f6','木':'#22c55e','土':'#f59e0b','氣':'#a78bfa' };
+const CRITERIA_LABELS = ['選題需求','病生理深度','視覺表達','整體印象'];
+const CRITERIA_KEYS   = ['content','design','creativity','total'];
+const JUDGE_COLORS    = ['#4f46e5','#16a34a','#d97706'];
+
+// ── Stats helpers ─────────────────────────────────────────────────────────
+function mean(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function std(arr)  {
+  const m = mean(arr);
+  return arr.length < 2 ? 0 : Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1));
+}
+function pearson(xs, ys) {
+  const mx=mean(xs), my=mean(ys), n=xs.length;
+  const num=xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+  const den=Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
+  return den===0 ? 0 : num/den;
+}
+function quantile(sorted, p) {
+  const i=(sorted.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
+  return +(sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo)).toFixed(2);
+}
+function fmt2(n) { return isNaN(n)?'—':n.toFixed(2); }
+
+createApp({
+  setup() {
+    const state  = ref('loading');
+    const raw    = ref([]);
+    const judges = ref(['評審A','評審B','評審C']);
+    const submitted = ref([false,false,false]);
+
+    // judge weighted score per group
+    const judgeWeighted = (g, j) => {
+      const s = g[j];
+      if (!s.total) return 0;
+      return (s.content+s.design+s.creativity)/3*0.5 + s.total*0.5;
+    };
+
+    const ranked = computed(() => [...raw.value].sort((a,b)=>a.rank-b.rank));
+    const submittedCount = computed(() => submitted.value.filter(Boolean).length);
+
+    const finals = computed(() => ranked.value.filter(g=>g.final>0).map(g=>g.final));
+    const maxFinal   = computed(() => finals.value.length ? fmt2(Math.max(...finals.value)) : '—');
+    const minFinal   = computed(() => finals.value.length ? fmt2(Math.min(...finals.value)) : '—');
+    const meanFinal  = computed(() => fmt2(mean(finals.value)));
+    const stdFinal   = computed(() => fmt2(std(finals.value)));
+    const rangeFinal = computed(() => finals.value.length ? fmt2(Math.max(...finals.value)-Math.min(...finals.value)) : '—');
+    const iqrFinal   = computed(() => {
+      const s=[...finals.value].sort((a,b)=>a-b);
+      return s.length ? fmt2(quantile(s,.75)-quantile(s,.25)) : '—';
+    });
+    const spreadLabel = computed(() => {
+      const s=parseFloat(stdFinal.value);
+      return s<0.3?'分佈集中':s<0.6?'適中分散':s<0.9?'分散':s<1.2?'高度分散':'極度分散';
+    });
+
+    // per-judge weighted scores (only if submitted)
+    const jScores = (j) => ranked.value.map(g=>judgeWeighted(g,j)).filter(x=>x>0);
+    const corrAB  = computed(()=>{ const a=jScores('A'),b=jScores('B'); return a.length&&b.length ? fmt2(pearson(a,b)):'—'; });
+    const corrAC  = computed(()=>{ const a=jScores('A'),c=jScores('C'); return a.length&&c.length ? fmt2(pearson(a,c)):'—'; });
+    const corrBC  = computed(()=>{ const b=jScores('B'),c=jScores('C'); return b.length&&c.length ? fmt2(pearson(b,c)):'—'; });
+    const meanCorr = computed(()=>{
+      const vals=[corrAB.value,corrAC.value,corrBC.value].map(parseFloat).filter(x=>!isNaN(x));
+      return vals.length ? fmt2(mean(vals)) : '—';
+    });
+    const maxJudgeDiff = computed(()=>{
+      let mx=0, grp='';
+      ranked.value.forEach(g=>{
+        const ws=[judgeWeighted(g,'A'),judgeWeighted(g,'B'),judgeWeighted(g,'C')].filter(x=>x>0);
+        if(ws.length<2) return;
+        const d=Math.max(...ws)-Math.min(...ws);
+        if(d>mx){mx=d;grp=g.zodiac;}
+      });
+      return fmt2(mx);
+    });
+    const maxJudgeDiffGroup = computed(()=>{
+      let mx=0, grp='—';
+      ranked.value.forEach(g=>{
+        const ws=[judgeWeighted(g,'A'),judgeWeighted(g,'B'),judgeWeighted(g,'C')].filter(x=>x>0);
+        if(ws.length<2) return;
+        const d=Math.max(...ws)-Math.min(...ws);
+        if(d>mx){mx=d;grp=g.zodiac;}
+      });
+      return grp;
+    });
+
+    const criteriaAvgs = computed(()=>{
+      const gs=ranked.value;
+      return CRITERIA_KEYS.map((k,i)=>({
+        label:CRITERIA_LABELS[i], avg:fmt2(mean(gs.map(g=>g.avg[k]).filter(x=>x>0)))
+      }));
+    });
+    const topCriteria    = computed(()=>{ const a=[...criteriaAvgs.value].sort((x,y)=>parseFloat(y.avg)-parseFloat(x.avg)); return a[0]?`${a[0].label} (${a[0].avg})`:'—'; });
+    const bottomCriteria = computed(()=>{ const a=[...criteriaAvgs.value].sort((x,y)=>parseFloat(x.avg)-parseFloat(y.avg)); return a[0]?`${a[0].label} (${a[0].avg})`:'—'; });
+    const criteriaRange  = computed(()=>{
+      const avgs=criteriaAvgs.value.map(c=>parseFloat(c.avg)).filter(x=>!isNaN(x));
+      return avgs.length ? fmt2(Math.max(...avgs)-Math.min(...avgs)) : '—';
+    });
+    const corrDimTotal = computed(()=>{
+      const gs=ranked.value.filter(g=>g.avg.total>0);
+      const dims=gs.map(g=>(g.avg.content+g.avg.design+g.avg.creativity)/3);
+      const tots=gs.map(g=>g.avg.total);
+      return dims.length ? fmt2(pearson(dims,tots)) : '—';
+    });
+
+    const hmStyle = (v) => {
+      const t = (v-1)/4;
+      const r=Math.round(79+t*(16-79)), g2=Math.round(70+t*(163-70)), b=Math.round(229+t*(68-229));
+      return `background:rgba(${r},${g2},${b},${0.15+0.5*t});color:${t>0.55?'#fff':'#18181b'}`;
+    };
+
+    // ── Charts ───────────────────────────────────────────────────────────
+    let charts = {};
+    const destroyCharts = () => Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});
+
+    const buildCharts = (data) => {
+      destroyCharts();
+      const sorted = [...data].sort((a,b)=>a.rank-b.rank);
+      const labels = sorted.map(g=>g.zodiac);
+      const colors = sorted.map(g=>ELEM_COLORS[g.element]||'#6366f1');
+
+      // 1. Bar — final scores
+      charts.bar = new Chart(document.getElementById('barChart'), {
+        type:'bar',
+        data:{ labels, datasets:[{
+          label:'最終加權分', data:sorted.map(g=>g.final),
+          backgroundColor:colors.map(c=>c+'cc'), borderColor:colors, borderWidth:2,
+          borderRadius:6
+        }]},
+        options:{ plugins:{legend:{display:false}}, scales:{y:{min:0,max:5,ticks:{stepSize:0.5}}},
+                  responsive:true, maintainAspectRatio:true }
+      });
+
+      // 2. Histogram of finals
+      const bins=[0,0,0,0,0]; // [1-2, 2-3, 3-4, 4-4.5, 4.5-5]
+      sorted.forEach(g=>{ const f=g.final; if(f<2)bins[0]++;else if(f<3)bins[1]++;else if(f<4)bins[2]++;else if(f<4.5)bins[3]++;else bins[4]++; });
+      charts.hist = new Chart(document.getElementById('histChart'), {
+        type:'bar',
+        data:{ labels:['1–2','2–3','3–4','4–4.5','4.5–5'],
+               datasets:[{ label:'組數', data:bins, backgroundColor:'#4f46e580',
+                           borderColor:'#4f46e5', borderWidth:2, borderRadius:5 }]},
+        options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}},
+                  responsive:true, maintainAspectRatio:true }
+      });
+
+      // 3. Judge comparison grouped bar
+      const judgeData = ['A','B','C'].map((j,i)=>({
+        label: judges.value[i]||('評審'+j),
+        data: sorted.map(g=>judgeWeighted(g,j)||null),
+        backgroundColor: JUDGE_COLORS[i]+'99', borderColor: JUDGE_COLORS[i], borderWidth:2, borderRadius:4
+      }));
+      charts.judge = new Chart(document.getElementById('judgeChart'), {
+        type:'bar', data:{ labels, datasets:judgeData },
+        options:{ plugins:{legend:{position:'top'}}, scales:{y:{min:0,max:5}},
+                  responsive:true, maintainAspectRatio:true }
+      });
+
+      // 4. Radar — avg of all groups per criteria
+      const avgVals = CRITERIA_KEYS.map(k=>parseFloat(fmt2(mean(sorted.map(g=>g.avg[k]).filter(x=>x>0)))));
+      charts.radar = new Chart(document.getElementById('radarChart'), {
+        type:'radar',
+        data:{ labels:CRITERIA_LABELS, datasets:[{
+          label:'全體均分', data:avgVals,
+          backgroundColor:'rgba(79,70,229,.15)', borderColor:'#4f46e5',
+          pointBackgroundColor:'#4f46e5', borderWidth:2
+        }]},
+        options:{ scales:{r:{min:0,max:5,ticks:{stepSize:1}}},
+                  plugins:{legend:{display:false}}, responsive:true, maintainAspectRatio:true }
+      });
+
+      // 5. Criteria grouped bar (all groups × 4 criteria)
+      const criteriaDatasets = CRITERIA_KEYS.map((k,i)=>({
+        label: CRITERIA_LABELS[i],
+        data: sorted.map(g=>g.avg[k]||null),
+        backgroundColor: ['#4f46e599','#16a34a99','#d9770699','#dc262699'][i],
+        borderColor:     ['#4f46e5','#16a34a','#d97706','#dc2626'][i],
+        borderWidth:2, borderRadius:3
+      }));
+      charts.criteria = new Chart(document.getElementById('criteriaChart'), {
+        type:'bar', data:{ labels, datasets:criteriaDatasets },
+        options:{ plugins:{legend:{position:'top'}}, scales:{y:{min:0,max:5}},
+                  responsive:true, maintainAspectRatio:true }
+      });
+    };
+
+    onMounted(async ()=>{
+      try {
+        const res = await fetch(GAS_URL, {
+          method:'POST', body:JSON.stringify({action:'getScores', secret:GAS_SECRET})
+        });
+        const json = await res.json();
+        if (json.status!=='success') throw new Error(json.message||'GAS error');
+        raw.value       = json.groups;
+        judges.value    = json.judges;
+        submitted.value = json.submitted;
+        state.value     = 'ready';
+        await nextTick();
+        buildCharts(json.groups);
+      } catch(e) { console.error(e); state.value='error'; }
+    });
+
+    return {
+      state, ranked, judges, submitted, submittedCount, judgeWeighted,
+      maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal, spreadLabel,
+      corrAB, corrAC, corrBC, meanCorr, maxJudgeDiff, maxJudgeDiffGroup,
+      criteriaAvgs, topCriteria, bottomCriteria, criteriaRange, corrDimTotal,
+      hmStyle,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
