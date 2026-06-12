@@ -383,6 +383,12 @@
           <div class="kv"><span class="k">標準差</span><span class="v">{{ stdFinal }}（{{ spreadLabel }}）</span></div>
           <div class="kv"><span class="k">四分位距 (IQR)</span><span class="v">{{ iqrFinal }}</span></div>
 
+          <!-- Ceiling verdict box -->
+          <div v-if="ceilingVerdict" :style="{marginTop:'12px',padding:'10px 14px',borderRadius:'10px',border:'1px solid',background:ceilingVerdict.bgColor,borderColor:ceilingVerdict.borderColor}">
+            <div style="font-weight:800;font-size:13px;" :style="{color:ceilingVerdict.textColor}">{{ ceilingVerdict.label }}</div>
+            <div style="font-size:12px;margin-top:4px;color:var(--text2);line-height:1.6;">{{ ceilingVerdict.msg }}</div>
+          </div>
+
           <h3>評審一致性（Inter-rater）</h3>
           <div class="kv"><span class="k">A vs B 相關</span><span class="v">{{ corrAB }}</span></div>
           <div class="kv"><span class="k">A vs C 相關</span><span class="v">{{ corrAC }}</span></div>
@@ -391,6 +397,31 @@
             {{ meanCorr }}（{{ meanCorr>=0.7?'高度一致 ✓':meanCorr>=0.5?'中等一致':'低一致 ⚠' }}）
           </span></div>
           <div class="kv"><span class="k">各組最大評分落差</span><span class="v">{{ maxJudgeDiff }} 分（{{ maxJudgeDiffGroup }}）</span></div>
+
+          <!-- Per-judge breakdown table -->
+          <div style="margin-top:12px;overflow-x:auto;">
+            <table style="font-size:12px;border-collapse:collapse;width:auto;">
+              <thead>
+                <tr>
+                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:left;">評審</th>
+                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">均分</th>
+                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">標準差</th>
+                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">極差</th>
+                  <th style="padding:6px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">評了幾組</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(js,i) in judgeStats" :key="i" style="border-bottom:1px solid var(--border);">
+                  <td style="padding:6px 12px;font-weight:700;" :style="{color:['var(--primary)','var(--ok)','var(--accent-l)'][i]}">{{ js.name }}</td>
+                  <td style="padding:6px 12px;text-align:right;font-weight:700;">{{ js.mean }}</td>
+                  <td style="padding:6px 12px;text-align:right;">{{ js.sd }}</td>
+                  <td style="padding:6px 12px;text-align:right;">{{ js.range }}</td>
+                  <td style="padding:6px 12px;text-align:right;color:var(--muted);">{{ js.n > 0 ? js.n+'組' : '未送出' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">均分高→寬鬆型；標準差大→鑑別型；兩者結合可判斷評審風格。</div>
+          </div>
 
           <h3>面向分析</h3>
           <div class="kv"><span class="k">最高均分面向</span><span class="v">{{ topCriteria }}</span></div>
@@ -550,17 +581,34 @@
             </p>
 
             <h3>主要差異組</h3>
-            <div v-if="bigDiffGroups.length===0" style="color:var(--ok);">無顯著差異（所有組別排名差距 &lt; 3）</div>
-            <div v-for="g in bigDiffGroups" :key="g.zodiac" class="kv">
-              <span class="k">{{ g.zodiac }}</span>
-              <span class="v">
-                評審 #{{ g.judgeRank }} vs 學生 #{{ g.voteRank }}
-                （差 {{ Math.abs(g.rankDiff) }} 名，
-                <span :style="g.rankDiff<0?'color:var(--ok)':'color:var(--danger)'">
-                  {{ g.rankDiff<0?'學生評價較高':'評審評價較高' }}
-                </span>）
-              </span>
+            <div v-if="bigDiffGroupsAnalyzed.length===0" style="color:var(--ok);">無顯著差異（所有組別排名差距 &lt; 3）</div>
+            <div v-for="g in bigDiffGroupsAnalyzed" :key="g.zodiac" style="margin:6px 0;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);">
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+                <span style="font-weight:800;font-size:13px;">{{ g.zodiac }}</span>
+                <span style="font-size:12px;color:var(--muted);">評審 #{{ g.judgeRank }} → 學生 #{{ g.voteRank }}（差 {{ Math.abs(g.rankDiff) }} 名）</span>
+                <span class="agree-badge" v-if="g.rankDiff<0">學生評價更高 ↑</span>
+                <span class="disagree-badge" v-else>評審評價更高 ↑</span>
+              </div>
+              <div v-if="g.hyp" style="font-size:11px;color:var(--text2);margin-top:3px;">{{ g.hyp }}</div>
             </div>
+
+            <h3>各面向對學生票選的影響力</h3>
+            <div v-if="dimVoteCorr.length===0" style="color:var(--muted);font-size:12px;">請先連接學生票選資料</div>
+            <template v-else>
+              <div v-for="d in dimVoteCorr" :key="d.label" class="kv">
+                <span class="k">{{ d.label }}</span>
+                <span class="v" :style="parseFloat(d.r)>=0.5?'color:var(--ok)':parseFloat(d.r)>=0.2?'color:var(--accent-l)':'color:var(--muted)'">
+                  r = {{ d.r }}
+                  <span style="font-size:11px;font-weight:400;">
+                    {{ parseFloat(d.r)>=0.5?'↑ 強影響':parseFloat(d.r)>=0.2?'中等影響':'弱影響' }}
+                  </span>
+                </span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;">
+                r 為 Pearson 相關（負排名取反），正值表示該面向分數高的組別學生票選也高。<br>
+                r 最大的面向 = 學生共鳴最強的評分維度。
+              </div>
+            </template>
 
             <h3>自組票偏差（同組相互投票）</h3>
             <div class="kv"><span class="k">自組票總計</span><span class="v" style="color:var(--accent-l);">{{ selfVoteCount }} 票</span></div>
@@ -572,6 +620,12 @@
             <h3>投票參與</h3>
             <div class="kv"><span class="k">投票人數</span><span class="v">{{ totalVoters }}</span></div>
             <div class="kv"><span class="k">1st choice 集中度</span><span class="v">{{ topVoteConcentration }}%（前三組票數佔比）</span></div>
+
+            <h3>📊 綜合判斷結語</h3>
+            <div v-if="conclusionText.length===0" style="color:var(--muted);font-size:12px;">載入資料後自動生成</div>
+            <ul v-else style="padding-left:18px;margin:0;">
+              <li v-for="(line,i) in conclusionText" :key="i" style="margin:4px 0;font-size:13px;line-height:1.6;">{{ line }}</li>
+            </ul>
           </div>
         </div>
 
@@ -767,6 +821,41 @@ createApp({
       return dims.length ? fmt2(pearson(dims,tots)) : '—';
     });
 
+    // ── Ceiling detection ────────────────────────────────────────────────
+    const ceilingVerdict = computed(() => {
+      const m=parseFloat(meanFinal.value), s=parseFloat(stdFinal.value);
+      if (isNaN(m)||isNaN(s)||!finals.value.length) return null;
+      if (m>4.0 && s<0.4) return {
+        level:'ceiling', label:'天花板效應 ⚠',
+        textColor:'var(--danger)', bgColor:'var(--danger-soft)', borderColor:'#fca5a5',
+        msg:`均分 ${meanFinal.value} ＞ 4.0，標準差僅 ${stdFinal.value}（＜0.4）。評審評分集中於高分端，排名區分力弱。若需提升鑑別度，可考慮以各評審 Z-score 正規化後重排；但若目的在保留原始評分的教育意義，直接排名即可。`
+      };
+      if (m>3.8 && s<0.55) return {
+        level:'mild', label:'評分略偏寬鬆',
+        textColor:'var(--accent-l)', bgColor:'var(--accent-soft)', borderColor:'#fde68a',
+        msg:`均分 ${meanFinal.value}（偏高），標準差 ${stdFinal.value}。前後段仍可區分，原始排名可用，但極差較小。`
+      };
+      return {
+        level:'ok', label:'分佈健康 ✓',
+        textColor:'var(--ok)', bgColor:'var(--ok-soft)', borderColor:'#bbf7d0',
+        msg:`均分 ${meanFinal.value}，標準差 ${stdFinal.value}。分佈符合設計預期，評分具備良好鑑別度。`
+      };
+    });
+
+    // ── Per-judge stats ──────────────────────────────────────────────────
+    const judgeStats = computed(() =>
+      ['A','B','C'].map((j,i) => {
+        const sc=ranked.value.map(g=>judgeWeighted(g,j)).filter(x=>x>0);
+        return {
+          name: judges.value[i]||('評審'+j),
+          mean: sc.length ? fmt2(mean(sc)) : '—',
+          sd:   sc.length>1 ? fmt2(std(sc)) : '—',
+          range:sc.length ? fmt2(Math.max(...sc)-Math.min(...sc)) : '—',
+          n: sc.length
+        };
+      })
+    );
+
     // ── Vote analytics ───────────────────────────────────────────────────
     const ZODIAC_ORDER = ['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
 
@@ -812,6 +901,55 @@ createApp({
     const exactMatchCount = computed(() => comparisonRows.value.filter(r=>r.rankDiff===0).length);
     const bigDiffCount    = computed(() => comparisonRows.value.filter(r=>Math.abs(r.rankDiff)>=3).length);
     const bigDiffGroups   = computed(() => comparisonRows.value.filter(r=>Math.abs(r.rankDiff)>=3).sort((a,b)=>Math.abs(b.rankDiff)-Math.abs(a.rankDiff)));
+
+    const DIM_LABEL = {content:'選題需求',design:'病生理深度',creativity:'視覺表達'};
+    const bigDiffGroupsAnalyzed = computed(() =>
+      bigDiffGroups.value.map(r => {
+        const g=raw.value.find(x=>x.zodiac===r.zodiac);
+        if (!g||!g.avg) return {...r, hyp:''};
+        const maxK=['content','design','creativity'].reduce((b,k)=>g.avg[k]>g.avg[b]?k:b,'content');
+        const minK=['content','design','creativity'].reduce((b,k)=>g.avg[k]<g.avg[b]?k:b,'content');
+        const hyp = r.rankDiff<0
+          ? `學生評價偏高：${DIM_LABEL[maxK]} 均分 ${g.avg[maxK]}（三維最高）——視覺或表達優勢可能拉高學生共鳴`
+          : `評審評分偏高：${DIM_LABEL[maxK]} 均分 ${g.avg[maxK]}——內容深度獲肯定，但學生觀感有限`;
+        return {...r, hyp};
+      })
+    );
+
+    // ── Dimension vs student vote correlation ───────────────────────────
+    // Pearson r between each avg criterion score and student vote rank (negated: high score→low rank→good)
+    const dimVoteCorr = computed(() => {
+      if (voteState.value!=='ready'||!raw.value.length) return [];
+      const rows=comparisonRows.value.filter(r=>r.judgeRank>0&&r.voteRank<99);
+      if (rows.length<4) return [];
+      const grps=rows.map(r=>raw.value.find(g=>g.zodiac===r.zodiac)).filter(Boolean);
+      const vRanks=rows.map(r=>r.voteRank);
+      return ['content','design','creativity','total'].map((k,i)=>{
+        const scores=grps.map(g=>g.avg[k]);
+        const r=-pearson(scores,vRanks);
+        return {label:['選題需求','病生理深度','視覺表達','整體印象'][i], r:fmt2(r)};
+      }).sort((a,b)=>parseFloat(b.r)-parseFloat(a.r));
+    });
+
+    // ── Auto-generated conclusion text ──────────────────────────────────
+    const conclusionText = computed(() => {
+      if (voteState.value!=='ready'||spearmanRho.value==='—') return '';
+      const rho=parseFloat(spearmanRho.value);
+      const cv=ceilingVerdict.value;
+      const agree=exactMatchCount.value, diff=bigDiffCount.value;
+      const lines=[];
+      if (rho>=0.7) lines.push(`✓ 評審與學生排名高度一致（ρ=${rho}），核心前幾名有共識。`);
+      else if (rho>=0.4) lines.push(`△ 評審與學生排名中等相關（ρ=${rho}），前段有共識但中後段分歧。`);
+      else lines.push(`⚠ 評審與學生排名相關偏低（ρ=${rho}），兩者評估標準差異大。`);
+      if (cv) {
+        if (cv.level==='ceiling') lines.push(`⚠ 評審分佈有天花板效應（均 ${meanFinal.value}，SD ${stdFinal.value}），排名比絕對分數更具參考意義。`);
+        else if (cv.level==='ok') lines.push(`✓ 評審分佈健康（均 ${meanFinal.value}，SD ${stdFinal.value}），絕對分數與排名均可引用。`);
+      }
+      if (agree>=4) lines.push(`✓ ${agree} 組排名完全一致，評審與學生對優質海報的判斷重疊高。`);
+      if (diff>=3) lines.push(`△ ${diff} 組出現顯著分歧（差距 ≥3 名），反映評估角度不同——評審重內容深度，學生重視覺表達。`);
+      if (selfVotePct.value>20) lines.push(`⚠ 自組票佔比 ${selfVotePct.value}%，部分組別學生排名可能被同組票拉高。`);
+      return lines;
+    });
 
     const selfVoteCount = computed(() => {
       let c=0;
@@ -1018,10 +1156,12 @@ createApp({
       maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal, spreadLabel,
       corrAB, corrAC, corrBC, meanCorr, maxJudgeDiff, maxJudgeDiffGroup,
       criteriaAvgs, topCriteria, bottomCriteria, criteriaRange, corrDimTotal,
+      ceilingVerdict, judgeStats,
       outlierMap, flaggedGroups, OUTLIER_THRESHOLD,
       // vote tab
       voteSessionInput, voteState, voteRanked, totalVoters,
       comparisonRows, spearmanRho, exactMatchCount, bigDiffCount, bigDiffGroups,
+      bigDiffGroupsAnalyzed, dimVoteCorr, conclusionText,
       selfVoteCount, selfVotePct, topVoteConcentration,
       openVotesTab, connectVoteSession,
       hmStyle,
