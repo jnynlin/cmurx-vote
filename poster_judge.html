@@ -218,6 +218,12 @@
   .submit-btn:hover:not(:disabled){background:var(--primary-d);}
   .submit-btn:disabled{background:var(--border);color:var(--faint);cursor:not-allowed;}
   .submit-btn.done{background:#059669;}
+  .submit-btn.failed{background:var(--danger);animation:pulse-fail 1.8s ease infinite;}
+  @keyframes pulse-fail{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.35);}50%{box-shadow:0 0 0 7px rgba(220,38,38,0);}}
+  .retry-strip{position:fixed;bottom:72px;left:0;right:0;background:#450a0a;border-top:1px solid #7f1d1d;padding:10px 20px;display:flex;align-items:center;gap:10px;z-index:49;font-size:13px;color:var(--danger-l);font-weight:600;}
+  .retry-strip span{flex:1;min-width:0;}
+  .retry-btn{background:var(--danger);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+  .retry-btn:disabled{opacity:.6;cursor:not-allowed;}
   .jump-btn{background:none;border:1px solid #475569;border-radius:8px;padding:6px 10px;color:var(--faint);font-size:13px;cursor:pointer;white-space:nowrap;}
   .jump-btn:hover{border-color:var(--accent);color:var(--accent);}
 
@@ -270,7 +276,7 @@
   /* ── Print ── */
   @media print{
     body{background:#fff;color:#000;}
-    .submit-bar,.loading-overlay,.toast,.result-actions,.gallery-link,.saved-flash,.tabbar,.sticky-head{display:none!important;}
+    .submit-bar,.retry-strip,.loading-overlay,.toast,.result-actions,.gallery-link,.saved-flash,.tabbar,.sticky-head{display:none!important;}
     .result-card{border:none;padding:0;max-width:100%;}
     .sig-box{border:1px solid #ccc;background:#f9f9f9;}
     .sb-name,.result-table td,.result-table th{color:#000;}
@@ -585,6 +591,16 @@
       </div>
     </div>
 
+    <!-- Retry strip (shown after submit failure) -->
+    <div v-if="submitFailed && activeTab==='score'" class="retry-strip">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>上次送出失敗 — 評分已存本機，請確認網路後重試</span>
+      <button @click="doSubmit" :disabled="submitting" class="retry-btn">
+        <i :class="submitting?'fa-solid fa-spinner fa-spin':'fa-solid fa-rotate-right'"></i>
+        {{ submitting?'重試中…':'立即重試' }}
+      </button>
+    </div>
+
     <!-- Submit bar (only on score tab) -->
     <div v-show="activeTab==='score'" class="submit-bar">
       <div class="submit-info">
@@ -597,9 +613,9 @@
           <i class="fa-solid fa-arrow-down"></i> 未完成
         </button>
         <button :disabled="scoredCount < ZODIAC.length || submitting"
-                :class="['submit-btn', submitted?'done':'']" @click="openSummary">
-          <i :class="submitting?'fa-solid fa-spinner fa-spin':submitted?'fa-solid fa-check':'fa-solid fa-list-check'"></i>
-          {{ submitting?'送出中…':submitted?'已送出':'預覽送出' }}
+                :class="['submit-btn', submitted?'done':submitFailed?'failed':'']" @click="openSummary">
+          <i :class="submitting?'fa-solid fa-spinner fa-spin':submitted?'fa-solid fa-check':submitFailed?'fa-solid fa-rotate-right':'fa-solid fa-list-check'"></i>
+          {{ submitting?'送出中…':submitted?'已送出':submitFailed?'重新預覽送出':'預覽送出' }}
         </button>
       </div>
     </div>
@@ -726,6 +742,7 @@ createApp({
     const loadingMsg    = ref('');
     const submitting    = ref(false);
     const submitted     = ref(false);
+    const submitFailed  = ref(false);
     const submitTime    = ref('');
     const judgeName     = ref('');
     const judgeSlot     = ref('');
@@ -771,9 +788,9 @@ createApp({
 
     const todayStr = new Date().toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'});
     const withHonorific = n => (!n?'':HONORIFIC_TITLES.some(t=>n.includes(t))?n:n+'老師');
-    const showToast = (msg,type='success',icon='fa-solid fa-circle-check') => {
+    const showToast = (msg,type='success',icon='fa-solid fa-circle-check',ms=4000) => {
       toast.msg=msg; toast.type=type; toast.icon=icon;
-      setTimeout(()=>{toast.msg='';}, 4000);
+      setTimeout(()=>{toast.msg='';}, ms);
     };
 
     const progressPct   = computed(() => Math.round(scoredCount.value / ZODIAC.length * 100));
@@ -797,6 +814,10 @@ createApp({
 
     window.addEventListener('online',  ()=>{ isOnline.value=true;  showToast('網路已恢復','success','fa-solid fa-wifi'); });
     window.addEventListener('offline', ()=>{ isOnline.value=false; showToast('網路已中斷，評分已儲存本機','warn','fa-solid fa-wifi-slash'); });
+    window.addEventListener('beforeunload', (e) => {
+      if (judgeSlot.value && !submitted.value && ZODIAC.some((_,i)=>groupSubtotal(i)>0))
+        e.preventDefault();
+    });
 
     onMounted(() => {
       const saved = JSON.parse(localStorage.getItem(LS_SESSION)||'null');
@@ -928,20 +949,23 @@ createApp({
     const confirmSubmit = async () => { showSummary.value=false; await doSubmit(); };
     const doSubmit = async () => {
       if (submitting.value || submitted.value) return;
-      submitting.value=true;
+      submitting.value=true; submitFailed.value=false;
       try {
         const now=new Date();
         const ts=now.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
         const rows=ZODIAC.map((z,i)=>({zodiac:z.label,element:z.element,content:scores[i].content,design:scores[i].design,creativity:scores[i].creativity,total:scores[i].total}));
         const json=await postGAS({action:'judgeScore',judge:judgeSlot.value,judgeName:judgeName.value,judgeEmail:form.email,secret:GAS_SECRET,rows,timestamp:now.toISOString(),origin:location.origin});
         if (json.status==='error') throw new Error(json.message||'GAS error');
-        submitted.value=true; submitTime.value=ts;
+        submitted.value=true; submitFailed.value=false; submitTime.value=ts;
         localStorage.removeItem(LS_SCORES(judgeSlot.value));
         // Monochrome blue + silver — on-brand, restrained (result screen already shows green ✅)
         try { confetti({particleCount:110, spread:70, startVelocity:38, origin:{y:0.55}, ticks:160,
               colors:['#3b82f6','#60a5fa','#06b6d4','#cbd5e1','#e2e8f0','#94a3b8']}); } catch(e){}
         setTimeout(()=>{phase.value='result';}, 900);
-      } catch(e) { showToast('送出失敗：'+e.message,'error','fa-solid fa-triangle-exclamation'); }
+      } catch(e) {
+        submitFailed.value=true;
+        showToast('送出失敗 — 評分已存本機，請稍後重試','error','fa-solid fa-triangle-exclamation',8000);
+      }
       finally { submitting.value=false; }
     };
 
@@ -955,7 +979,7 @@ createApp({
 
     return {
       ZODIAC, GALLERY_URL, CRITERIA, phase, activeTab, loading, loadingMsg, form,
-      pinDigits, pinReject, pinStr, judgeName, submitting, submitted, submitTime,
+      pinDigits, pinReject, pinStr, judgeName, submitting, submitted, submitFailed, submitTime,
       scores, scoredCount, progressPct, toast, nameInput, pinRefs,
       isOnline, showSummary, showSavedFlash, returnMode, returnName, todayStr,
       withHonorific, groupSubtotal, groupWeighted, isModified, modifiedCount, originalScores, remainCount, numClass,
