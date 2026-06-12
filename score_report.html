@@ -527,6 +527,74 @@
           </div>
         </div>
 
+        <!-- Monte Carlo simulation comparison -->
+        <div v-if="voteState==='ready' && zScores.length" class="sec">
+          <div class="sec-title">
+            <i class="fa-solid fa-dice" style="color:var(--primary);"></i>
+            Monte Carlo 模擬比較（n = 3,000 次隨機投票）
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+            假設每位學生完全隨機投票（不偏好任何組），模擬 3,000 次後得出各組的期望票數分佈（均值 ± 2σ）。
+            實際票數超出 +2σ → 真實偏好；落入帶內 → 隨機範圍；低於 −2σ → 低於預期。
+          </div>
+          <canvas id="simChart" style="max-height:320px;"></canvas>
+          <div style="margin-top:6px;display:flex;gap:16px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:#16a34a;font-weight:700;">■ 綠 = 顯著超出隨機（z &gt; 2）</span>
+            <span style="color:#4f46e5;font-weight:700;">■ 藍 = 隨機範圍內</span>
+            <span style="color:#dc2626;font-weight:700;">■ 紅 = 顯著低於隨機（z &lt; −2）</span>
+            <span style="color:#f59e0b;font-weight:700;">— 黃線 = 模擬均值；帶 = ±2σ</span>
+          </div>
+
+          <!-- Z-score table -->
+          <div style="margin-top:16px;overflow-x:auto;">
+            <table style="font-size:12px;width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="padding:7px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:left;">組別</th>
+                  <th style="padding:7px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">實際票數</th>
+                  <th style="padding:7px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">模擬均值</th>
+                  <th style="padding:7px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">模擬 σ</th>
+                  <th style="padding:7px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-align:right;">z-score</th>
+                  <th style="padding:7px 12px;background:var(--surface2);color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);">判斷</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in zScores" :key="r.zodiac"
+                    :style="r.z>2?'background:var(--ok-soft)':r.z<-2?'background:var(--danger-soft)':''">
+                  <td style="padding:7px 12px;font-weight:700;">
+                    {{ r.zodiac }}
+                    <span class="elem-badge" :class="'elem-'+r.element">{{ r.element }}</span>
+                  </td>
+                  <td style="padding:7px 12px;text-align:right;font-weight:800;">{{ r.actual }}</td>
+                  <td style="padding:7px 12px;text-align:right;color:var(--muted);">{{ r.simMean }}</td>
+                  <td style="padding:7px 12px;text-align:right;color:var(--muted);">{{ r.simSD }}</td>
+                  <td style="padding:7px 12px;text-align:right;font-weight:800;"
+                      :style="r.z>2?'color:var(--ok)':r.z<-2?'color:var(--danger)':'color:var(--text2)'">
+                    {{ r.z > 0 ? '+' : '' }}{{ r.z }}
+                  </td>
+                  <td style="padding:7px 12px;">
+                    <span v-if="r.z>2"
+                      style="background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">
+                      {{ r.label }}
+                    </span>
+                    <span v-else-if="r.z<-2"
+                      style="background:var(--danger-soft);color:var(--danger);border:1px solid #fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">
+                      {{ r.label }}
+                    </span>
+                    <span v-else style="font-size:11px;color:var(--muted);">{{ r.label }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+            z = (實際 − 模擬均值) / 模擬σ。模擬條件：每位學生從 11 個可選組中隨機選 3 組，不記名次偏好。
+          </div>
+        </div>
+        <div v-else-if="voteState!=='ready'" class="sec" style="text-align:center;padding:18px;color:var(--muted);font-size:13px;">
+          <i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>在「學生票選」tab 連接 Session 後，此處顯示模擬比較
+        </div>
+
         <!-- K-means cluster table -->
         <div class="sec">
           <div class="sec-title"><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i>K-means 聚類（k = 3）</div>
@@ -759,6 +827,47 @@ function olsBeta(X, y) {
   return {beta:beta.map(b=>+b.toFixed(3)), r2};
 }
 
+// ── Monte Carlo simulation ─────────────────────────────────────────────────
+// voterGroups: array of each voter's own zodiac (or '' if unknown)
+// allGroups:   array of 12 zodiac labels
+// Returns per-group { simMean, simSD } under purely random uniform voting
+function simulateVoting(voterGroups, allGroups, nSims) {
+  nSims = nSims || 3000;
+  var n = voterGroups.length;
+  var k = allGroups.length;
+  var sums  = {}; // zodiac → Σ pts across sims
+  var sums2 = {}; // zodiac → Σ pts² across sims
+  allGroups.forEach(function(z){ sums[z]=0; sums2[z]=0; });
+
+  for (var s=0; s<nSims; s++) {
+    var simPts = {};
+    allGroups.forEach(function(z){ simPts[z]=0; });
+    for (var i=0; i<n; i++) {
+      var own = voterGroups[i];
+      var eligible = allGroups.filter(function(z){ return z!==own; });
+      // Fisher-Yates shuffle of eligible, pick first 3
+      for (var j=eligible.length-1; j>0; j--) {
+        var r = Math.floor(Math.random()*(j+1));
+        var tmp=eligible[j]; eligible[j]=eligible[r]; eligible[r]=tmp;
+      }
+      simPts[eligible[0]] += 3;
+      simPts[eligible[1]] += 2;
+      simPts[eligible[2]] += 1;
+    }
+    allGroups.forEach(function(z){
+      sums[z]  += simPts[z];
+      sums2[z] += simPts[z]*simPts[z];
+    });
+  }
+  var result = {};
+  allGroups.forEach(function(z){
+    var m = sums[z]/nSims;
+    var sd = Math.sqrt(Math.max(0, sums2[z]/nSims - m*m));
+    result[z] = { simMean:+m.toFixed(1), simSD:+sd.toFixed(2) };
+  });
+  return result;
+}
+
 // Chart.js plugin: draw zodiac labels next to each scatter point
 const pointLabelPlugin = {
   id:'pointLabels',
@@ -815,6 +924,7 @@ createApp({
         voteRaw.value = snap.val() || {};
         voteState.value = 'ready';
         nextTick(() => { buildVoteCharts(); if(tab.value==='ml') buildMLCharts(); });
+        // also rebuild sim chart if already on ml tab after a session reconnect
       }, () => { voteState.value='error'; });
     };
 
@@ -925,6 +1035,31 @@ createApp({
         if (vpts.some(v=>v>0)) regResult=olsBeta(X,vpts);
       }
       return {gs,proj,var1,var2,assign,inertia,regResult};
+    });
+
+    // ── Monte Carlo simulation ───────────────────────────────────────────
+    const simResults = computed(() => {
+      if (voteState.value !== 'ready' || !Object.keys(voteRaw.value).length) return null;
+      const voterGroups = Object.values(voteRaw.value).map(v => v.voterZodiac || '');
+      const allGroups = ZODIAC_ORDER;
+      return simulateVoting(voterGroups, allGroups, 3000);
+    });
+
+    const zScores = computed(() => {
+      if (!simResults.value || !Object.keys(voteTotals.value).length) return [];
+      return ZODIAC_ORDER.map(z => {
+        const actual = voteTotals.value[z]?.points || 0;
+        const {simMean, simSD} = simResults.value[z] || {simMean:0, simSD:1};
+        const z_val = simSD > 0 ? +((actual - simMean) / simSD).toFixed(2) : 0;
+        const g = ranked.value.find(g => g.zodiac === z);
+        return {
+          zodiac: z, element: g?.element || '',
+          actual, simMean, simSD,
+          z: z_val,
+          label: z_val > 2 ? '顯著超出' : z_val > 1 ? '略高' : z_val < -2 ? '顯著低於' : z_val < -1 ? '略低' : '隨機範圍內'
+        };
+      }).filter(r => r.actual > 0 || r.simMean > 0)
+        .sort((a,b) => b.actual - a.actual);
     });
 
     // Correlation matrix: content, design, creativity, total, final
@@ -1156,6 +1291,48 @@ createApp({
         }
       });
 
+      // Simulation comparison chart
+      if (zScores.value.length) {
+        const zs = [...zScores.value].sort((a,b)=>b.actual-a.actual);
+        const zlabels = zs.map(r=>r.zodiac);
+        const actualData = zs.map(r=>r.actual);
+        const simMeanData = zs.map(r=>r.simMean);
+        const simHiData = zs.map(r=>+(r.simMean + 2*r.simSD).toFixed(1));
+        const simLoData = zs.map(r=>+Math.max(0, r.simMean - 2*r.simSD).toFixed(1));
+        const barColors = zs.map(r =>
+          r.z > 2  ? '#16a34acc' :
+          r.z < -2 ? '#dc2626cc' : '#4f46e580'
+        );
+        if(mlCharts.sim) mlCharts.sim.destroy();
+        mlCharts.sim = new Chart(document.getElementById('simChart'), {
+          type: 'bar',
+          data: {
+            labels: zlabels,
+            datasets: [
+              { label: '實際票數', data: actualData,
+                backgroundColor: barColors, borderColor: barColors.map(c=>c.slice(0,-2)),
+                borderWidth: 2, borderRadius: 5, order: 2 },
+              { label: '模擬均值', data: simMeanData,
+                type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent',
+                borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#f59e0b', order: 1 },
+              { label: '模擬 ±2σ 上界', data: simHiData,
+                type: 'line', borderColor: '#f59e0b44', backgroundColor: 'transparent',
+                borderWidth: 1, borderDash: [4,3], pointRadius: 0, order: 0 },
+              { label: '模擬 ±2σ 下界', data: simLoData,
+                type: 'line', borderColor: '#f59e0b44',
+                backgroundColor: 'rgba(245,158,11,0.06)',
+                borderWidth: 1, borderDash: [4,3], pointRadius: 0,
+                fill: '-1', order: 0 }
+            ]
+          },
+          options: {
+            plugins: { legend: { position: 'top', labels: { font:{size:11} } } },
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'Borda 票數' } } },
+            responsive: true, maintainAspectRatio: true
+          }
+        });
+      }
+
       // OLS bar
       if(regResult){
         const {beta,r2}=regResult;
@@ -1275,6 +1452,7 @@ createApp({
       openVotesTab, connectVoteSession,
       // ml tab
       mlResults, corrMatrix, corrMatHeaders, hmStyleCorr,
+      simResults, zScores,
       openMLTab, exportData,
       hmStyle,
     };
