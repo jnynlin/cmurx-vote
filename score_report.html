@@ -70,6 +70,11 @@
   .chart-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text2);}
   canvas{max-height:320px;}
 
+  /* outlier */
+  .outlier-badge{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;
+                 border-radius:6px;background:var(--danger-soft);color:var(--danger);
+                 border:1px solid #fca5a5;}
+
   /* heatmap */
   .heatmap{overflow-x:auto;}
   .hm-table{border-collapse:collapse;font-size:12px;width:100%;}
@@ -158,10 +163,12 @@
               <th class="r">評審A</th>
               <th class="r">評審B</th>
               <th class="r">評審C</th>
+              <th class="r">離群偵測</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="g in ranked" :key="g.zodiac">
+            <tr v-for="g in ranked" :key="g.zodiac"
+                :style="outlierMap[g.zodiac]?.diff>0?'background:#fffbeb':''">
               <td>
                 <span class="rank-num" :class="'rank-'+g.rank">
                   {{ g.rank===1?'🥇':g.rank===2?'🥈':g.rank===3?'🥉':g.rank }}
@@ -186,9 +193,24 @@
               </td>
               <td class="r">{{ g.avg.dimAvg }}</td>
               <td class="r">{{ g.avg.total }}</td>
-              <td class="r" style="color:var(--primary);">{{ g.A.total>0 ? judgeWeighted(g,'A').toFixed(1) : '—' }}</td>
-              <td class="r" style="color:var(--ok);">{{ g.B.total>0 ? judgeWeighted(g,'B').toFixed(1) : '—' }}</td>
-              <td class="r" style="color:var(--accent-l);">{{ g.C.total>0 ? judgeWeighted(g,'C').toFixed(1) : '—' }}</td>
+              <td class="r" :style="outlierMap[g.zodiac]?.judge==='A'?'color:var(--danger);font-weight:800;':'color:var(--primary);'">
+                {{ g.A.total>0 ? judgeWeighted(g,'A').toFixed(1) : '—' }}
+                <i v-if="outlierMap[g.zodiac]?.judge==='A'" class="fa-solid fa-triangle-exclamation" style="font-size:10px;margin-left:3px;"></i>
+              </td>
+              <td class="r" :style="outlierMap[g.zodiac]?.judge==='B'?'color:var(--danger);font-weight:800;':'color:var(--ok);'">
+                {{ g.B.total>0 ? judgeWeighted(g,'B').toFixed(1) : '—' }}
+                <i v-if="outlierMap[g.zodiac]?.judge==='B'" class="fa-solid fa-triangle-exclamation" style="font-size:10px;margin-left:3px;"></i>
+              </td>
+              <td class="r" :style="outlierMap[g.zodiac]?.judge==='C'?'color:var(--danger);font-weight:800;':'color:var(--accent-l);'">
+                {{ g.C.total>0 ? judgeWeighted(g,'C').toFixed(1) : '—' }}
+                <i v-if="outlierMap[g.zodiac]?.judge==='C'" class="fa-solid fa-triangle-exclamation" style="font-size:10px;margin-left:3px;"></i>
+              </td>
+              <td class="r">
+                <span v-if="outlierMap[g.zodiac]?.diff>0" class="outlier-badge">
+                  評審{{ outlierMap[g.zodiac].judge }} ±{{ outlierMap[g.zodiac].diff }}
+                </span>
+                <span v-else style="color:var(--faint);font-size:11px;">—</span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -257,6 +279,59 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Outlier summary -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-l);"></i>
+          離群偵測（單一評審偏離其他兩位 &gt; {{ OUTLIER_THRESHOLD }} 分）
+        </div>
+        <div v-if="flaggedGroups.length===0" style="color:var(--ok);font-size:13px;font-weight:600;">
+          <i class="fa-solid fa-circle-check"></i> 無離群 — 所有評審對所有組別的加權分差距均在 {{ OUTLIER_THRESHOLD }} 分以內
+        </div>
+        <table v-else>
+          <thead>
+            <tr>
+              <th>組別</th>
+              <th class="r">評審A</th>
+              <th class="r">評審B</th>
+              <th class="r">評審C</th>
+              <th class="r">離群評審</th>
+              <th class="r">偏離量</th>
+              <th>解讀建議</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="o in flaggedGroups" :key="o.zodiac" style="background:var(--accent-soft);">
+              <td style="font-weight:700;">{{ o.zodiac }}</td>
+              <td class="r" :style="o.judge==='A'?'color:var(--danger);font-weight:800;':'color:var(--primary);'">
+                {{ o.ws.A>0 ? o.ws.A.toFixed(2) : '—' }}
+              </td>
+              <td class="r" :style="o.judge==='B'?'color:var(--danger);font-weight:800;':'color:var(--ok);'">
+                {{ o.ws.B>0 ? o.ws.B.toFixed(2) : '—' }}
+              </td>
+              <td class="r" :style="o.judge==='C'?'color:var(--danger);font-weight:800;':'color:var(--accent-l);'">
+                {{ o.ws.C>0 ? o.ws.C.toFixed(2) : '—' }}
+              </td>
+              <td class="r">
+                <span class="outlier-badge">{{ o.judge || '兩評審' }}</span>
+              </td>
+              <td class="r" style="font-weight:800;color:var(--danger);">{{ o.diff }}</td>
+              <td style="font-size:12px;color:var(--text2);">
+                <span v-if="o.judge">
+                  評審{{ o.judge }} 與其他兩位均分差 {{ o.diff }} 分 →
+                  <strong>建議確認評審{{ o.judge }} 對此組的評分依據</strong>；
+                  若有合理說明則保留，否則考慮以另外兩位均值替代
+                </span>
+                <span v-else>兩位評審分歧 &gt; {{ OUTLIER_THRESHOLD }} 分 → 建議討論後確認</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);">
+          方法：對每組每位評審計算其加權分與另外兩位均值之差，差值 &gt; {{ OUTLIER_THRESHOLD }} 且為三人中最大者標記為離群。
+          僅加權分（50% 面向 + 50% 整體印象）納入比較，非原始各面向分數。
         </div>
       </div>
 
@@ -408,6 +483,42 @@ createApp({
       return dims.length ? fmt2(pearson(dims,tots)) : '—';
     });
 
+    // ── Outlier detection ────────────────────────────────────────────────
+    // For each group: compare every judge to mean of the other two.
+    // Flag if deviation > OUTLIER_THRESHOLD. With 3 judges this is more
+    // robust than median (median = middle value, middle can never be outlier).
+    const OUTLIER_THRESHOLD = 1.0;
+
+    const outliers = computed(() => {
+      return ranked.value.map(g => {
+        const ws = { A: judgeWeighted(g,'A'), B: judgeWeighted(g,'B'), C: judgeWeighted(g,'C') };
+        const active = Object.entries(ws).filter(([,v]) => v > 0);
+        if (active.length < 2) return { zodiac:g.zodiac, judge:null, diff:0, ws };
+
+        let outlierJudge=null, maxDiff=0;
+        if (active.length === 3) {
+          ['A','B','C'].forEach(j => {
+            const others = ['A','B','C'].filter(x=>x!==j).map(x=>ws[x]);
+            const diff = Math.abs(ws[j] - mean(others));
+            if (diff > OUTLIER_THRESHOLD && diff > maxDiff) { maxDiff=diff; outlierJudge=j; }
+          });
+        } else {
+          // 2 judges only — just record the diff
+          const diff = Math.abs(active[0][1] - active[1][1]);
+          if (diff > OUTLIER_THRESHOLD) maxDiff = diff;
+        }
+        return { zodiac:g.zodiac, judge:outlierJudge, diff:+(maxDiff.toFixed(2)), ws };
+      });
+    });
+
+    const outlierMap = computed(() => {
+      const m = {};
+      outliers.value.forEach(o => { m[o.zodiac] = o; });
+      return m;
+    });
+
+    const flaggedGroups = computed(() => outliers.value.filter(o => o.diff > 0));
+
     const hmStyle = (v) => {
       const t = (v-1)/4;
       const r=Math.round(79+t*(16-79)), g2=Math.round(70+t*(163-70)), b=Math.round(229+t*(68-229));
@@ -509,6 +620,7 @@ createApp({
       maxFinal, minFinal, meanFinal, stdFinal, rangeFinal, iqrFinal, spreadLabel,
       corrAB, corrAC, corrBC, meanCorr, maxJudgeDiff, maxJudgeDiffGroup,
       criteriaAvgs, topCriteria, bottomCriteria, criteriaRange, corrDimTotal,
+      outlierMap, flaggedGroups, OUTLIER_THRESHOLD,
       hmStyle,
     };
   }
