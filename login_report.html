@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>登入記錄報告 · 20260611-9X9Y</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg:#f4f4f5; --surface:#ffffff; --surface2:#fafafa; --border:#e4e4e7;
+    --text:#18181b; --text2:#3f3f46; --muted:#71717a; --faint:#a1a1aa;
+    --primary:#4f46e5; --primary-d:#4338ca; --primary-soft:#eef2ff;
+    --ok:#15803d; --ok-l:#16a34a; --ok-soft:#f0fdf4;
+    --danger:#dc2626; --danger-l:#ef4444; --danger-soft:#fef2f2;
+    --accent:#b45309; --accent-l:#d97706; --accent-soft:#fffbeb;
+    --warn:#92400e; --warn-l:#b45309;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  .page{max-width:960px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* ── Header ── */
+  .hd{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+  .hd-left h1{font-size:20px;font-weight:800;color:var(--text);}
+  .hd-left .sub{font-size:13px;color:var(--muted);margin-top:4px;}
+  .live-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+              background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;
+              border-radius:99px;padding:4px 12px;}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  /* ── Summary cards ── */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
+  .card .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;}
+  .card .val{font-size:28px;font-weight:800;line-height:1;}
+  .card .val.blue{color:var(--primary);}
+  .card .val.green{color:var(--ok);}
+  .card .val.amber{color:var(--accent-l);}
+  .card .val.red{color:var(--danger);}
+  .card .hint{font-size:11px;color:var(--faint);margin-top:4px;}
+
+  /* ── Controls ── */
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .search-box{flex:1;min-width:180px;padding:8px 14px;border:1px solid var(--border);border-radius:10px;
+              font-size:13px;color:var(--text);background:var(--surface);outline:none;}
+  .search-box:focus{border-color:var(--primary);}
+  .sort-btn{padding:7px 14px;border:1px solid var(--border);border-radius:10px;
+            font-size:12px;font-weight:700;background:var(--surface);color:var(--text2);cursor:pointer;}
+  .sort-btn.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary);}
+  .export-btn{padding:7px 14px;border:none;border-radius:10px;font-size:12px;font-weight:700;
+              background:var(--primary);color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .export-btn:hover{background:var(--primary-d);}
+
+  /* ── Table ── */
+  .tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;
+           text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;
+           text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);}
+  thead th.r{text-align:right;}
+  thead th.c{text-align:center;}
+  tbody tr{border-bottom:1px solid var(--border);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface2);}
+  td{padding:11px 14px;vertical-align:middle;}
+  td.r{text-align:right;}
+  td.c{text-align:center;}
+
+  .uid{font-family:monospace;font-size:11px;color:var(--faint);}
+  .name{font-weight:700;font-size:14px;}
+  .zodiac{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  .cnt{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:15px;}
+  .cnt-in{color:var(--ok);}
+  .cnt-out{color:var(--muted);}
+  .cnt.warn .cnt-in{color:var(--accent-l);}  /* logged in multiple times */
+
+  .status-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+               padding:3px 9px;border-radius:99px;}
+  .status-pill.online{background:var(--ok-soft);color:var(--ok);}
+  .status-pill.offline{background:var(--surface2);color:var(--faint);}
+
+  .last-login{font-size:11px;color:var(--muted);font-family:monospace;}
+
+  .delta-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;
+               border-radius:6px;margin-left:4px;}
+  .delta-plus{background:var(--danger-soft);color:var(--danger);}  /* more logins than logouts */
+  .delta-zero{background:var(--ok-soft);color:var(--ok);}
+
+  /* ── Highlight rows ── */
+  tr.multi-login td:first-child{border-left:3px solid var(--accent-l);}
+  tr.active-now td:first-child{border-left:3px solid var(--ok);}
+
+  /* ── Empty / loading ── */
+  .state-box{padding:60px 20px;text-align:center;color:var(--muted);}
+  .state-box i{font-size:36px;margin-bottom:14px;display:block;opacity:.4;}
+  .state-box p{font-size:14px;}
+  .spinner{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── Footer ── */
+  .foot{margin-top:20px;font-size:11px;color:var(--faint);text-align:right;}
+
+  @media(max-width:600px){
+    .cards{grid-template-columns:repeat(2,1fr);}
+    .hd{flex-direction:column;}
+    td,th{padding:8px 10px;}
+  }
+  @media print{
+    .controls,.export-btn,.live-badge{display:none!important;}
+    body{background:#fff;}
+    .tbl-wrap{border:1px solid #ccc;border-radius:0;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="page">
+
+    <!-- Header -->
+    <div class="hd">
+      <div class="hd-left">
+        <h1><i class="fa-solid fa-arrow-right-to-bracket" style="color:var(--primary);margin-right:8px;"></i>登入 / 登出記錄報告</h1>
+        <div class="sub">Session&nbsp;<strong style="color:var(--text);font-family:monospace;">{{ SESSION_ID }}</strong>&nbsp;·&nbsp;即時更新</div>
+      </div>
+      <div>
+        <span v-if="state==='ready'" class="live-badge"><span class="live-dot"></span>LIVE</span>
+        <span v-else-if="state==='loading'" style="font-size:12px;color:var(--muted);">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> 載入中…
+        </span>
+        <span v-else-if="state==='error'" style="font-size:12px;color:var(--danger);">
+          <i class="fa-solid fa-triangle-exclamation"></i> 連線失敗
+        </span>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div v-if="state==='ready'" class="cards">
+      <div class="card">
+        <div class="label">學生人數</div>
+        <div class="val blue">{{ total }}</div>
+        <div class="hint">本 Session 名單</div>
+      </div>
+      <div class="card">
+        <div class="label">目前在線</div>
+        <div class="val green">{{ onlineCount }}</div>
+        <div class="hint">isActive = true</div>
+      </div>
+      <div class="card">
+        <div class="label">總登入次數</div>
+        <div class="val green">{{ totalLogins }}</div>
+        <div class="hint">所有學生合計</div>
+      </div>
+      <div class="card">
+        <div class="label">總登出次數</div>
+        <div class="val amber">{{ totalLogouts }}</div>
+        <div class="hint">所有學生合計</div>
+      </div>
+      <div class="card">
+        <div class="label">多次登入</div>
+        <div class="val red">{{ multiLoginCount }}</div>
+        <div class="hint">loginCount ≥ 2</div>
+      </div>
+      <div class="card">
+        <div class="label">從未登入</div>
+        <div class="val" style="color:var(--faint);">{{ neverLoginCount }}</div>
+        <div class="hint">loginCount = 0</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div v-if="state==='ready'" class="controls">
+      <input v-model="searchQ" class="search-box" placeholder="搜尋姓名 / 學號 / 組別…">
+      <button class="sort-btn" :class="{active:sortKey==='loginCount'}" @click="toggleSort('loginCount')">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> 登入次數
+        <i v-if="sortKey==='loginCount'" :class="sortAsc?'fa-solid fa-arrow-up':'fa-solid fa-arrow-down'"></i>
+      </button>
+      <button class="sort-btn" :class="{active:sortKey==='name'}" @click="toggleSort('name')">
+        <i class="fa-solid fa-user"></i> 姓名
+      </button>
+      <button class="sort-btn" :class="{active:sortKey==='zodiac'}" @click="toggleSort('zodiac')">
+        <i class="fa-solid fa-star"></i> 組別
+      </button>
+      <button class="export-btn" @click="exportCSV">
+        <i class="fa-solid fa-file-csv"></i> 匯出 CSV
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="tbl-wrap" v-if="state==='ready'">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>學生</th>
+            <th class="c">目前狀態</th>
+            <th class="r">登入次數</th>
+            <th class="r">登出次數</th>
+            <th class="r">未登出差值</th>
+            <th class="r">最後登入</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(s, idx) in displayed" :key="s.uid"
+              :class="{'multi-login': s.loginCount >= 2, 'active-now': s.isActive}">
+            <td style="color:var(--faint);font-size:12px;">{{ idx + 1 }}</td>
+            <td>
+              <div class="name">{{ s.name }}</div>
+              <div class="zodiac">{{ s.studentId }} · {{ s.zodiac }}</div>
+              <div class="uid">{{ s.uid }}</div>
+            </td>
+            <td class="c">
+              <span :class="['status-pill', s.isActive ? 'online' : 'offline']">
+                <i :class="s.isActive ? 'fa-solid fa-circle' : 'fa-regular fa-circle'" style="font-size:7px;"></i>
+                {{ s.isActive ? '在線' : '離線' }}
+              </span>
+            </td>
+            <td class="r">
+              <span :class="['cnt', s.loginCount >= 2 ? 'warn' : '']">
+                <i class="fa-solid fa-right-to-bracket cnt-in"></i>
+                {{ s.loginCount }}
+              </span>
+            </td>
+            <td class="r">
+              <span class="cnt">
+                <i class="fa-solid fa-right-from-bracket cnt-out"></i>
+                {{ s.logoutCount }}
+              </span>
+            </td>
+            <td class="r">
+              <span v-if="s.delta > 0" class="delta-badge delta-plus">+{{ s.delta }}</span>
+              <span v-else-if="s.delta === 0 && s.loginCount > 0" class="delta-badge delta-zero">0</span>
+              <span v-else style="color:var(--faint);font-size:11px;">—</span>
+            </td>
+            <td class="r last-login">{{ s.lastLoginStr }}</td>
+          </tr>
+        </tbody>
+        <tfoot v-if="displayed.length">
+          <tr style="background:var(--surface2);font-weight:700;">
+            <td colspan="3" style="padding:10px 14px;font-size:12px;color:var(--muted);">
+              顯示 {{ displayed.length }} / {{ total }} 人
+            </td>
+            <td class="r" style="padding:10px 14px;color:var(--ok);">{{ displayedLoginSum }}</td>
+            <td class="r" style="padding:10px 14px;color:var(--accent-l);">{{ displayedLogoutSum }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div v-if="displayed.length === 0" class="state-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <p>沒有符合的學生</p>
+      </div>
+    </div>
+
+    <!-- Loading / error state -->
+    <div v-else-if="state==='loading'" class="tbl-wrap state-box">
+      <i class="fa-solid fa-circle-notch spinner"></i>
+      <p>正在連接 Firebase…</p>
+    </div>
+    <div v-else-if="state==='error'" class="tbl-wrap state-box">
+      <i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);opacity:1;"></i>
+      <p style="color:var(--danger);">無法讀取資料，請確認 Session ID 及網路連線。</p>
+      <p style="margin-top:8px;font-size:12px;color:var(--muted);">Session: {{ SESSION_ID }}</p>
+    </div>
+
+    <div class="foot">
+      資料來源：Firebase Realtime DB · classrooms/{{ SESSION_ID }}/students · 登入計數自 2026-06-12 起累計
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { createApp, ref, computed, onMounted } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
+import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref as dbRef, onValue }   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getAuth, signInAnonymously }            from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+const SESSION_ID = '20260611-9X9Y';
+
+const FIREBASE = {
+  apiKey:            "AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",
+  authDomain:        "cmu-11402-pathophysiology.firebaseapp.com",
+  databaseURL:       "https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "cmu-11402-pathophysiology",
+  storageBucket:     "cmu-11402-pathophysiology.firebasestorage.app",
+  messagingSenderId: "367793212618",
+  appId:             "1:367793212618:web:c11acedc50ce6fc3897833"
+};
+
+function fmtTime(ts) {
+  if (!ts) return '—';
+  try {
+    return new Date(ts).toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+  } catch(e) { return '—'; }
+}
+
+createApp({
+  setup() {
+    const state     = ref('loading');
+    const rawData   = ref({});
+    const searchQ   = ref('');
+    const sortKey   = ref('loginCount');
+    const sortAsc   = ref(false);
+
+    const students = computed(() => {
+      return Object.entries(rawData.value).map(([uid, d]) => {
+        const auth    = d.auth    || {};
+        const profile = d.profile || {};
+        const loginCount  = auth.loginCount  || 0;
+        const logoutCount = auth.logoutCount || 0;
+        return {
+          uid,
+          name:         profile.Name       || uid,
+          studentId:    profile.StudentId  || '',
+          zodiac:       profile.Zodiac     || '',
+          isActive:     !!auth.isActive,
+          loginCount,
+          logoutCount,
+          delta:        loginCount - logoutCount,
+          lastLoginStr: fmtTime(auth.loginAt),
+          loginAt:      auth.loginAt || 0,
+        };
+      });
+    });
+
+    const filtered = computed(() => {
+      const q = searchQ.value.trim().toLowerCase();
+      if (!q) return students.value;
+      return students.value.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.studentId.toLowerCase().includes(q) ||
+        s.zodiac.toLowerCase().includes(q) ||
+        s.uid.toLowerCase().includes(q)
+      );
+    });
+
+    const displayed = computed(() => {
+      const arr = [...filtered.value];
+      const k = sortKey.value;
+      arr.sort((a, b) => {
+        let va = a[k], vb = b[k];
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return sortAsc.value ? -1 : 1;
+        if (va > vb) return sortAsc.value ?  1 : -1;
+        return 0;
+      });
+      return arr;
+    });
+
+    const total           = computed(() => students.value.length);
+    const onlineCount     = computed(() => students.value.filter(s => s.isActive).length);
+    const totalLogins     = computed(() => students.value.reduce((a, s) => a + s.loginCount, 0));
+    const totalLogouts    = computed(() => students.value.reduce((a, s) => a + s.logoutCount, 0));
+    const multiLoginCount = computed(() => students.value.filter(s => s.loginCount >= 2).length);
+    const neverLoginCount = computed(() => students.value.filter(s => s.loginCount === 0).length);
+    const displayedLoginSum  = computed(() => displayed.value.reduce((a, s) => a + s.loginCount, 0));
+    const displayedLogoutSum = computed(() => displayed.value.reduce((a, s) => a + s.logoutCount, 0));
+
+    const toggleSort = (key) => {
+      if (sortKey.value === key) { sortAsc.value = !sortAsc.value; }
+      else { sortKey.value = key; sortAsc.value = key === 'name' || key === 'zodiac'; }
+    };
+
+    const exportCSV = () => {
+      const rows = [['UID','姓名','學號','組別','登入次數','登出次數','差值','最後登入','目前狀態']];
+      displayed.value.forEach(s => {
+        rows.push([s.uid, s.name, s.studentId, s.zodiac,
+                   s.loginCount, s.logoutCount, s.delta,
+                   s.lastLoginStr, s.isActive ? '在線' : '離線']);
+      });
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+      a.download = `login_report_${SESSION_ID}.csv`;
+      a.click();
+    };
+
+    onMounted(async () => {
+      try {
+        const fbApp  = initializeApp(FIREBASE);
+        const db     = getDatabase(fbApp);
+        const auth   = getAuth(fbApp);
+        await signInAnonymously(auth);
+        onValue(
+          dbRef(db, `classrooms/${SESSION_ID}/students`),
+          snap => { rawData.value = snap.val() || {}; state.value = 'ready'; },
+          () => { state.value = 'error'; }
+        );
+      } catch(e) { state.value = 'error'; }
+    });
+
+    return {
+      SESSION_ID, state, searchQ, sortKey, sortAsc,
+      displayed, total, onlineCount,
+      totalLogins, totalLogouts, multiLoginCount, neverLoginCount,
+      displayedLoginSum, displayedLogoutSum,
+      toggleSort, exportCSV,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
