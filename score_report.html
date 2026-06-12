@@ -583,9 +583,8 @@
 
 <script type="module">
 import { createApp, ref, computed, onMounted, nextTick } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
-import { initializeApp }                                  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref as dbRef, onValue as fbOnValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-import { getAuth, signInAnonymously }                     from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+// Firebase is loaded lazily inside loadVotes() so a CDN hiccup
+// doesn't prevent the judge scoring tab from rendering.
 
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const GAS_URL    = 'https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec';
@@ -649,13 +648,26 @@ createApp({
 
     const loadVotes = async (sid) => {
       if (!fbInited) {
-        fbApp=initializeApp(FIREBASE); fbDb=getDatabase(fbApp);
-        fbAuth=getAuth(fbApp); fbInited=true;
+        // Lazy-load Firebase so top-level import failure can't break the judge tab
+        const [fbAppMod, fbDbMod, fbAuthMod] = await Promise.all([
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js'),
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'),
+        ]);
+        fbApp  = fbAppMod.initializeApp(FIREBASE);
+        fbDb   = fbDbMod.getDatabase(fbApp);
+        fbAuth = fbAuthMod.getAuth(fbApp);
+        // store helpers on closure vars for reuse
+        loadVotes._dbRef   = fbDbMod.ref;
+        loadVotes._onValue = fbDbMod.onValue;
+        loadVotes._signIn  = fbAuthMod.signInAnonymously;
+        fbInited = true;
       }
-      if (!fbAuth.currentUser) await signInAnonymously(fbAuth);
+      const { _dbRef, _onValue, _signIn } = loadVotes;
+      if (!fbAuth.currentUser) await _signIn(fbAuth);
       if (_voteUnsub) { _voteUnsub(); _voteUnsub=null; }
       voteState.value = 'loading';
-      _voteUnsub = fbOnValue(dbRef(fbDb, `classrooms/${sid}/posterVotes`), (snap) => {
+      _voteUnsub = _onValue(_dbRef(fbDb, `classrooms/${sid}/posterVotes`), (snap) => {
         voteRaw.value = snap.val() || {};
         voteState.value = 'ready';
         nextTick(() => buildVoteCharts());
