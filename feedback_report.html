@@ -282,8 +282,16 @@ Object.values(AI_EVAL).forEach(d=>{const[c,de,cr,t]=d.dims;d.base=+((c+de+cr)/3*
 // ── ⚠ FILL THIS: zodiac → AI topic key mapping ───────────────────────────
 // Leave '' for unknown. Student & teacher work regardless; AI lens shows when mapped.
 const ZODIAC_TOPIC = {
-  '子鼠':'', '丑牛':'', '寅虎':'', '卯兔':'', '辰龍':'', '巳蛇':'',
-  '午馬':'', '未羊':'', '申猴':'', '酉雞':'', '戌狗':'', '亥豬':'',
+  // ── confirmed from poster group-number labels (生肖=組號 natural order) ──
+  '丑牛':'Lipid',     // 第二組 高血脂（poster text）
+  '辰龍':'DM_kidney', // 第五組 糖尿病護腎（poster text）
+  '申猴':'ATC',       // 第九組 甲狀腺未分化癌（poster text）
+  '戌狗':'Alz_tx',    // 第11組 阿茲海默治療（poster text）
+  '亥豬':'DM_bcell',  // 第12組 糖尿病β細胞（檔名 + 視覺）
+  // ── remaining 7: poster has no printed group#, awaiting confirmation ──
+  // topics to place: Resp 呼吸道 / HD 亨丁頓 / MG 重症肌無力 / ALS 漸凍 /
+  //                  SMA 脊髓 / Alz_cause 阿茲病因 / Pancreatic 胰臟癌
+  '子鼠':'', '寅虎':'', '卯兔':'', '巳蛇':'', '午馬':'', '未羊':'', '酉雞':'',
 };
 
 createApp({
