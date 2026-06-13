@@ -724,10 +724,11 @@
             </table>
           </div>
           <div style="margin-top:6px;display:flex;gap:14px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:#4ade80;font-weight:700;">■ ≥2 強烈偏好</span>
-            <span style="color:#86efac;">■ 1.5–2</span>
+            <span style="color:var(--ok);font-weight:700;">■ ≥2 強烈偏好</span>
+            <span style="color:var(--ok-l);">■ 1.5–2</span>
             <span style="color:var(--muted);">■ 0.8–1.5 隨機範圍</span>
-            <span style="color:var(--danger);">■ &lt;0.5 低於預期</span>
+            <span style="color:var(--accent);">■ 0.5–0.8</span>
+            <span style="color:var(--danger);font-weight:700;">■ &lt;0.5 低於預期</span>
           </div>
         </div>
 
@@ -2323,12 +2324,12 @@ createApp({
 
     const liftStyle = (v) => {
       const n=parseFloat(v);
-      if(n>=3)   return 'background:#dcfce7;color:#14532d;font-weight:800;';
-      if(n>=2)   return 'background:#bbf7d0;color:#15803d;font-weight:700;';
-      if(n>=1.5) return 'background:#d1fae5;color:#16a34a;';
+      if(n>=3)   return 'background:var(--ok-soft);color:var(--ok);font-weight:800;';
+      if(n>=2)   return 'background:#d1fae5;color:var(--ok-l);font-weight:700;';
+      if(n>=1.5) return 'background:#ecfdf5;color:var(--ok-l);';
       if(n>=0.8) return 'background:var(--surface2);color:var(--faint);';
-      if(n>=0.5) return 'background:#ffe4e6;color:#be123c;';
-      return             'background:#fecdd3;color:#dc2626;font-weight:700;';
+      if(n>=0.5) return 'background:var(--accent-soft);color:var(--accent);';
+      return             'background:var(--danger-soft);color:var(--danger);font-weight:700;';
     };
 
     const temporalData = computed(()=>{
