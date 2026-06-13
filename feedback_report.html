@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>海報回饋 — 三面向 profile + 榮譽榜</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{
+    --bg:#f4f4f5;--surface:#fff;--surface2:#fafafa;--border:#e4e4e7;
+    --text:#18181b;--text2:#3f3f46;--muted:#71717a;--faint:#a1a1aa;
+    --primary:#4f46e5;--primary-d:#4338ca;--primary-soft:#eef2ff;
+    --ok:#15803d;--ok-l:#16a34a;--ok-soft:#f0fdf4;
+    --danger:#dc2626;--danger-soft:#fef2f2;
+    --accent:#b45309;--accent-l:#d97706;--accent-soft:#fffbeb;
+    --gold:#ca8a04;--gold-soft:#fefce8;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+  .page{max-width:920px;margin:0 auto;padding:26px 18px 80px;}
+  .hd h1{font-size:22px;font-weight:800;}
+  .hd .sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+  .tabbar{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
+          border-radius:12px;padding:4px;margin:20px 0;}
+  .tabbar button{flex:1;padding:10px 16px;border:none;border-radius:9px;font-size:14px;
+                 font-weight:700;cursor:pointer;background:none;color:var(--muted);transition:all .15s;}
+  .tabbar button.active{background:var(--primary);color:#fff;}
+  .tabbar button i{margin-right:6px;}
+
+  .sec{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:18px;}
+  .sec-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .sec-title i{color:var(--primary);}
+
+  /* group selector */
+  .grp-pills{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{padding:8px 14px;border:1px solid var(--border);border-radius:20px;background:var(--surface);
+        font-size:14px;font-weight:700;cursor:pointer;transition:all .12s;}
+  .pill:hover{border-color:var(--primary);color:var(--primary);}
+  .pill.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+  /* profile card */
+  .profile{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
+  .profile-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:18px;
+                padding-bottom:14px;border-bottom:2px solid var(--border);}
+  .profile-head .zname{font-size:22px;font-weight:900;}
+  .profile-head .topic{font-size:14px;color:var(--muted);}
+
+  .lens{margin-bottom:16px;}
+  .lens-row{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
+  .lens-name{min-width:84px;font-size:13px;font-weight:700;color:var(--text2);}
+  .lens-bar-wrap{flex:1;height:14px;background:var(--surface2);border-radius:7px;overflow:hidden;}
+  .lens-bar{height:100%;border-radius:7px;transition:width .5s;}
+  .lens-tag{min-width:120px;font-size:12px;font-weight:700;text-align:right;}
+  .lens-detail{font-size:11.5px;color:var(--muted);margin-left:96px;line-height:1.5;}
+
+  .band{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:6px;}
+  .band-hi{background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;}
+  .band-mid{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+  .band-lo{background:var(--danger-soft);color:var(--danger);border:1px solid #fca5a5;}
+
+  .insight-box{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .ib{padding:14px 16px;border-radius:11px;font-size:13px;line-height:1.65;}
+  .ib-strong{background:var(--ok-soft);border:1px solid #bbf7d0;}
+  .ib-grow{background:var(--accent-soft);border:1px solid #fde68a;}
+  .ib h4{font-size:12px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .ib-strong h4{color:var(--ok);} .ib-grow h4{color:var(--accent);}
+  .ib .body{color:var(--text2);}
+
+  .dimfeedback{margin-top:14px;background:var(--surface2);border-radius:11px;padding:14px 16px;}
+  .dimfeedback h4{font-size:12px;font-weight:800;color:var(--primary);margin-bottom:8px;}
+  .dimfeedback .d{font-size:12px;line-height:1.6;margin-bottom:6px;color:var(--text2);}
+  .dimfeedback .d b{color:var(--text);}
+
+  /* honor roll */
+  .awards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .award{border-radius:14px;padding:20px;border:1px solid var(--border);position:relative;overflow:hidden;}
+  .award .ico{font-size:30px;margin-bottom:8px;}
+  .award .atitle{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+  .award .winner{font-size:24px;font-weight:900;margin:4px 0;}
+  .award .detail{font-size:12px;color:var(--muted);}
+  .aw-gold{background:var(--gold-soft);border-color:#fde68a;}
+  .aw-fire{background:var(--danger-soft);border-color:#fca5a5;}
+  .aw-team{background:var(--ok-soft);border-color:#bbf7d0;}
+  .aw-vis{background:var(--primary-soft);border-color:#c7d2fe;}
+  .aw-all{background:#faf5ff;border-color:#e9d5ff;}
+
+  .loading{text-align:center;padding:50px 20px;color:var(--muted);}
+  .loading i{font-size:30px;margin-bottom:10px;display:block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.6;}
+  .warn-map{background:var(--accent-soft);border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;}
+  .warn-map strong{color:var(--accent);}
+  @media(max-width:640px){.insight-box,.awards{grid-template-columns:1fr;}.lens-tag{min-width:90px;}}
+  @media print{.page{padding:10px;}.profile,.sec{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="page">
+
+  <div class="hd">
+    <h1><i class="fa-solid fa-comments" style="color:var(--primary);margin-right:8px;"></i>海報回饋報告</h1>
+    <div class="sub">三面向 profile（同學共鳴 · 學術深度 · 系統評估 + 團隊合作）· 私下個別回饋 + 公開榮譽榜</div>
+  </div>
+
+  <div v-if="loadState==='loading'" class="loading">
+    <i class="fa-solid fa-circle-notch"></i>載入學生票選與評審分數中…
+  </div>
+  <div v-else-if="loadState==='error'" class="loading" style="color:var(--danger);">
+    <i class="fa-solid fa-triangle-exclamation" style="animation:none;"></i> 資料載入失敗，請確認連線
+  </div>
+
+  <template v-else>
+    <div class="tabbar">
+      <button :class="{active:tab==='private'}" @click="tab='private'"><i class="fa-solid fa-user-group"></i>個別回饋</button>
+      <button :class="{active:tab==='honor'}" @click="tab='honor'"><i class="fa-solid fa-award"></i>公開榮譽榜</button>
+    </div>
+
+    <!-- ═══ PRIVATE FEEDBACK ═══ -->
+    <div v-show="tab==='private'">
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-hand-pointer"></i>選擇組別（此頁供私下回饋給該組）</div>
+        <div class="grp-pills">
+          <div v-for="z in ZODIAC" :key="z" class="pill" :class="{active:sel===z}" @click="sel=z">{{ z }}</div>
+        </div>
+      </div>
+
+      <div v-if="sel" class="profile">
+        <div class="profile-head">
+          <span class="zname">{{ sel }}</span>
+          <span class="topic">{{ topicOf(sel) || '（主題待對應）' }}</span>
+        </div>
+
+        <!-- Lens 1: student resonance -->
+        <div class="lens">
+          <div class="lens-row">
+            <span class="lens-name">同學共鳴</span>
+            <div class="lens-bar-wrap"><div class="lens-bar" :style="barStudent(sel)"></div></div>
+            <span class="lens-tag">
+              <span class="band" :class="bandClass(sel)">{{ bandLabel(sel) }}</span>
+            </span>
+          </div>
+          <div class="lens-detail">{{ stu[sel]?.pts ?? 0 }} 票 · 全班 {{ N }} 人投票 · {{ bandExplain(sel) }}</div>
+        </div>
+
+        <!-- Lens 2: teacher academic -->
+        <div class="lens">
+          <div class="lens-row">
+            <span class="lens-name">學術深度</span>
+            <div class="lens-bar-wrap"><div class="lens-bar" :style="barTeacher(sel)"></div></div>
+            <span class="lens-tag" style="color:var(--primary);">評審 {{ tea[sel]?.final?.toFixed(2) ?? '—' }} / 5</span>
+          </div>
+          <div class="lens-detail">病生理深度與內容正確性的專業評核（{{ teaTier(sel) }}）</div>
+        </div>
+
+        <!-- Lens 3: AI systematic (only if mapped) -->
+        <div class="lens" v-if="aiOf(sel)">
+          <div class="lens-row">
+            <span class="lens-name">系統評估</span>
+            <div class="lens-bar-wrap"><div class="lens-bar" :style="barAI(sel)"></div></div>
+            <span class="lens-tag" style="color:var(--accent-l);">AI {{ aiOf(sel).base.toFixed(2) }} / 5</span>
+          </div>
+          <div class="lens-detail">rubric 一致性評讀（選題/病理/視覺/整體）</div>
+        </div>
+
+        <!-- Teamwork bonus -->
+        <div class="lens" v-if="aiOf(sel)">
+          <div class="lens-row">
+            <span class="lens-name">團隊合作</span>
+            <div class="lens-bar-wrap"><div class="lens-bar" :style="barTeam(sel)"></div></div>
+            <span class="lens-tag" style="color:var(--ok);">{{ aiOf(sel).tw }} / 5 → 加分 +{{ aiOf(sel).bonus.toFixed(2) }}</span>
+          </div>
+          <div class="lens-detail">{{ aiOf(sel).notes.team }}</div>
+        </div>
+
+        <!-- Strength + Growth -->
+        <div class="insight-box">
+          <div class="ib ib-strong">
+            <h4><i class="fa-solid fa-star"></i>強項</h4>
+            <div class="body">{{ strengthText(sel) }}</div>
+          </div>
+          <div class="ib ib-grow">
+            <h4><i class="fa-solid fa-seedling"></i>成長點</h4>
+            <div class="body">{{ growthText(sel) }}</div>
+          </div>
+        </div>
+
+        <!-- Dimension-level feedback from AI -->
+        <div class="dimfeedback" v-if="aiOf(sel)">
+          <h4><i class="fa-solid fa-list-check" style="margin-right:5px;"></i>逐面向具體回饋</h4>
+          <div class="d"><b>選題需求（{{ aiOf(sel).dims[0] }}）：</b>{{ aiOf(sel).notes.sel }}</div>
+          <div class="d"><b>病生理深度（{{ aiOf(sel).dims[1] }}）：</b>{{ aiOf(sel).notes.path }}</div>
+          <div class="d"><b>視覺表達（{{ aiOf(sel).dims[2] }}）：</b>{{ aiOf(sel).notes.vis }}</div>
+          <div class="d"><b>整體印象（{{ aiOf(sel).dims[3] }}）：</b>{{ aiOf(sel).notes.tot }}</div>
+        </div>
+        <div v-else class="note" style="margin-top:14px;">
+          <i class="fa-solid fa-circle-info"></i> 此組尚未對應 AI 評估主題，補上 ZODIAC_TOPIC 對照後即顯示系統評估與逐面向回饋。
+        </div>
+      </div>
+      <div v-else class="note" style="text-align:center;padding:30px;">↑ 點選一個組別查看其私下回饋卡</div>
+    </div>
+
+    <!-- ═══ HONOR ROLL ═══ -->
+    <div v-show="tab==='honor'">
+      <div class="warn-map" v-if="mappedCount < 12">
+        <strong>提醒：</strong>目前 {{ mappedCount }}/12 組已對應 AI 主題。「最佳團隊」「最佳視覺」獎需完整對應後才準確（目前依已對應組計算）。
+        「人氣獎」「學術深度獎」由學生票與評審分直接決定，不受影響。
+      </div>
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-trophy"></i>公開榮譽榜（只表揚得主，不公布完整排名）</div>
+        <div class="awards">
+          <div class="award aw-gold">
+            <div class="ico">🎓</div>
+            <div class="atitle">學術深度獎</div>
+            <div class="winner">{{ awards.academic.z }}</div>
+            <div class="detail">評審加權第一 · {{ awards.academic.v }} / 5　{{ topicOf(awards.academic.z) }}</div>
+          </div>
+          <div class="award aw-fire">
+            <div class="ico">🔥</div>
+            <div class="atitle">人氣獎</div>
+            <div class="winner">{{ awards.popular.z }}</div>
+            <div class="detail">學生票選第一 · {{ awards.popular.v }} 票（z = {{ awards.popular.z2 }}，顯著）</div>
+          </div>
+          <div class="award aw-team">
+            <div class="ico">🤝</div>
+            <div class="atitle">最佳團隊合作獎</div>
+            <div class="winner">{{ awards.team.z || '待對應' }}</div>
+            <div class="detail">{{ awards.team.detail }}</div>
+          </div>
+          <div class="award aw-vis">
+            <div class="ico">🎨</div>
+            <div class="atitle">最佳視覺表達獎</div>
+            <div class="winner">{{ awards.visual.z || '待對應' }}</div>
+            <div class="detail">{{ awards.visual.detail }}</div>
+          </div>
+          <div class="award aw-all" style="grid-column:1/-1;">
+            <div class="ico">✦</div>
+            <div class="atitle">全方位均衡獎</div>
+            <div class="winner">{{ awards.allround.z || '待對應' }}</div>
+            <div class="detail">{{ awards.allround.detail }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="note">
+        評選邏輯：學術深度獎＝評審加權最高；人氣獎＝學生票最高且統計顯著；最佳團隊＝AI 團隊合作分最高；
+        最佳視覺＝AI 視覺表達分最高；全方位＝同學共鳴／學術深度／系統評估三項標準化後總和最高。
+      </div>
+    </div>
+  </template>
+
+</div>
+</div>
+
+<script type="module">
+import { createApp, ref, computed, onMounted, nextTick } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
+
+const GAS_URL='https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec';
+const GAS_SECRET='zodiac-2026-cmuh';
+const SESSION='20260611-9X9Y';
+const FIREBASE={apiKey:"AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",authDomain:"cmu-11402-pathophysiology.firebaseapp.com",databaseURL:"https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"cmu-11402-pathophysiology",storageBucket:"cmu-11402-pathophysiology.firebasestorage.app",messagingSenderId:"367793212618",appId:"1:367793212618:web:c11acedc50ce6fc3897833"};
+const ZODIAC=['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+
+// ── AI evaluation data (keyed by topic) ───────────────────────────────────
+const AI_EVAL = {
+  'ATC':       {topic:'甲狀腺未分化癌 (ATC)', dims:[4.5,5,4.5,4.5], tw:4.5, notes:{sel:'罕見極惡性，以「去分化」切入，未滿足需求清楚。',path:'分子機轉完整（BRAF/MAPK、TERT/telomerase、mTKI、BRAF/MEK 雙標靶、PD-1/L1、NGS），研究所級深度。',vis:'DNA 雙螺旋為軸貫穿版面，專業度極高。',tot:'學術深度最完整的作品。',team:'完整作者貢獻表（20 學號），分工明確。'}},
+  'Alz_tx':    {topic:'阿茲海默症（治療）', dims:[4.5,4,5,4.5], tw:4, notes:{sel:'超高齡社會最大失智症負擔，選題切中需求。',path:'Aβ/Tau 機轉清楚，新藥 Leqembi/Kisunla/Aduhelm 正確。',vis:'五大分區色彩編碼、圖示精緻，視覺完成度最高之一。',tot:'內容完整、視覺優異。',team:'分工表載明各段負責同學。'}},
+  'HD':        {topic:'亨丁頓舞蹈症 (HD)', dims:[4,4.5,4.5,4], tw:3.5, notes:{sel:'「發現基因 30 年仍無法治癒」的醫學不對稱切入有洞察。',path:'CAG 擴增→mHTT 毒性蛋白正確，觸及 ASO 與 CNS 遞送瓶頸。',vis:'多面板組織清楚，動線流暢。',tot:'罕病機轉論述紮實。',team:'研究歷程與分工有記錄。'}},
+  'DM_kidney': {topic:'糖尿病護腎顧神經', dims:[4.5,4,4.5,4], tw:4, notes:{sel:'聚焦腎病變(DKD)與神經病變(DPNP)未滿足需求，定位精準。',path:'SGLT2i/Finerenone/神經病變新嘗試，機轉正確且臨床實用。',vis:'三段式版面清楚、色彩分區佳。',tot:'加入藥師觀點切合課程定位，一大亮點。',team:'完整學號名單＋研究歷程。'}},
+  'SMA':       {topic:'脊髓性肌肉萎縮症 (SMA)', dims:[4.5,4.5,4,4], tw:4, notes:{sel:'由課堂 Zolgensma 延伸，選題具時效性。',path:'SMN-dependent/independent 雙機轉、Zolgensma 肝毒性、雞尾酒療法，分子深入。',vis:'全球地圖＋分區治療，資訊量大但清楚。',tot:'前沿療法與安全性並重。',team:'完整學號名單＋研究歷程。'}},
+  'DM_bcell':  {topic:'糖尿病 β細胞修復', dims:[4,3.5,4.5,4], tw:3, notes:{sel:'涵蓋 T1D/T2D 並指向根本治療，企圖心佳。',path:'架構清楚，惟修復療法機轉深度中等。',vis:'kawaii 風格一致、分區清爽。',tot:'視覺討喜、架構完整，深度可再強化。',team:'簡報以圖像為主，未見可擷取分工文字（基準分）。'}},
+  'ALS':       {topic:'漸凍症 (ALS)', dims:[4.5,4,4,4], tw:3.5, notes:{sel:'高死亡率、治療有限，符合 R&D 主題。',path:'Riluzole/Tofersen/Edaravone 結構化呈現，機轉正確。',vis:'分區與 QR 延伸得宜，版面均衡。',tot:'藥物比較清楚、臨床限制到位。',team:'討論過程頁面記錄研究歷程。'}},
+  'Pancreatic':{topic:'胰臟癌', dims:[4.5,4,3.5,3.5], tw:3, notes:{sel:'高死亡率、早期難診斷，未滿足需求極強。',path:'精準/免疫/靶向涵蓋廣，機轉正確。',vis:'資訊密度偏高、留白稍弱。',tot:'內容紮實但呈現偏密集。',team:'僅見工作分配時間表（基準分）。'}},
+  'MG':        {topic:'重症肌無力 (MG)', dims:[4,4,4,3.5], tw:4.5, notes:{sel:'結合免疫學與藥學，連結課程佳。',path:'從傳統到精準藥物設計，免疫機轉正確。',vis:'分區色彩得宜，策略區較密。',tot:'結構完整、呈現中上。',team:'完整學號名單＋研究歷程＋討論紀錄，協作充分。'}},
+  'Alz_cause': {topic:'阿茲海默症（病因）', dims:[3.5,3.5,4.5,3.5], tw:3.5, notes:{sel:'聚焦病因與風險因素，與另一阿茲組重疊，差異化稍弱。',path:'病因整理清楚，分子治療層面較輕。',vis:'kawaii 插圖精緻、版面清爽。',tot:'視覺優秀、內容偏衛教導向。',team:'研究歷程與分工有敘述。'}},
+  'Resp':      {topic:'呼吸道感染 COVID-19+TB', dims:[4,3.5,4,3.5], tw:5, notes:{sel:'常見高關聯，雙主題貼近時事。',path:'Paxlovid/MDR-TB/Long COVID 廣，但雙病深度被稀釋。',vis:'kawaii、左右對比清楚。',tot:'整合度佳、誠實標註工具使用。',team:'全場最完整：A/B/C/D 四階段分工＋作者貢獻表＋時間線，團隊典範。'}},
+  'Lipid':     {topic:'高血脂症', dims:[4.5,4,3,3.5], tw:4, notes:{sel:'「無症狀、無法自測、每3人1人」隱形殺手框架洞察極佳。',path:'三高比較與血脂機轉正確、資料完整。',vis:'資訊極密、文字量大、視覺層次與留白不足。',tot:'選題內容紮實，惟視覺密度過高。',team:'附線上＋實體討論照片，真實會議協作。'}},
+};
+// compute AI base + bonus
+Object.values(AI_EVAL).forEach(d=>{const[c,de,cr,t]=d.dims;d.base=+((c+de+cr)/3*0.5+t*0.5).toFixed(2);d.bonus=+Math.max(0,(d.tw-3)*0.25).toFixed(2);});
+
+// ── ⚠ FILL THIS: zodiac → AI topic key mapping ───────────────────────────
+// Leave '' for unknown. Student & teacher work regardless; AI lens shows when mapped.
+const ZODIAC_TOPIC = {
+  '子鼠':'', '丑牛':'', '寅虎':'', '卯兔':'', '辰龍':'', '巳蛇':'',
+  '午馬':'', '未羊':'', '申猴':'', '酉雞':'', '戌狗':'', '亥豬':'',
+};
+
+createApp({
+  setup(){
+    const tab=ref('private');
+    const sel=ref('');
+    const loadState=ref('loading');
+    const stu=ref({});   // zodiac → {pts, z}
+    const tea=ref({});   // zodiac → {final, rank}
+    const N=ref(0);
+
+    const topicOf=(z)=>{ const k=ZODIAC_TOPIC[z]; return k&&AI_EVAL[k]?AI_EVAL[k].topic:''; };
+    const aiOf  =(z)=>{ const k=ZODIAC_TOPIC[z]; return k?AI_EVAL[k]:null; };
+    const mappedCount=computed(()=>Object.values(ZODIAC_TOPIC).filter(Boolean).length);
+
+    // significance bands
+    const bandOf=(z)=>{ const s=stu.value[z]; if(!s)return'mid'; return s.z>2?'hi':s.z<-2?'lo':'mid'; };
+    const bandClass=(z)=>({hi:'band-hi',mid:'band-mid',lo:'band-lo'}[bandOf(z)]);
+    const bandLabel=(z)=>({hi:'顯著高 🟢',mid:'隨機範圍 ⚪',lo:'低於隨機 🔴'}[bandOf(z)]);
+    const bandExplain=(z)=>{const b=bandOf(z); const zz=stu.value[z]?.z?.toFixed(2)??'—';
+      return b==='hi'?`z = ${zz}，明顯超出隨機投票，真實人氣`:
+             b==='lo'?`z = ${zz}，低於隨機期望`:
+             `z = ${zz}，與多數組同屬統計平手帶（中段排名差異多為隨機）`;};
+
+    const teaTier=(z)=>{const r=tea.value[z]?.rank; if(!r)return'—'; return r<=4?'前段':r<=8?'中段':'後段';};
+
+    // bar styles (normalize to 0-1 then %)
+    const barStudent=(z)=>{const s=stu.value[z]; if(!s)return'width:0';
+      const pct=Math.max(8,Math.min(100,(s.z+3)/6*100)); // z -3..+3 → 0..100
+      const c=bandOf(z)==='hi'?'var(--ok)':bandOf(z)==='lo'?'var(--danger)':'var(--faint)';
+      return `width:${pct}%;background:${c}`;};
+    const barTeacher=(z)=>{const v=tea.value[z]?.final||0; return `width:${v/5*100}%;background:var(--primary)`;};
+    const barAI=(z)=>{const a=aiOf(z); if(!a)return'width:0'; return `width:${a.base/5*100}%;background:var(--accent-l)`;};
+    const barTeam=(z)=>{const a=aiOf(z); if(!a)return'width:0'; return `width:${a.tw/5*100}%;background:var(--ok-l)`;};
+
+    // strength / growth auto-text from available lenses (normalized 0-1)
+    const norm=(z)=>{
+      const out={};
+      const s=stu.value[z]; if(s) out['同學共鳴']=Math.max(0,Math.min(1,(s.z+3)/6));
+      const t=tea.value[z]; if(t) out['學術深度']=t.final/5;
+      const a=aiOf(z); if(a) out['系統評估']=a.base/5;
+      return out;
+    };
+    const strengthText=(z)=>{
+      const n=norm(z); const keys=Object.keys(n); if(!keys.length)return'資料載入中';
+      const best=keys.reduce((a,b)=>n[b]>n[a]?b:a);
+      const map={'同學共鳴':'同學給予高度共鳴——你們的海報在全班眼中很有吸引力。',
+                 '學術深度':'評審肯定你們的學術深度與病生理正確性——內容紮實。',
+                 '系統評估':'系統評讀顯示你們在 rubric 各面向均衡且完整。'};
+      const a=aiOf(z);
+      let extra='';
+      if(a&&a.bonus>0.3) extra=' 團隊合作documentation 也非常完整，是協作的好示範。';
+      return map[best]+extra;
+    };
+    const growthText=(z)=>{
+      const n=norm(z); const keys=Object.keys(n); if(keys.length<2)return'持續保持，期待下一份作品。';
+      const worst=keys.reduce((a,b)=>n[b]<n[a]?b:a);
+      const map={'同學共鳴':'可在視覺吸引力與第一眼溝通上再加強，讓同學在快速瀏覽時更容易被吸引。',
+                 '學術深度':'病生理機轉的因果鏈可再深化，補強分子層次與藥物作用機制的正確性。',
+                 '系統評估':'整體呈現的完整度與面向均衡可再提升。'};
+      const a=aiOf(z);
+      let extra='';
+      if(a){ const dn=['選題需求','病生理深度','視覺表達','整體印象'][a.dims.indexOf(Math.min(...a.dims))];
+        extra=` 具體面向上，「${dn}」最有提升空間。`; }
+      return map[worst]+extra;
+    };
+
+    // ── Honor roll awards ─────────────────────────────────────────────────
+    const awards=computed(()=>{
+      const T=tea.value, S=stu.value;
+      // academic: teacher rank 1
+      let acad=ZODIAC.filter(z=>T[z]).sort((a,b)=>T[a].rank-T[b].rank)[0]||'';
+      // popular: student pts max
+      let pop=ZODIAC.filter(z=>S[z]).sort((a,b)=>S[b].pts-S[a].pts)[0]||'';
+      // team: AI tw max (among mapped)
+      let teamZ=ZODIAC.filter(z=>aiOf(z)).sort((a,b)=>aiOf(b).tw-aiOf(a).tw)[0]||'';
+      // visual: AI dims[2] max (among mapped)
+      let vis=ZODIAC.filter(z=>aiOf(z)).sort((a,b)=>aiOf(b).dims[2]-aiOf(a).dims[2])[0]||'';
+      // allround: normalized sum of 3 lenses
+      const score=(z)=>{const n=norm(z); return (n['同學共鳴']||0)+(n['學術深度']||0)+(n['系統評估']||0);};
+      let all=ZODIAC.filter(z=>tea.value[z]&&stu.value[z]&&aiOf(z)).sort((a,b)=>score(b)-score(a))[0]||'';
+      return {
+        academic:{z:acad, v:T[acad]?.final?.toFixed(2)??'—'},
+        popular: {z:pop,  v:S[pop]?.pts??'—', z2:S[pop]?.z?.toFixed(2)??'—'},
+        team:    {z:teamZ, detail: teamZ? `AI 團隊合作 ${aiOf(teamZ).tw}/5 · ${topicOf(teamZ)}` : '需完成 AI 主題對應'},
+        visual:  {z:vis,  detail: vis? `AI 視覺表達 ${aiOf(vis).dims[2]}/5 · ${topicOf(vis)}` : '需完成 AI 主題對應'},
+        allround:{z:all,  detail: all? `三面向標準化總和最高 · ${topicOf(all)}` : '需完成 AI 主題對應'},
+      };
+    });
+
+    onMounted(async()=>{
+      try{
+        // Teacher (GAS)
+        const tr=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'getScores',secret:GAS_SECRET})});
+        const tj=await tr.json();
+        const tmap={}; tj.groups.forEach(g=>{tmap[g.zodiac]={final:g.final,rank:g.rank};});
+        tea.value=tmap;
+
+        // Student (Firebase)
+        const [appMod,dbMod,authMod]=await Promise.all([
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js'),
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js')]);
+        const app=appMod.initializeApp(FIREBASE);
+        const db=dbMod.getDatabase(app); const auth=authMod.getAuth(app);
+        await authMod.signInAnonymously(auth);
+        dbMod.onValue(dbMod.ref(db,`classrooms/${SESSION}/posterVotes`),snap=>{
+          const v=snap.val()||{};
+          const pts={}; ZODIAC.forEach(z=>pts[z]=0);
+          Object.values(v).forEach(o=>{
+            if(o.rank1&&pts[o.rank1]!==undefined)pts[o.rank1]+=3;
+            if(o.rank2&&pts[o.rank2]!==undefined)pts[o.rank2]+=2;
+            if(o.rank3&&pts[o.rank3]!==undefined)pts[o.rank3]+=1;
+          });
+          const n=Object.keys(v).length; N.value=n;
+          const E=n/2, sig=Math.sqrt(n*118/121)||1;
+          const smap={}; ZODIAC.forEach(z=>{smap[z]={pts:pts[z],z:+((pts[z]-E)/sig).toFixed(2)};});
+          stu.value=smap;
+          loadState.value='ready';
+        },()=>{loadState.value='error';});
+      }catch(e){console.error(e);loadState.value='error';}
+    });
+
+    return {tab,sel,loadState,stu,tea,N,ZODIAC,topicOf,aiOf,mappedCount,
+      bandClass,bandLabel,bandExplain,teaTier,
+      barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards};
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
