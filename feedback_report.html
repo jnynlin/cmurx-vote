@@ -663,6 +663,9 @@ const ZODIAC_TOPIC = {
 
 createApp({
   setup(){
+    // ── ROOT: exclude debug/test accounts (S1101, S1102, S111000999…) from ALL analysis ──
+    const isDebug = (uid,sid)=>{ const s=String(sid||uid||''); return !/^S?11[1-4]003\d{3,4}$/.test(s); };
+    const stripDebug = (obj)=>{ const o={}; Object.entries(obj).forEach(([k,v])=>{ if(!isDebug(k, v&&v.profile&&v.profile.StudentId))o[k]=v; }); return o; };
     const tab=ref('private');
     const sel=ref('');
     const loadState=ref('loading');
@@ -901,7 +904,7 @@ createApp({
         const db=dbMod.getDatabase(app); const auth=authMod.getAuth(app);
         await authMod.signInAnonymously(auth);
         dbMod.onValue(dbMod.ref(db,`classrooms/${SESSION}/posterVotes`),snap=>{
-          const v=snap.val()||{};
+          const v=stripDebug(snap.val()||{});
           const pts={}; ZODIAC.forEach(z=>pts[z]=0);
           Object.values(v).forEach(o=>{
             if(o.rank1&&pts[o.rank1]!==undefined)pts[o.rank1]+=3;
@@ -915,7 +918,7 @@ createApp({
           loadState.value='ready';
         },()=>{loadState.value='error';});
         dbMod.onValue(dbMod.ref(db,`classrooms/${SESSION}/students`),snap=>{
-          stu_raw.value=snap.val()||{};
+          stu_raw.value=stripDebug(snap.val()||{});
         });
       }catch(e){console.error(e);loadState.value='error';}
     });

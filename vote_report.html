@@ -511,6 +511,9 @@ const auth = getAuth(app);
 
 createApp({
   setup() {
+    // ── ROOT: exclude debug/test accounts (S1101, S1102, S111000999…) from ALL analysis ──
+    const isDebug = (uid,sid)=>{ const s=String(sid||uid||''); return !/^S?11[1-4]003\d{3,4}$/.test(s); };
+    const stripDebug = (obj)=>{ const o={}; Object.entries(obj).forEach(([k,v])=>{ if(!isDebug(k, v&&v.profile&&v.profile.StudentId))o[k]=v; }); return o; };
     const _p = new URLSearchParams(location.search);
     const sid = ref(_p.get('id') || '20260611-9X9Y');
     const embedMode = ref(_p.get('embed') || '');  // e.g. ?embed=flow → show only flow tab
@@ -526,11 +529,11 @@ createApp({
       try {
         if (!auth.currentUser) await signInAnonymously(auth);
         onValue(dbRef(db, `classrooms/${sid.value}/posterVotes`), snap => {
-          votes.value = snap.val() || {};
+          votes.value = stripDebug(snap.val() || {});
           connected.value = true;
         }, e => { err.value = '讀取失敗：' + e.message; });
         onValue(dbRef(db, `classrooms/${sid.value}/students`), snap => {
-          students.value = snap.val() || {};
+          students.value = stripDebug(snap.val() || {});
         }, e => { err.value = '名單讀取失敗：' + e.message; });
       } catch(e) {
         err.value = '連線/驗證失敗：' + (e.code||e.message) + '（請確認 Anonymous 登入已啟用）';

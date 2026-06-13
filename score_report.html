@@ -1808,7 +1808,9 @@ createApp({
       if (_voteUnsub) { _voteUnsub(); _voteUnsub=null; }
       voteState.value = 'loading';
       _voteUnsub = _onValue(_dbRef(fbDb, `classrooms/${sid}/posterVotes`), (snap) => {
-        voteRaw.value = snap.val() || {};
+        const _raw=snap.val()||{};
+        // ROOT: exclude debug/test accounts (S1101, S1102, S111000999…)
+        voteRaw.value = Object.fromEntries(Object.entries(_raw).filter(([k,v])=>/^S?11[1-4]003\d{3,4}$/.test(String((v&&v.voterId)||k))));
         voteState.value = 'ready';
         nextTick(() => {
           buildVoteCharts();

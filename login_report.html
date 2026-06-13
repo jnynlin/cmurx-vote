@@ -409,6 +409,9 @@ function fmtTime(ts) {
 
 createApp({
   setup() {
+    // ── ROOT: exclude debug/test accounts (S1101, S1102, S111000999…) from ALL analysis ──
+    const isDebug = (uid,sid)=>{ const s=String(sid||uid||''); return !/^S?11[1-4]003\d{3,4}$/.test(s); };
+    const stripDebug = (obj)=>{ const o={}; Object.entries(obj).forEach(([k,v])=>{ if(!isDebug(k, v&&v.profile&&v.profile.StudentId))o[k]=v; }); return o; };
     const state        = ref('loading');
     const rawData      = ref({});
     const searchQ      = ref('');
@@ -552,7 +555,7 @@ createApp({
         await signInAnonymously(auth);
         onValue(
           dbRef(db, `classrooms/${SESSION_ID}/students`),
-          snap => { rawData.value = snap.val() || {}; state.value = 'ready'; },
+          snap => { rawData.value = stripDebug(snap.val() || {}); state.value = 'ready'; },
           () => { state.value = 'error'; }
         );
       } catch(e) { state.value = 'error'; }
