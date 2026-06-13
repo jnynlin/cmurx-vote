@@ -116,6 +116,7 @@
       <button :class="{active:tab==='private'}" @click="tab='private'"><i class="fa-solid fa-user-group"></i>個別回饋</button>
       <button :class="{active:tab==='honor'}" @click="tab='honor'"><i class="fa-solid fa-award"></i>公開榮譽榜</button>
       <button :class="{active:tab==='team'}" @click="tab='team'"><i class="fa-solid fa-people-group"></i>團隊合作分析</button>
+      <button :class="{active:tab==='trait'}" @click="tab='trait'"><i class="fa-solid fa-fingerprint"></i>學生特質側寫</button>
     </div>
 
     <!-- ═══ PRIVATE FEEDBACK ═══ -->
@@ -456,6 +457,99 @@
       </div>
 
     </div>
+
+    <!-- ═══ STUDENT TRAIT PROFILE ═══ -->
+    <div v-show="tab==='trait'">
+      <div class="note" style="margin-bottom:16px;background:var(--primary-soft);border:1px solid #c7d2fe;border-radius:10px;padding:12px 16px;color:var(--text2);line-height:1.7;">
+        依學生自選的「協作貢獻」勾選歸納——這是<strong>本次專案的協作角色傾向</strong>（自述），非經驗證的人格特質。
+        5 類貢獻 → 5 種協作原型：🔬研究型・🛠實作型・💬內容型・🧭協調型・🤝支援型。
+      </div>
+
+      <template v-if="traitStats">
+        <!-- Trait tendency bars -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-chart-simple"></i>全班特質傾向（{{ traitStats.N }} 位填寫，可複選）</div>
+          <div v-for="t in traitStats.traitPct" :key="t.label" style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
+            <span style="min-width:78px;font-size:13px;font-weight:700;">{{ t.icon }} {{ t.label }}</span>
+            <div style="flex:1;height:14px;background:var(--surface2);border-radius:7px;overflow:hidden;">
+              <div :style="{width:t.pct+'%',height:'100%',borderRadius:'7px',background:t.pct>=60?'var(--primary)':t.pct>=30?'var(--ok-l)':'var(--accent-l)'}"></div>
+            </div>
+            <span style="min-width:62px;font-weight:700;font-size:13px;">{{ t.pct }}% <span style="color:var(--muted);font-weight:400;">({{ t.n }})</span></span>
+          </div>
+          <div class="note" style="margin-top:8px;">
+            研究導向強、內容討論幾乎人人參與；<strong>實作型最稀缺</strong>（技術/視覺的關鍵專才）。
+          </div>
+        </div>
+
+        <!-- Breadth -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-layer-group"></i>投入廣度（一人身兼幾種角色）</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;">
+            <div v-for="b in traitStats.breadth" :key="b.label" class="stat" style="text-align:center;">
+              <div style="font-size:24px;font-weight:900;color:var(--primary);">{{ b.pct }}%</div>
+              <div style="font-size:12px;font-weight:700;margin-top:3px;">{{ b.label }}</div>
+              <div style="font-size:10px;color:var(--muted);">{{ b.desc }} · {{ b.n }} 人</div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:10px;">約半數身兼 3 種以上角色（通才），半數聚焦 1–2 種（專精）——通才與專才並存的健康結構。</div>
+        </div>
+
+        <!-- Leader vs member -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-user-tie"></i>組長特質側寫（{{ traitStats.leaderN }} 位組長）</div>
+          <div v-for="t in traitStats.leaderProfile" :key="t.label" style="display:flex;align-items:center;gap:12px;margin-bottom:7px;">
+            <span style="min-width:78px;font-size:13px;font-weight:700;">{{ t.icon }} {{ t.label }}</span>
+            <div style="flex:1;height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;">
+              <div :style="{width:t.pct+'%',height:'100%',borderRadius:'6px',background:'var(--accent-l)'}"></div>
+            </div>
+            <span style="min-width:50px;font-weight:700;font-size:13px;">{{ t.pct }}%</span>
+          </div>
+          <div class="note" style="margin-top:8px;">
+            組長平均涉獵 <strong>{{ traitStats.leaderAvg }}</strong> 種角色，組員 {{ traitStats.memberAvg }} 種——
+            領導者是「<strong>協調＋內容</strong>」的廣譜型，技能面更寬。
+          </div>
+        </div>
+
+        <!-- Per-group skill composition -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-puzzle-piece"></i>各組技能組成（缺技術人力＝結構風險）</div>
+          <table>
+            <thead><tr><th>組別</th><th class="r">🔬研究</th><th class="r">🛠實作</th><th class="r">💬內容</th><th class="r">🧭協調</th><th class="r">🤝支援</th><th>技術人力</th></tr></thead>
+            <tbody>
+              <tr v-for="g in groupTraits" :key="g.z" :style="g.tech<=2?'background:var(--accent-soft)':''">
+                <td><span style="font-weight:700;">{{ g.z }}</span> <span style="font-size:11px;color:var(--muted);">{{ g.topic }}</span></td>
+                <td class="r">{{ g.研究型 }}</td>
+                <td class="r" style="font-weight:700;" :style="g.tech<=2?'color:var(--accent)':''">{{ g.實作型 }}</td>
+                <td class="r">{{ g.內容型 }}</td>
+                <td class="r">{{ g.協調型 }}</td>
+                <td class="r">{{ g.支援型 }}</td>
+                <td>
+                  <span v-if="g.tech<=2" style="background:var(--accent-soft);color:var(--accent);border:1px solid #fde68a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">⚠ {{ g.techFlag }}（{{ g.tech }}）</span>
+                  <span v-else style="font-size:12px;color:var(--ok);">OK（{{ g.tech }}）</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note" style="margin-top:8px;">
+            數字＝該組勾選此角色的人次。<strong>寅虎、辰龍、未羊、戌狗</strong>僅 2 位實作型——技術/視覺製作易吃力，
+            其中辰龍、未羊同時分工集中，形成「缺技術 × 集中」的雙重不利。
+          </div>
+        </div>
+
+        <!-- Persona summary -->
+        <div class="sec">
+          <div class="sec-title"><i class="fa-solid fa-id-badge"></i>可辨識的協作原型</div>
+          <div style="font-size:13px;line-height:1.9;color:var(--text2);">
+            🌟 <strong>全能核心</strong>（{{ traitStats.breadth[0].pct }}%，4–5 類）：團隊支柱<br>
+            🔬 <strong>研究專才</strong>：內容深度來源<br>
+            🛠 <strong>稀缺技術手</strong>（僅 {{ traitStats.traitPct.find(t=>t.label==='實作型')?.pct }}%）：視覺/製作關鍵<br>
+            🧭 <strong>協調領導</strong>：團隊黏著劑（多為組長）<br>
+            ✍️ <strong>角色自覺者</strong>（{{ traitStats.customN }} 位自填具體任務）：最清楚自己定位
+          </div>
+        </div>
+      </template>
+      <div v-else class="note" style="text-align:center;padding:40px;">載入學生資料中…</div>
+    </div>
   </template>
 
 </div>
@@ -712,6 +806,55 @@ createApp({
           avgItems:d.filled?+(d.items/d.filled).toFixed(2):0, custom:d.custom};
       }).filter(r=>r.members>0).sort((a,b)=>b.substRate-a.substRate);
     });
+    // ── Student collaboration-trait profile (live from Firebase) ───────────
+    const TRAIT_MAP={'文獻與研究':'研究型','技術與實作':'實作型','內容與討論':'內容型','進度與溝通':'協調型','協作支援':'支援型'};
+    const TRAIT_ORDER=['內容型','研究型','支援型','協調型','實作型'];
+    const TRAIT_ICON={'研究型':'🔬','實作型':'🛠','內容型':'💬','協調型':'🧭','支援型':'🤝'};
+    const traitRecs=computed(()=>{
+      const out=[];
+      Object.values(stu_raw.value).forEach(s=>{
+        const a=s?.tasks?.assignment||{};
+        const c=a.contributions||[];
+        if(!Array.isArray(c)||!c.length) return;
+        const base=c.filter(x=>!String(x).startsWith('其他'));
+        const traits=[...new Set(base.map(x=>TRAIT_MAP[x]).filter(Boolean))];
+        out.push({role:a.role, traits, k:traits.length, custom:c.some(x=>String(x).startsWith('其他：'))});
+      });
+      return out;
+    });
+    const traitStats=computed(()=>{
+      const recs=traitRecs.value, N=recs.length;
+      if(!N) return null;
+      const tc={}; TRAIT_ORDER.forEach(t=>tc[t]=0);
+      recs.forEach(r=>r.traits.forEach(t=>{if(tc[t]!==undefined)tc[t]++;}));
+      const traitPct=TRAIT_ORDER.map(t=>({label:t,icon:TRAIT_ICON[t],n:tc[t],pct:Math.round(tc[t]/N*100)}));
+      const bk={'全能型':0,'多元型':0,'雙能型':0,'專精型':0};
+      recs.forEach(r=>{ bk[r.k>=4?'全能型':r.k===3?'多元型':r.k===2?'雙能型':'專精型']++; });
+      const breadth=[['全能型','4–5 類'],['多元型','3 類'],['雙能型','2 類'],['專精型','單一類']]
+        .map(([k,d])=>({label:k,desc:d,n:bk[k],pct:Math.round(bk[k]/N*100)}));
+      const leaders=recs.filter(r=>r.role==='leader'), members=recs.filter(r=>r.role!=='leader');
+      const lc={}; TRAIT_ORDER.forEach(t=>lc[t]=0);
+      leaders.forEach(r=>r.traits.forEach(t=>{if(lc[t]!==undefined)lc[t]++;}));
+      const leaderProfile=TRAIT_ORDER.map(t=>({label:t,icon:TRAIT_ICON[t],n:lc[t],pct:leaders.length?Math.round(lc[t]/leaders.length*100):0}))
+        .sort((a,b)=>b.pct-a.pct);
+      return {N, traitPct, breadth,
+        leaderAvg: leaders.length?+(leaders.reduce((s,r)=>s+r.k,0)/leaders.length).toFixed(1):0,
+        memberAvg: members.length?+(members.reduce((s,r)=>s+r.k,0)/members.length).toFixed(1):0,
+        leaderProfile, leaderN:leaders.length,
+        customN: recs.filter(r=>r.custom).length };
+    });
+    const groupTraits=computed(()=>{
+      const g={}; ZODIAC.forEach(z=>g[z]={研究型:0,實作型:0,內容型:0,協調型:0,支援型:0});
+      Object.values(stu_raw.value).forEach(s=>{
+        const z=s?.profile?.Zodiac; if(!g[z]) return;
+        const c=s?.tasks?.assignment?.contributions||[];
+        c.forEach(x=>{ const t=TRAIT_MAP[x]; if(t)g[z][t]++; });
+      });
+      return ZODIAC.map(z=>({z,topic:topicShort(z),...g[z],tech:g[z].實作型,
+        techFlag:g[z].實作型===0?'缺':g[z].實作型<=2?'稀缺':'OK'}))
+        .filter(r=>Object.values(g[r.z]).some(v=>v>0));
+    });
+
     const pearson=(xs,ys)=>{
       const n=xs.length; if(n<2)return 0;
       const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
@@ -780,7 +923,8 @@ createApp({
     return {tab,sel,loadState,stu,tea,N,ZODIAC,EV_LABELS,topicOf,aiOf,mappedCount,
       bandClass,bandLabel,bandExplain,teaTier,
       barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,
-      topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded,contribMetrics};
+      topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded,contribMetrics,
+      traitStats,groupTraits};
   }
 }).mount('#app');
 </script>
