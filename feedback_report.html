@@ -297,7 +297,8 @@
           <span style="min-width:64px;font-weight:700;font-size:13px;">{{ c.n }}/12 ({{ c.pct }}%)</span>
         </div>
         <div class="note" style="margin-top:8px;">
-          多數組備有分工表與研究歷程（各 83%），但<strong>討論照片（17%）</strong>與<strong>時間線（33%）</strong>較少——這兩項是呈現「真實協作過程」最有力的佐證，可作為下次的提升方向。
+          經逐頁實際檢視：<strong>全班 12 組皆備有完整貢獻名單（學號或姓名）＋分工表＋研究歷程（各 100%）</strong>——團隊合作 documentation 是全班共同強項。
+          差異主要在<strong>討論照片/截圖（50%）</strong>與<strong>時間線/階段（33%）</strong>——有附者額外呈現了「真實協作過程」。
         </div>
       </div>
 
@@ -322,12 +323,13 @@
           </div>
         </div>
         <div class="ib ib-strong">
-          <h4><i class="fa-solid fa-lightbulb"></i>關鍵洞察：加分機制運作正常</h4>
+          <h4><i class="fa-solid fa-lightbulb"></i>關鍵洞察：團隊合作是全班共同強項</h4>
           <div class="body">
-            團隊合作與學術品質呈<strong>負相關（r ≈ −0.70）</strong>——documentation 最完整的組，海報品質與人氣反而偏低。
-            這正是「加分項」應有的特性：它獎勵的是<strong>協作過程</strong>這個獨立面向，而非海報成果本身。
-            若團隊分與品質高度正相關，加分就是多餘的重複計分；負相關代表它確實補捉到品質分數看不見的努力，
-            讓<strong>協作認真但成果稍弱</strong>的組（如 子鼠/呼吸道：團隊 5.0 但評審墊底）得到應有的肯定。
+            <strong>更正（2026-06-13）：</strong>先前用純文字偵測曾得出「團隊合作與學術分強負相關」，
+            但那是<strong>量測偏誤</strong>——圖像式簡報與用姓名（非學號）的名單被低估了。
+            經逐頁實際檢視後，<strong>12 組皆備有完整貢獻名單＋分工＋歷程</strong>，團隊合作分趨於一致（多數 4.5、子鼠 5.0），
+            因此與學術/人氣已<strong>無明顯相關</strong>（上方 r 因變異極小而不具統計意義，僅供參考）。
+            真正的結論是：<strong>全班在協作這件事上都做得很扎實</strong>；加分項肯定了這份共同的努力，子鼠（呼吸道）以 A/B/C/D 四階段結構為唯一標竿。
           </div>
         </div>
       </div>
@@ -358,12 +360,23 @@ const SESSION='20260611-9X9Y';
 const FIREBASE={apiKey:"AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",authDomain:"cmu-11402-pathophysiology.firebaseapp.com",databaseURL:"https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"cmu-11402-pathophysiology",storageBucket:"cmu-11402-pathophysiology.firebasestorage.app",messagingSenderId:"367793212618",appId:"1:367793212618:web:c11acedc50ce6fc3897833"};
 const ZODIAC=['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
 
-// Teamwork evidence presence (from PDF pdftotext signals): [學號名單,分工表,研究歷程,討論照片,時間線]
-const EV_LABELS=['學號名單','分工表','研究歷程','討論照片','時間線'];
+// Teamwork evidence presence — REVISED 2026-06-13 by viewing rendered pages
+// (names count = IDs; image/diagram process & division credited; photo type judged)
+// [貢獻名單(學號或姓名), 分工表, 研究歷程, 討論照片/截圖, 時間線/階段]
+const EV_LABELS=['貢獻名單','分工表','研究歷程','討論照片','時間線'];
 const TEAM_EV={
-  '子鼠':[1,1,1,0,1], '丑牛':[0,1,1,1,0], '寅虎':[0,1,1,0,0], '卯兔':[0,0,1,0,1],
-  '辰龍':[1,1,1,0,0], '巳蛇':[0,1,1,0,0], '午馬':[1,1,1,1,1], '未羊':[0,1,1,0,0],
-  '申猴':[1,1,1,0,0], '酉雞':[1,1,1,0,0], '戌狗':[0,1,0,0,1], '亥豬':[0,0,0,0,0],
+  '子鼠':[1,1,1,1,1], // 呼吸道: 作者貢獻表+A/B/C/D四階段+時間線+工具誠實標註
+  '丑牛':[1,1,1,1,0], // 高血脂: 名單+分工+歷程+線上&實體討論照片
+  '寅虎':[1,1,1,1,0], // ALS: 作者貢獻表(學號+姓名)+討論截圖
+  '卯兔':[1,1,1,1,1], // 胰臟癌: 色彩分區分配表+歷程+帶時戳討論截圖+時間線
+  '辰龍':[1,1,1,0,0], // 糖尿護腎: 22人成員分工一覽(姓名+學號+任務)
+  '巳蛇':[1,1,1,1,0], // HD: Authors'contribution(學號+姓名)+討論截圖製作
+  '午馬':[1,1,1,1,1], // MG: 完整名單+討論照片+時間線
+  '未羊':[1,1,1,0,0], // 阿茲病因: 22人Authors'contribution(學號+姓名+任務)
+  '申猴':[1,1,1,0,0], // ATC: 完整作者貢獻表(20學號)
+  '酉雞':[1,1,1,0,0], // SMA: Authors'contribution(學號+姓名+任務)
+  '戌狗':[1,1,1,0,1], // 阿茲治療: 7段命名分工表(姓名)+時間線
+  '亥豬':[1,1,1,0,0], // 糖尿βcell: 完整分工表(18+學號+姓名+任務)
 };
 
 // ── AI evaluation data (keyed by topic) ───────────────────────────────────
