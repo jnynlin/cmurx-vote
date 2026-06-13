@@ -163,7 +163,7 @@
             <div class="lens-bar-wrap"><div class="lens-bar" :style="barAI(sel)"></div></div>
             <span class="lens-tag" style="color:var(--accent-l);">AI {{ aiOf(sel).base.toFixed(2) }} / 5</span>
           </div>
-          <div class="lens-detail">rubric 一致性評讀（選題/病理/視覺/整體）</div>
+          <div class="lens-detail">綜合選題、病理、視覺、整體四個面向的一致性評估</div>
         </div>
 
         <!-- Teamwork bonus -->
@@ -298,7 +298,7 @@
           <span style="min-width:64px;font-weight:700;font-size:13px;">{{ c.n }}/12 ({{ c.pct }}%)</span>
         </div>
         <div class="note" style="margin-top:8px;">
-          經逐頁實際檢視：<strong>全班 12 組皆備有完整貢獻名單（學號或姓名）＋分工表＋研究歷程（各 100%）</strong>——團隊合作 documentation 是全班共同強項。
+          經逐頁實際檢視：<strong>全班 12 組皆備有完整貢獻名單（學號或姓名）＋分工表＋研究歷程（各 100%）</strong>——團隊合作的紀錄是全班共同強項。
           差異主要在<strong>討論照片/截圖（50%）</strong>與<strong>時間線/階段（33%）</strong>——有附者額外呈現了「真實協作過程」。
         </div>
       </div>
@@ -354,7 +354,7 @@
         <div class="sec-title"><i class="fa-solid fa-users-between-lines"></i>任務分配均勻度（真分工 vs 名義分工）</div>
         <div class="note" style="margin-bottom:10px;">
           分工表的<strong>任務指派粒度</strong>：每人/每段是否有實質專責，還是多數僅列「參與討論」。
-          ⚠ 此為<strong>documentation 粒度</strong>，非實際貢獻——「參與討論」可能是謙虛自述，不代表沒出力。<strong>不影響團隊合作評分</strong>，僅供解讀。
+          ⚠ 此為<strong>分工紀錄的詳細程度</strong>，非實際貢獻——「參與討論」可能是謙虛自述，不代表沒出力。<strong>不影響團隊合作評分</strong>，僅供解讀。
         </div>
         <table>
           <thead><tr><th>組別</th><th>分級</th><th>分工粒度</th></tr></thead>
@@ -711,10 +711,10 @@ createApp({
       const best=keys.reduce((a,b)=>n[b]>n[a]?b:a);
       const map={'同學共鳴':'同學給予高度共鳴——你們的海報在全班眼中很有吸引力。',
                  '學術深度':'評審肯定你們的學術深度與病生理正確性——內容紮實。',
-                 '系統評估':'系統評讀顯示你們在 rubric 各面向均衡且完整。'};
+                 '系統評估':'在選題、病理、視覺、整體四個面向都表現得均衡而完整。'};
       const a=aiOf(z);
       let extra='';
-      if(a&&a.bonus>0.3) extra=' 團隊合作documentation 也非常完整，是協作的好示範。';
+      if(a&&a.bonus>0.3) extra=' 你們的分工與討論紀錄也很完整，是團隊合作的好示範。';
       return map[best]+extra;
     };
     const growthText=(z)=>{
@@ -722,7 +722,7 @@ createApp({
       const worst=keys.reduce((a,b)=>n[b]<n[a]?b:a);
       const map={'同學共鳴':'可在視覺吸引力與第一眼溝通上再加強，讓同學在快速瀏覽時更容易被吸引。',
                  '學術深度':'病生理機轉的因果鏈可再深化，補強分子層次與藥物作用機制的正確性。',
-                 '系統評估':'整體呈現的完整度與面向均衡可再提升。'};
+                 '系統評估':'整體呈現的完整度與各面向的均衡可再加強。'};
       const a=aiOf(z);
       let extra='';
       if(a){ const dn=['選題需求','病生理深度','視覺表達','整體印象'][a.dims.indexOf(Math.min(...a.dims))];
