@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>各組綜合回饋 — Zodiac Ops 2026</title>
+<style>
+  :root{
+    --bg:#faf9f7;--surface:#fff;--border:#e7e3dc;--text:#1a1812;--text2:#3d3928;--muted:#7a7060;--faint:#a8a090;
+    --primary:#4338ca;--primary-soft:#eef2ff;--ok:#15803d;--ok-soft:#f0fdf4;
+    --gold:#b8860b;--gold-soft:#fdf8ed;--accent:#92400e;--accent-soft:#fffbeb;--danger:#b91c1c;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Serif TC','Georgia',serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:15px;}
+  .page{max-width:780px;margin:0 auto;padding:48px 28px 90px;}
+  .head{text-align:center;margin-bottom:14px;}
+  .head .badge{display:inline-block;font-family:system-ui,sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:4px 14px;margin-bottom:14px;}
+  .head h1{font-size:25px;font-weight:800;letter-spacing:-.3px;}
+  .head .sub{font-size:13px;color:var(--muted);font-family:system-ui,sans-serif;margin-top:6px;}
+  .intro{background:var(--primary-soft);border:1px solid #c7d2fe;border-radius:12px;padding:14px 18px;margin:24px 0 30px;font-size:13px;color:var(--text2);line-height:1.75;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 26px;margin-bottom:20px;}
+  .card-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:14px;}
+  .gnum{font-family:system-ui,sans-serif;font-size:12px;font-weight:800;color:#fff;background:var(--primary);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .zname{font-size:21px;font-weight:900;}
+  .topic{font-size:14px;color:var(--muted);}
+  .tag{font-family:system-ui,sans-serif;font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;margin-left:auto;}
+
+  .lenses{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;font-family:system-ui,sans-serif;}
+  .lens{font-size:12px;border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--surface);}
+  .lens b{font-weight:800;}
+  .lens .hi{color:var(--ok);} .lens .lo{color:var(--danger);} .lens .mid{color:var(--muted);}
+
+  .sect{margin-bottom:12px;}
+  .sect h4{font-family:system-ui,sans-serif;font-size:12px;font-weight:800;letter-spacing:.03em;margin-bottom:3px;display:flex;align-items:center;gap:6px;}
+  .s-str h4{color:var(--ok);} .s-team h4{color:var(--primary);} .s-grow h4{color:var(--accent);}
+  .sect p{font-size:14px;color:var(--text2);}
+
+  .foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--faint);text-align:center;font-family:system-ui,sans-serif;}
+  @media print{body{background:#fff;}.page{padding:14px;}.card{break-inside:avoid;}}
+  @media(max-width:560px){.tag{margin-left:0;}}
+</style>
+</head>
+<body>
+<div id="app" class="page">
+
+  <div class="head">
+    <div class="badge">藥學系 · Pathophysiology · 2026</div>
+    <h1>各組綜合回饋</h1>
+    <div class="sub">整合同學票選 · 評審評分 · 系統評估 · 團隊協作四個視角</div>
+  </div>
+
+  <div class="intro">
+    這份回饋綜合了四個獨立視角——<strong>同學共鳴</strong>（票選）、<strong>學術深度</strong>（評審）、<strong>系統評估</strong>（AI rubric）、
+    與<strong>團隊協作</strong>（分工/討論紀錄＋個人自評貢獻）。四個視角衡量不同的東西，<strong>「不一致」本身就是最值得思考的回饋</strong>。
+    排名僅供參考，重點在各組的獨特強項與下一步的成長空間。
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="foot">
+    Zodiac Ops 2026 · 中國醫藥大學藥學系 Pathophysiology · 綜合回饋（同學票選／評審／系統評估／團隊協作）
+  </div>
+
+</div>
+
+<script>
+// 學生票選與評審名次為相對排序（穩定）；z 為統計顯著度（>+2 顯著高人氣 / <-2 顯著低）
+const G=[
+ {n:1,z:'子鼠',topic:'呼吸道感染 COVID-19＋TB',tag:['團隊協作典範','--ok-soft','var(--ok)'],
+  stu:'#11 (z −2.4)',stuC:'lo',tea:'#12 (2.23)',teaC:'lo',ai:'3.67',team:'5.0 ★',
+  str:'你們把一個跨兩種疾病的複雜主題完整整合，並誠實標註了 AI 工具的使用——這份坦率與系統性難能可貴。',
+  teamtxt:'全班唯一用「泳道圖（Swimlane）」呈現協作歷程：全體／A／B／C／D 五條泳道對應時間軸，每個節點都有時戳與任務。這是專案管理等級的協作視覺化，是全班的標竿。',
+  grow:'海報的內容深度與第一眼視覺吸引力還有成長空間。但你們示範了一個團隊「如何一起完成」的最佳樣貌——這份協作能力會走得很遠。'},
+
+ {n:2,z:'丑牛',topic:'高血脂症',tag:['選題洞察＋高人氣','--ok-soft','var(--ok)'],
+  stu:'#2 (z +2.6) 顯著',stuC:'hi',tea:'#5 (3.75)',teaC:'mid',ai:'3.67',team:'4.5',
+  str:'「無症狀、無法自測、每 3 人有 1 人」的隱形殺手框架極具洞察，成功打動同學（票選顯著第二）。選題切入是全場最佳之一。',
+  teamtxt:'附上線上＋實體討論照片，是少數記錄了面對面聚會的組，協作真實感強。',
+  grow:'內容紮實，但資訊密度偏高、視覺層次與留白可再加強，讓重點更跳出來。'},
+
+ {n:3,z:'寅虎',topic:'漸凍症 ALS',tag:['民主協作','--ok-soft','var(--ok)'],
+  stu:'#3 (z +1.6)',stuC:'mid',tea:'#7 (3.60)',teaC:'mid',ai:'4.08',team:'5.0 ★',
+  str:'同學票選前段、系統評估亦佳，藥物（Riluzole／Tofersen／Edaravone）資訊結構清楚。',
+  teamtxt:'最高規格協作佐證之一：露臉視訊會議（6/3）＋主題票選紀錄——你們用投票民主地決定研究主題，是很成熟的團隊運作示範。',
+  grow:'技術／實作人力較稀缺（僅 2 位），視覺製作可再補強，讓紮實的內容有更亮眼的呈現。'},
+
+ {n:4,z:'卯兔',topic:'胰臟癌',tag:['內容實力派','--ok-soft','var(--ok)'],
+  stu:'#4 (z +1.4)',stuC:'mid',tea:'#2 (4.12)',teaC:'hi',ai:'3.75',team:'4.5',
+  str:'高死亡率、早期難診斷的強選題，獲評審第二高肯定——三方平均排名靠前，是內容紮實的實力派。',
+  teamtxt:'色彩分區的工作分配表＋帶時間戳的線上討論截圖（5/29、5/30），協作脈絡清楚。',
+  grow:'資訊密度偏高、版面留白稍弱（系統評估視覺面向較低），可讓畫面更透氣。'},
+
+ {n:5,z:'辰龍',topic:'糖尿病：護腎・顧神經',tag:['視覺亮眼，待凝聚','--accent-soft','var(--accent)'],
+  stu:'#5 (z +1.3)',stuC:'mid',tea:'#11 (2.90)',teaC:'lo',ai:'4.17',team:'4.5',
+  str:'視覺設計吸睛（同學票進前段），聚焦腎病變與神經病變的未滿足需求定位精準，並加入「藥師觀點」切合課程。',
+  teamtxt:'附 LINE 語音通話截圖（18 人），記錄了團隊的同步討論。',
+  grow:'兩個成長點：①病生理機轉的深度（評審較保守）；②22 人的大團隊中，實質研究參與較集中（自評僅 44% 投入文獻/實作、技術人力 2 位）。把大團隊的能量更平均分配，會更有爆發力。'},
+
+ {n:6,z:'巳蛇',topic:'亨丁頓舞蹈症 HD',tag:['機轉論述高手','--ok-soft','var(--ok)'],
+  stu:'#7 (z −0.4)',stuC:'mid',tea:'#3 (4.07)',teaC:'hi',ai:'4.17',team:'4.5',
+  str:'CAG 重複擴增→mHTT 毒性蛋白機轉、ASO 前沿技術論述紮實，獲評審第三。個人投入度高（自評實質參與 81%）。',
+  teamtxt:'完整三欄分工表（工作項目×內容×成員，含報告統籌）＋大量討論截圖，分工是全班最細緻的之一。',
+  grow:'罕病主題同學較難第一時間共鳴，可加強疾病與日常生活的連結，讓更多人有感。'},
+
+ {n:7,z:'午馬',topic:'重症肌無力 MG',tag:['投入度全場第一','--ok-soft','var(--ok)'],
+  stu:'#10 (z −2.0)',stuC:'lo',tea:'#9 (3.03)',teaC:'mid',ai:'3.75',team:'4.5',
+  str:'全班最高的實質研究參與率（自評 94%）、人均投入也最高——這是一個每個人都真的下去做的組。免疫機轉與藥物設計策略正確。',
+  teamtxt:'2.5 小時的視訊會議＋共享螢幕一起製作海報，投入時數全場數一數二。',
+  grow:'這麼高的投入，值得轉化成更高的辨識度——可在選題獨特性或視覺亮點上再突破，讓努力被更多人看見。'},
+
+ {n:8,z:'未羊',topic:'阿茲海默症（病因與風險）',tag:['待凝聚的大團隊','--accent-soft','var(--accent)'],
+  stu:'#8 (z −0.4)',stuC:'mid',tea:'#6 (3.68)',teaC:'mid',ai:'3.67',team:'4.5',
+  str:'阿茲海默病因與風險因子整理清楚、視覺討喜，評審評價中段穩定。組長（黃湘崴）明確負責分工協調，是稱職的領導。',
+  teamtxt:'附 LINE 群組討論截圖，協作有記錄。',
+  grow:'兩點可成長：①主題與另一阿茲組重疊，差異化可再強；②22 人但實質研究參與較集中（自評 50%、技術人力 2 位），大團隊的能量可更廣泛調動。'},
+
+ {n:9,z:'申猴',topic:'甲狀腺未分化癌 ATC',tag:['最深學術企圖','--gold-soft','var(--gold)'],
+  stu:'#12 (z −3.5)',stuC:'lo',tea:'#10 (3.02)',teaC:'mid',ai:'4.58 ★最高',
+  team:'4.5',
+  str:'系統評估全場最高分——以 DNA 雙螺旋為軸貫穿版面，分子機轉（BRAF/MEK 雙標靶、TERT 端粒、mTKI、NGS 導向）達研究所級深度，一位評審也給予高分。自評實質研究參與率 90%（全場第二），是真的很多人在鑽研。',
+  teamtxt:'完整 20 人作者貢獻表，分工明確。',
+  grow:'這是「深度 ≠ 第一眼吸引力」最鮮明的一組：你們的學術功力在能細讀的人眼中極為突出，但對快速瀏覽的同學門檻偏高（票選偏低）。下一步——把頂尖的內容，用更親近的視覺敘事包裝，讓深度被更多人接住。你們的硬實力毋庸置疑。'},
+
+ {n:10,z:'酉雞',topic:'脊髓性肌肉萎縮症 SMA',tag:['評審心中第一','--gold-soft','var(--gold)'],
+  stu:'#9 (z −1.6)',stuC:'mid',tea:'#1 (4.28) 最高',teaC:'hi',ai:'4.17',team:'4.5',
+  str:'評審加權分全場第一！選題深度（Zolgensma 基因治療前沿）、病理正確性、視覺呈現三項全面領先，是老師心中最具學術完整度的作品。',
+  teamtxt:'1 小時視訊會議（22:00-23:00）＋完整分工，同步協作扎實。',
+  grow:'學術扎實但同學票偏低——可在 Padlet 的第一眼吸引力與標題溝通上強化，讓老師看見的優秀也被更多同學看見。'},
+
+ {n:11,z:'戌狗',topic:'阿茲海默症（治療）',tag:['全方位均衡領頭','--gold-soft','var(--gold)'],
+  stu:'#1 (z +3.6) 最高',stuC:'hi',tea:'#4 (3.92)',teaC:'hi',ai:'4.50',team:'5.0 ★',
+  str:'唯一同時在「同學共鳴」（票選第一）、「學術品質」（評審第四）、「團隊協作」（5.0）三方都名列前茅的組。視覺完成度最高之一、新藥（Leqembi／Kisunla／Aduhelm）機轉清楚。',
+  teamtxt:'全班最高規格的真實協作佐證：深夜 23:00 的露臉視訊會議截圖、7 段命名分工表（19 人）、完整討論紀錄與製作時間線。',
+  grow:'幾乎沒有明顯弱點。若要再上一層，可讓更多成員深入內容研究（自評實質參與 67%），把這份高人氣作品的學術厚度再墊高。'},
+
+ {n:12,z:'亥豬',topic:'糖尿病：β 細胞修復',tag:['完整紮實的中堅','--ok-soft','var(--ok)'],
+  stu:'#6 (z 0.0)',stuC:'mid',tea:'#8 (3.57)',teaC:'mid',ai:'4.00',team:'4.5',
+  str:'同時涵蓋 T1D／T2D 並指向「根本治療（β 細胞修復）」的企圖心佳，kawaii 視覺討喜、架構完整，三方評價都在中段穩定。',
+  teamtxt:'完整 18 人分工表（學號＋姓名＋任務）＋ LINE 語音通話＋清楚的階段時間線（5/29 決定主題→5/30 分工→6/11 製作）。',
+  grow:'β 細胞修復療法的機轉深度可再強化，讓「根本治療」的企圖有更扎實的論述支撐。'},
+];
+
+const cards=document.getElementById('cards');
+G.forEach(g=>{
+  const d=document.createElement('div'); d.className='card';
+  d.innerHTML=
+    `<div class="card-head">
+       <span class="gnum">${g.n}</span>
+       <span class="zname">${g.z}</span>
+       <span class="topic">${g.topic}</span>
+       <span class="tag" style="background:var(${g.tag[1]});color:${g.tag[2]};">${g.tag[0]}</span>
+     </div>
+     <div class="lenses">
+       <span class="lens">同學共鳴 <b class="${g.stuC}">${g.stu}</b></span>
+       <span class="lens">學術深度 <b class="${g.teaC}">評審 ${g.tea}</b></span>
+       <span class="lens">系統評估 <b>AI ${g.ai}</b></span>
+       <span class="lens">團隊協作 <b style="color:var(--primary);">${g.team}</b></span>
+     </div>
+     <div class="sect s-str"><h4>✦ 強項</h4><p>${g.str}</p></div>
+     <div class="sect s-team"><h4>🤝 團隊協作</h4><p>${g.teamtxt}</p></div>
+     <div class="sect s-grow"><h4>🌱 成長建議</h4><p>${g.grow}</p></div>`;
+  cards.appendChild(d);
+});
+</script>
+</body>
+</html>
