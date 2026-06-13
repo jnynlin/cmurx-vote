@@ -235,6 +235,62 @@
       </div>
     </div>
 
+    <!-- Non-voter profiling -->
+    <div class="card full" style="margin-top:14px;" v-if="notVotedCount>0">
+      <h3><i class="fa-solid fa-user-magnifying-glass"></i>未投票側寫（{{ notVotedCount }} 人）</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="padding:12px 14px;border-radius:10px;background:var(--accent-soft);border:1px solid #fde68a;">
+          <div style="font-size:24px;font-weight:900;color:var(--accent);">🔒 {{ nonVoterCats.unlocked }}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;">未解鎖型</div>
+          <div style="font-size:11px;color:var(--muted);">沒完成展覽 → 投票卡未出現（不能投，非不想投）</div>
+        </div>
+        <div style="padding:12px 14px;border-radius:10px;background:var(--primary-soft);border:1px solid #c7d2fe;">
+          <div style="font-size:24px;font-weight:900;color:var(--primary);">⏭ {{ nonVoterCats.skipped }}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;">已解鎖未投</div>
+          <div style="font-size:11px;color:var(--muted);">完成展覽、有上線，但未按投票（時機/遺漏）</div>
+        </div>
+        <div :style="`padding:12px 14px;border-radius:10px;background:${nonVoterCats.ghost?'var(--danger-soft)':'var(--surface2)'};border:1px solid ${nonVoterCats.ghost?'#fca5a5':'var(--border)'};`">
+          <div style="font-size:24px;font-weight:900;" :style="{color:nonVoterCats.ghost?'var(--danger)':'var(--faint)'}">👻 {{ nonVoterCats.ghost }}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;">消極型</div>
+          <div style="font-size:11px;color:var(--muted);">從未上線、未參與</div>
+        </div>
+      </div>
+      <div class="note" style="margin-bottom:10px;">
+        <strong>關鍵：</strong>投票卡只在「展覽任務完成」後出現。<strong>未解鎖型</strong>是要催「完成展覽」（不是催投票）；
+        <strong>已解鎖未投</strong>才是真正可直接提醒投票者。
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr>
+            <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">類型</th>
+            <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">組別</th>
+            <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">角色</th>
+            <th style="text-align:center;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">展覽</th>
+            <th style="text-align:center;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">任務</th>
+            <th style="text-align:center;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">在線</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="(r,i) in nonVoters" :key="i" style="border-bottom:1px solid var(--border);">
+              <td style="padding:6px 10px;">
+                <span v-if="r.cat==='unlocked'" style="color:var(--accent);font-weight:700;">🔒 未解鎖</span>
+                <span v-else-if="r.cat==='skipped'" style="color:var(--primary);font-weight:700;">⏭ 已解鎖未投</span>
+                <span v-else style="color:var(--danger);font-weight:700;">👻 消極</span>
+              </td>
+              <td style="padding:6px 10px;font-weight:700;">{{ r.z }}</td>
+              <td style="padding:6px 10px;">{{ r.role==='leader'?'組長':'組員' }}</td>
+              <td style="padding:6px 10px;text-align:center;">{{ r.gallery?'✓':'—' }}</td>
+              <td style="padding:6px 10px;text-align:center;color:var(--muted);">{{ r.ntasks }}/6</td>
+              <td style="padding:6px 10px;text-align:center;">{{ r.online?'🟢':r.ever?'⚪':'✗' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note" style="margin-top:8px;">
+        未投票者組別分布：<span v-for="([z,n],i) in nonVoterByGroup" :key="z">{{ z }}{{ n }}人<span v-if="i<nonVoterByGroup.length-1">、</span></span>
+        （🟢在線 ⚪曾上線 ✗從未上線）
+      </div>
+    </div>
+
     <div class="card full" style="margin-top:14px;">
       <h3><i class="fa-solid fa-clipboard-check"></i>結案檢核清單</h3>
       <div class="check" v-for="c in checklist" :key="c.label">
@@ -291,6 +347,30 @@ createApp({
     const notVotedCount = computed(()=> Object.keys(students.value).filter(id=>!votedIds.value.has(id)).length);
     const outsideRoster = computed(()=>{ const r=new Set(Object.keys(students.value)); return Object.keys(votes.value).filter(id=>!r.has(id)).length; });
     const onlineNotVoted = computed(()=>{ const t=now.value; return Object.entries(students.value).filter(([id,s])=>!votedIds.value.has(id)&&s.lastSeen&&(t-s.lastSeen<40000)).length; });
+    // ── Non-voter profiling: gallery gate is the key axis (voting only unlocks after gallery.done) ──
+    const TASK_KEYS=['calibration','notebook','slido','forms','assignment','gallery'];
+    const nonVoters = computed(()=>{
+      const t=now.value;
+      return Object.entries(students.value).filter(([id])=>!votedIds.value.has(id)).map(([id,s])=>{
+        const tk=s.tasks||{}, p=s.profile||{};
+        const gallery=!!(tk.gallery&&tk.gallery.done);
+        const ntasks=TASK_KEYS.reduce((n,k)=>n+((tk[k]&&tk[k].done)?1:0),0);
+        const ever=!!(s.lastSeen&&s.lastSeen>0);
+        const online=!!(s.lastSeen&&(t-s.lastSeen<40000));
+        const cat = !ever ? 'ghost' : !gallery ? 'unlocked' : 'skipped';
+        return {id, z:p.Zodiac||'?', role:p.Role||'member', gallery, ntasks, ever, online, cat};
+      }).sort((a,b)=>a.ntasks-b.ntasks);
+    });
+    const nonVoterCats = computed(()=>{
+      const c={unlocked:0,skipped:0,ghost:0};
+      nonVoters.value.forEach(r=>c[r.cat]++);
+      return c;
+    });
+    const nonVoterByGroup = computed(()=>{
+      const g={};
+      nonVoters.value.forEach(r=>{g[r.z]=(g[r.z]||0)+1;});
+      return Object.entries(g).sort((a,b)=>b[1]-a[1]);
+    });
     const lastVoteTs = computed(()=>{ const ts=Object.values(votes.value).map(v=>v.submittedAt||0).filter(Boolean); return ts.length?Math.max(...ts):0; });
     const lastVoteStr = computed(()=> lastVoteTs.value? new Date(lastVoteTs.value).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'—');
     const lastVoteAgoMin = computed(()=> lastVoteTs.value?(now.value-lastVoteTs.value)/60000:99999);
@@ -338,7 +418,8 @@ createApp({
     });
     onUnmounted(()=>{ if(timer)clearInterval(timer); });
 
-    return {SESSION,state,votingClosed,voteCount,rosterCount,totalPts,integrityOK,notVotedCount,outsideRoster,onlineNotVoted,lastVoteStr,lastVoteAgoMin,lastVoteAgoStr,judgesSubmitted,checklist,canClose,verdictWhy,snapshot,refreshJudges};
+    return {SESSION,state,votingClosed,voteCount,rosterCount,totalPts,integrityOK,notVotedCount,outsideRoster,onlineNotVoted,lastVoteStr,lastVoteAgoMin,lastVoteAgoStr,judgesSubmitted,checklist,canClose,verdictWhy,snapshot,refreshJudges,
+      nonVoters,nonVoterCats,nonVoterByGroup};
   }
 }).mount('#app');
 </script>
