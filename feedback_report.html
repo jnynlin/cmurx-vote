@@ -703,7 +703,8 @@ createApp({
     // ── ROOT: exclude debug/test accounts (S1101, S1102, S111000999…) from ALL analysis ──
     const isDebug = (uid,sid)=>{ const s=String(sid||uid||''); return !/^S?11[1-4]003\d{3,4}$/.test(s); };
     const stripDebug = (obj)=>{ const o={}; Object.entries(obj).forEach(([k,v])=>{ if(!isDebug(k, v&&v.profile&&v.profile.StudentId))o[k]=v; }); return o; };
-    const tab=ref('private');
+    const _qtab=new URLSearchParams(location.search).get('tab');
+    const tab=ref(['private','honor','team','trait'].includes(_qtab)?_qtab:'private');
     const sel=ref('');
     const loadState=ref('loading');
     const stu=ref({});   // zodiac → {pts, z}
