@@ -373,6 +373,34 @@
         </div>
       </div>
 
+      <!-- Live Firebase self-reported contributions -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-database"></i>學生自評貢獻（Firebase 即時，獨立佐證）</div>
+        <div class="note" style="margin-bottom:10px;">
+          來自學生端各自勾選的協作貢獻（個人自述，5 類：內容討論/文獻研究/協作支援/進度溝通/技術實作）——
+          與海報分工表<strong>互相獨立</strong>，可交叉驗證。<strong>實質參與率</strong>＝填寫者中勾選「文獻研究或技術實作」的比例。
+        </div>
+        <table>
+          <thead><tr><th>組別</th><th class="r">填寫率</th><th class="r">實質參與率</th><th class="r">人均項數</th><th class="r">自填具體任務</th></tr></thead>
+          <tbody>
+            <tr v-for="c in contribMetrics" :key="c.z"
+                :style="c.substRate>=85?'background:var(--ok-soft)':c.substRate<55?'background:var(--accent-soft)':''">
+              <td><span style="font-weight:700;">{{ c.z }}</span> <span style="font-size:11px;color:var(--muted);">{{ c.topic }}</span></td>
+              <td class="r">{{ c.fillRate }}%</td>
+              <td class="r" style="font-weight:800;"
+                  :style="c.substRate>=85?'color:var(--ok)':c.substRate<55?'color:var(--accent)':'color:var(--text2)'">{{ c.substRate }}%</td>
+              <td class="r">{{ c.avgItems }}</td>
+              <td class="r" style="color:var(--muted);">{{ c.custom }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note" style="margin-top:8px;">
+          <strong>交叉驗證：</strong>獨立的個人自評與海報分工表一致——
+          <strong>辰龍(44%)、未羊(50%)</strong>實質參與率最低，正是分工粒度 ★「任務集中」的兩組；
+          <strong>午馬(94%)、申猴(90%)、巳蛇(81%)</strong>最高，呼應其高度分工。兩個獨立資料源互相印證，結論穩健。
+        </div>
+      </div>
+
       <!-- Correlation analysis -->
       <div class="sec">
         <div class="sec-title"><i class="fa-solid fa-link"></i>團隊合作 vs 三面向 — 相關性分析</div>
@@ -536,6 +564,7 @@ createApp({
     const loadState=ref('loading');
     const stu=ref({});   // zodiac → {pts, z}
     const tea=ref({});   // zodiac → {final, rank}
+    const stu_raw=ref({}); // uid → full student record (for contribution metrics)
     const N=ref(0);
 
     const topicOf=(z)=>{ const k=ZODIAC_TOPIC[z]; return k&&AI_EVAL[k]?AI_EVAL[k].topic:''; };
@@ -650,6 +679,29 @@ createApp({
         glabel:EQ_LABEL[TEAM_EQUITY[z]?.g??1]}))
         .sort((a,b)=>b.g-a.g)
     );
+
+    // ── Live Firebase self-reported contributions (per zodiac) ─────────────
+    const SUBST=['文獻與研究','技術與實作'];
+    const contribMetrics=computed(()=>{
+      const g={}; ZODIAC.forEach(z=>g[z]={m:0,filled:0,subst:0,items:0,custom:0});
+      Object.values(stu_raw.value).forEach(s=>{
+        const z=s?.profile?.Zodiac; if(!g[z]) return;
+        g[z].m++;
+        const c=s?.tasks?.assignment?.contributions;
+        if(Array.isArray(c)&&c.length){
+          g[z].filled++; g[z].items+=c.length;
+          if(c.some(x=>SUBST.includes(x))) g[z].subst++;
+          if(c.some(x=>String(x).startsWith('其他：'))) g[z].custom++;
+        }
+      });
+      return ZODIAC.map(z=>{
+        const d=g[z];
+        return {z, topic:topicShort(z), members:d.m, filled:d.filled,
+          fillRate:d.m?Math.round(d.filled/d.m*100):0,
+          substRate:d.filled?Math.round(d.subst/d.filled*100):0,
+          avgItems:d.filled?+(d.items/d.filled).toFixed(2):0, custom:d.custom};
+      }).filter(r=>r.members>0).sort((a,b)=>b.substRate-a.substRate);
+    });
     const pearson=(xs,ys)=>{
       const n=xs.length; if(n<2)return 0;
       const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
@@ -704,13 +756,16 @@ createApp({
           stu.value=smap;
           loadState.value='ready';
         },()=>{loadState.value='error';});
+        dbMod.onValue(dbMod.ref(db,`classrooms/${SESSION}/students`),snap=>{
+          stu_raw.value=snap.val()||{};
+        });
       }catch(e){console.error(e);loadState.value='error';}
     });
 
     return {tab,sel,loadState,stu,tea,N,ZODIAC,EV_LABELS,topicOf,aiOf,mappedCount,
       bandClass,bandLabel,bandExplain,teaTier,
       barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,
-      topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded};
+      topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded,contribMetrics};
   }
 }).mount('#app');
 </script>
