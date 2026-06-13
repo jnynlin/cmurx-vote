@@ -282,16 +282,19 @@ Object.values(AI_EVAL).forEach(d=>{const[c,de,cr,t]=d.dims;d.base=+((c+de+cr)/3*
 // ── ⚠ FILL THIS: zodiac → AI topic key mapping ───────────────────────────
 // Leave '' for unknown. Student & teacher work regardless; AI lens shows when mapped.
 const ZODIAC_TOPIC = {
-  // ── confirmed from poster group-number labels (生肖=組號 natural order) ──
-  '丑牛':'Lipid',     // 第二組 高血脂（poster text）
-  '辰龍':'DM_kidney', // 第五組 糖尿病護腎（poster text）
-  '申猴':'ATC',       // 第九組 甲狀腺未分化癌（poster text）
-  '戌狗':'Alz_tx',    // 第11組 阿茲海默治療（poster text）
+  // 生肖 = 組號 natural order (子鼠1 … 亥豬12), confirmed by teacher
+  '子鼠':'Resp',      // 第1組  呼吸道感染 COVID-19+TB
+  '丑牛':'Lipid',     // 第2組  高血脂（poster text「第二組」）
+  '寅虎':'ALS',       // 第3組  漸凍症（⚠ 暫定：user 給 2 但 2=高血脂，3 為唯一空號）
+  '卯兔':'Pancreatic',// 第4組  胰臟癌
+  '辰龍':'DM_kidney', // 第5組  糖尿病護腎（poster text「第五組」）
+  '巳蛇':'HD',        // 第6組  亨丁頓舞蹈症
+  '午馬':'MG',        // 第7組  重症肌無力
+  '未羊':'Alz_cause', // 第8組  阿茲海默（病因版）
+  '申猴':'ATC',       // 第9組  甲狀腺未分化癌（poster text「第九組」）
+  '酉雞':'SMA',       // 第10組 脊髓性肌肉萎縮症
+  '戌狗':'Alz_tx',    // 第11組 阿茲海默（治療版，poster text「第11組」）
   '亥豬':'DM_bcell',  // 第12組 糖尿病β細胞（檔名 + 視覺）
-  // ── remaining 7: poster has no printed group#, awaiting confirmation ──
-  // topics to place: Resp 呼吸道 / HD 亨丁頓 / MG 重症肌無力 / ALS 漸凍 /
-  //                  SMA 脊髓 / Alz_cause 阿茲病因 / Pancreatic 胰臟癌
-  '子鼠':'', '寅虎':'', '卯兔':'', '巳蛇':'', '午馬':'', '未羊':'', '酉雞':'',
 };
 
 createApp({
