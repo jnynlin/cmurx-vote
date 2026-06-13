@@ -115,6 +115,7 @@
     <div class="tabbar">
       <button :class="{active:tab==='private'}" @click="tab='private'"><i class="fa-solid fa-user-group"></i>個別回饋</button>
       <button :class="{active:tab==='honor'}" @click="tab='honor'"><i class="fa-solid fa-award"></i>公開榮譽榜</button>
+      <button :class="{active:tab==='team'}" @click="tab='team'"><i class="fa-solid fa-people-group"></i>團隊合作分析</button>
     </div>
 
     <!-- ═══ PRIVATE FEEDBACK ═══ -->
@@ -247,6 +248,102 @@
         最佳視覺＝AI 視覺表達分最高；全方位＝同學共鳴／學術深度／系統評估三項標準化後總和最高。
       </div>
     </div>
+
+    <!-- ═══ TEAMWORK ANALYSIS ═══ -->
+    <div v-show="tab==='team'">
+
+      <!-- Evidence matrix -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-clipboard-check"></i>團隊合作佐證矩陣</div>
+        <div class="note" style="margin-bottom:12px;">
+          依各組 PDF 中可擷取的協作佐證評定（5 類）。團隊合作為<strong>加分項</strong>：加分 = max(0,(分−3)×0.25)，上限 +0.5，基準 3 分不加不減。
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>組別</th>
+              <th class="r" v-for="l in EV_LABELS" :key="l" style="text-align:center;">{{ l }}</th>
+              <th class="r" style="text-align:center;">涵蓋</th>
+              <th class="r" style="text-align:center;">團隊分</th>
+              <th class="r" style="text-align:center;color:var(--ok);">加分</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in teamRanked" :key="r.z">
+              <td>
+                <span style="font-weight:700;">{{ r.z }}</span>
+                <span style="font-size:11px;color:var(--muted);margin-left:4px;">{{ topicShort(r.z) }}</span>
+              </td>
+              <td class="c" v-for="(p,i) in r.ev" :key="i">
+                <span v-if="p" style="color:var(--ok);font-weight:800;">✓</span>
+                <span v-else style="color:var(--faint);">—</span>
+              </td>
+              <td class="c" style="font-weight:700;">{{ r.cnt }}/5</td>
+              <td class="c"><span class="band" :class="r.tw>=4.5?'band-hi':r.tw>=3.5?'band-mid':'band-lo'">{{ r.tw }}</span></td>
+              <td class="c" style="color:var(--ok);font-weight:700;">{{ r.bonus>0?'+'+r.bonus.toFixed(2):'—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Coverage -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-chart-simple"></i>各類佐證普及率</div>
+        <div v-for="c in evCoverage" :key="c.label" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <span style="min-width:80px;font-size:13px;font-weight:700;color:var(--text2);">{{ c.label }}</span>
+          <div style="flex:1;height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;">
+            <div :style="{width:c.pct+'%',height:'100%',borderRadius:'6px',background:c.pct>=70?'var(--ok)':c.pct>=40?'var(--accent-l)':'var(--danger)'}"></div>
+          </div>
+          <span style="min-width:64px;font-weight:700;font-size:13px;">{{ c.n }}/12 ({{ c.pct }}%)</span>
+        </div>
+        <div class="note" style="margin-top:8px;">
+          多數組備有分工表與研究歷程（各 83%），但<strong>討論照片（17%）</strong>與<strong>時間線（33%）</strong>較少——這兩項是呈現「真實協作過程」最有力的佐證，可作為下次的提升方向。
+        </div>
+      </div>
+
+      <!-- Correlation analysis -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-link"></i>團隊合作 vs 三面向 — 相關性分析</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="ib" :class="teamCorr.teacher<0?'ib-grow':'ib-strong'">
+            <h4 style="color:var(--text2);">vs 學術深度</h4>
+            <div style="font-size:22px;font-weight:900;" :style="{color:teamCorr.teacher<-0.3?'var(--danger)':teamCorr.teacher>0.3?'var(--ok)':'var(--muted)'}">r = {{ teamCorr.teacher.toFixed(2) }}</div>
+            <div class="note">{{ corrLabel(teamCorr.teacher) }}</div>
+          </div>
+          <div class="ib" :class="teamCorr.student<0?'ib-grow':'ib-strong'">
+            <h4 style="color:var(--text2);">vs 同學共鳴</h4>
+            <div style="font-size:22px;font-weight:900;" :style="{color:teamCorr.student<-0.3?'var(--danger)':teamCorr.student>0.3?'var(--ok)':'var(--muted)'}">r = {{ teamCorr.student.toFixed(2) }}</div>
+            <div class="note">{{ corrLabel(teamCorr.student) }}</div>
+          </div>
+          <div class="ib" style="background:var(--surface2);border:1px solid var(--border);">
+            <h4 style="color:var(--text2);">vs 系統評估</h4>
+            <div style="font-size:22px;font-weight:900;color:var(--muted);">r = {{ teamCorr.ai.toFixed(2) }}</div>
+            <div class="note">{{ corrLabel(teamCorr.ai) }}</div>
+          </div>
+        </div>
+        <div class="ib ib-strong">
+          <h4><i class="fa-solid fa-lightbulb"></i>關鍵洞察：加分機制運作正常</h4>
+          <div class="body">
+            團隊合作與學術品質呈<strong>負相關（r ≈ −0.70）</strong>——documentation 最完整的組，海報品質與人氣反而偏低。
+            這正是「加分項」應有的特性：它獎勵的是<strong>協作過程</strong>這個獨立面向，而非海報成果本身。
+            若團隊分與品質高度正相關，加分就是多餘的重複計分；負相關代表它確實補捉到品質分數看不見的努力，
+            讓<strong>協作認真但成果稍弱</strong>的組（如 子鼠/呼吸道：團隊 5.0 但評審墊底）得到應有的肯定。
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-group teamwork notes -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-comment-dots"></i>各組協作佐證重點</div>
+        <div v-for="r in teamRanked" :key="r.z" style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;">
+          <span style="font-weight:700;">{{ r.z }}</span>
+          <span style="font-size:11px;color:var(--muted);">{{ topicShort(r.z) }}</span>
+          <span class="band" :class="r.tw>=4.5?'band-hi':r.tw>=3.5?'band-mid':'band-lo'" style="margin-left:8px;">{{ r.tw }}</span>
+          <div style="color:var(--text2);margin-top:3px;">{{ r.note }}</div>
+        </div>
+      </div>
+
+    </div>
   </template>
 
 </div>
@@ -260,6 +357,14 @@ const GAS_SECRET='zodiac-2026-cmuh';
 const SESSION='20260611-9X9Y';
 const FIREBASE={apiKey:"AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",authDomain:"cmu-11402-pathophysiology.firebaseapp.com",databaseURL:"https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"cmu-11402-pathophysiology",storageBucket:"cmu-11402-pathophysiology.firebasestorage.app",messagingSenderId:"367793212618",appId:"1:367793212618:web:c11acedc50ce6fc3897833"};
 const ZODIAC=['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+
+// Teamwork evidence presence (from PDF pdftotext signals): [學號名單,分工表,研究歷程,討論照片,時間線]
+const EV_LABELS=['學號名單','分工表','研究歷程','討論照片','時間線'];
+const TEAM_EV={
+  '子鼠':[1,1,1,0,1], '丑牛':[0,1,1,1,0], '寅虎':[0,1,1,0,0], '卯兔':[0,0,1,0,1],
+  '辰龍':[1,1,1,0,0], '巳蛇':[0,1,1,0,0], '午馬':[1,1,1,1,1], '未羊':[0,1,1,0,0],
+  '申猴':[1,1,1,0,0], '酉雞':[1,1,1,0,0], '戌狗':[0,1,0,0,1], '亥豬':[0,0,0,0,0],
+};
 
 // ── AI evaluation data (keyed by topic) ───────────────────────────────────
 const AI_EVAL = {
@@ -385,6 +490,45 @@ createApp({
       };
     });
 
+    // ── Teamwork analysis ─────────────────────────────────────────────────
+    const topicShort=(z)=>{const t=topicOf(z); return t? t.replace(/（.*）/,'').slice(0,8):'';};
+    const teamRanked=computed(()=>
+      ZODIAC.map(z=>{
+        const a=aiOf(z), ev=TEAM_EV[z]||[0,0,0,0,0];
+        return {z, ev, cnt:ev.reduce((s,x)=>s+x,0),
+                tw:a?a.tw:3, bonus:a?a.bonus:0, note:a?a.notes.team:'（待對應）'};
+      }).sort((a,b)=>b.tw-a.tw || b.cnt-a.cnt)
+    );
+    const evCoverage=computed(()=>
+      EV_LABELS.map((label,i)=>{
+        const n=ZODIAC.filter(z=>TEAM_EV[z]?.[i]).length;
+        return {label, n, pct:Math.round(n/12*100)};
+      })
+    );
+    const pearson=(xs,ys)=>{
+      const n=xs.length; if(n<2)return 0;
+      const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+      const num=xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+      const den=Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
+      return den?num/den:0;
+    };
+    const teamCorr=computed(()=>{
+      const zs=ZODIAC.filter(z=>aiOf(z)&&tea.value[z]&&stu.value[z]);
+      if(zs.length<3) return {teacher:0,student:0,ai:0};
+      const tw=zs.map(z=>aiOf(z).tw);
+      return {
+        teacher:+pearson(tw,zs.map(z=>tea.value[z].final)).toFixed(2),
+        student:+pearson(tw,zs.map(z=>stu.value[z].z)).toFixed(2),
+        ai:+pearson(tw,zs.map(z=>aiOf(z).base)).toFixed(2),
+      };
+    });
+    const corrLabel=(r)=>{
+      const a=Math.abs(r);
+      const dir=r>0?'正':'負';
+      const str=a>=0.7?'強':a>=0.4?'中等':a>=0.2?'弱':'幾乎無';
+      return a<0.2?'幾乎無相關（獨立面向）':`${str}${dir}相關`;
+    };
+
     onMounted(async()=>{
       try{
         // Teacher (GAS)
@@ -418,9 +562,10 @@ createApp({
       }catch(e){console.error(e);loadState.value='error';}
     });
 
-    return {tab,sel,loadState,stu,tea,N,ZODIAC,topicOf,aiOf,mappedCount,
+    return {tab,sel,loadState,stu,tea,N,ZODIAC,EV_LABELS,topicOf,aiOf,mappedCount,
       bandClass,bandLabel,bandExplain,teaTier,
-      barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards};
+      barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,
+      topicShort,teamRanked,evCoverage,teamCorr,corrLabel};
   }
 }).mount('#app');
 </script>
