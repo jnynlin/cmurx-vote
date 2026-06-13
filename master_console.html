@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>結案主控台 — Zodiac Ops</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{
+    --bg:#f4f4f5;--surface:#fff;--surface2:#fafafa;--border:#e4e4e7;
+    --text:#18181b;--text2:#3f3f46;--muted:#71717a;--faint:#a1a1aa;
+    --primary:#4f46e5;--primary-soft:#eef2ff;
+    --ok:#15803d;--ok-l:#16a34a;--ok-soft:#f0fdf4;
+    --danger:#dc2626;--danger-l:#ef4444;--danger-soft:#fef2f2;
+    --accent:#b45309;--accent-l:#d97706;--accent-soft:#fffbeb;
+    --gold:#ca8a04;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+  .page{max-width:880px;margin:0 auto;padding:26px 18px 80px;}
+  .hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  .hd h1{font-size:22px;font-weight:800;}
+  .hd .sub{font-size:12px;color:var(--muted);}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ok);font-weight:700;}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--ok-l);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+  /* verdict banner */
+  .verdict{border-radius:16px;padding:24px 28px;margin:20px 0;display:flex;align-items:center;gap:20px;}
+  .verdict .big{font-size:30px;font-weight:900;}
+  .verdict .ico{font-size:48px;}
+  .verdict.go{background:var(--ok-soft);border:2px solid var(--ok-l);color:var(--ok);}
+  .verdict.nogo{background:var(--danger-soft);border:2px solid var(--danger-l);color:var(--danger);}
+  .verdict .why{font-size:13px;font-weight:600;margin-top:4px;opacity:.85;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .card.full{grid-column:1/-1;}
+  .card h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+  .lockstate{font-size:26px;font-weight:900;}
+  .lock-open{color:var(--accent-l);} .lock-closed{color:var(--ok);}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border);}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{color:var(--muted);}
+  .kv .v{font-weight:700;}
+  .big-num{font-size:32px;font-weight:900;color:var(--primary);}
+
+  .check{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px;border-bottom:1px solid var(--border);}
+  .check:last-child{border-bottom:none;}
+  .check .ci{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;color:#fff;}
+  .ci-ok{background:var(--ok-l);} .ci-no{background:var(--danger-l);}
+  .check .ctext{flex:1;}
+  .check .cdetail{font-size:11px;color:var(--muted);}
+
+  .btn{border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+  .btn.primary{background:var(--primary);color:#fff;}
+  .btn.ghost{background:var(--surface);border:1px solid var(--border);color:var(--text2);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;}
+  .pill-ok{background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;}
+  .pill-warn{background:var(--accent-soft);color:var(--accent);border:1px solid #fde68a;}
+  .pill-err{background:var(--danger-soft);color:var(--danger);border:1px solid #fca5a5;}
+
+  .loading{text-align:center;padding:60px 20px;color:var(--muted);}
+  .loading i{font-size:32px;margin-bottom:10px;display:block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px;}
+  .instr{background:var(--accent-soft);border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:12.5px;color:var(--text2);line-height:1.7;}
+  .instr strong{color:var(--accent);}
+  @media(max-width:620px){.grid{grid-template-columns:1fr;}.verdict .big{font-size:24px;}}
+  @media print{.page{padding:10px;}.card,.verdict{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="page">
+
+  <div class="hd">
+    <div>
+      <h1><i class="fa-solid fa-flag-checkered" style="color:var(--primary);margin-right:8px;"></i>結案主控台</h1>
+      <div class="sub">Zodiac Ops 2026 · Session {{ SESSION }} · 即時鎖定狀態 / 完整性 / 名單對帳 / 凍結快照</div>
+    </div>
+    <span v-if="state==='ready'" class="live"><span class="dot"></span> 即時連線中 · 每 {{ tickSec }}s 刷新時間</span>
+  </div>
+
+  <div v-if="state==='loading'" class="loading"><i class="fa-solid fa-circle-notch"></i>載入即時資料中…</div>
+  <div v-else-if="state==='error'" class="loading" style="color:var(--danger);">
+    <i class="fa-solid fa-triangle-exclamation" style="animation:none;"></i> 連線失敗，請確認網路與權限
+  </div>
+
+  <template v-else>
+
+    <!-- VERDICT -->
+    <div class="verdict" :class="canClose ? 'go' : 'nogo'">
+      <div class="ico">{{ canClose ? '✅' : '🚧' }}</div>
+      <div>
+        <div class="big">{{ canClose ? '可結案' : '尚不可結案' }}</div>
+        <div class="why">{{ verdictWhy }}</div>
+      </div>
+    </div>
+
+    <!-- TOP ROW: lock + votes -->
+    <div class="grid">
+      <div class="card">
+        <h3><i class="fa-solid fa-lock"></i>投票鎖定狀態</h3>
+        <div class="lockstate" :class="votingClosed ? 'lock-closed' : 'lock-open'">
+          {{ votingClosed ? '🔒 已關閉' : '🔓 開啟中' }}
+        </div>
+        <div class="note">{{ votingClosed ? '票數已凍結，可定案。' : '⚠ 投票仍開啟，學生可繼續投票，票數會變動。' }}</div>
+        <div class="kv" style="margin-top:10px;"><span class="k">最後一筆投票</span><span class="v">{{ lastVoteStr }}</span></div>
+        <div class="kv"><span class="k">距今</span>
+          <span class="v">
+            <span class="pill" :class="lastVoteAgoMin<10 ? 'pill-err' : lastVoteAgoMin<60 ? 'pill-warn' : 'pill-ok'">
+              {{ lastVoteAgoStr }}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fa-solid fa-square-poll-vertical"></i>投票筆數</h3>
+        <div class="big-num">{{ voteCount }}</div>
+        <div class="kv" style="margin-top:8px;"><span class="k">投出總分</span><span class="v">{{ totalPts }}</span></div>
+        <div class="kv"><span class="k">完整性 (筆數×6)</span>
+          <span class="v">
+            <span class="pill" :class="integrityOK ? 'pill-ok' : 'pill-err'">
+              {{ voteCount }}×6 = {{ voteCount*6 }} {{ integrityOK ? '✓ 無灌票' : '✗ 異常' }}
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- roster reconciliation -->
+    <div class="card full">
+      <h3><i class="fa-solid fa-list-check"></i>名單對帳</h3>
+      <div class="grid" style="margin-bottom:0;">
+        <div>
+          <div class="kv"><span class="k">名單總人數</span><span class="v">{{ rosterCount }}</span></div>
+          <div class="kv"><span class="k">已投票</span><span class="v" style="color:var(--ok);">{{ voteCount }}</span></div>
+          <div class="kv"><span class="k">投票率</span><span class="v">{{ rosterCount ? (voteCount/rosterCount*100).toFixed(1) : 0 }}%</span></div>
+        </div>
+        <div>
+          <div class="kv"><span class="k">名單內未投</span><span class="v" style="color:var(--accent-l);">{{ notVotedCount }}</span></div>
+          <div class="kv"><span class="k">未投・在線中</span><span class="v" style="color:var(--danger);">{{ onlineNotVoted }}</span></div>
+          <div class="kv"><span class="k">投票但不在名單</span>
+            <span class="v">
+              <span class="pill" :class="outsideRoster===0 ? 'pill-ok' : 'pill-err'">{{ outsideRoster }} {{ outsideRoster===0?'✓':'⚠' }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="note" v-if="onlineNotVoted>0">⚠ 仍有 {{ onlineNotVoted }} 位未投票同學在線中——關閉投票前可再提醒。</div>
+    </div>
+
+    <!-- judge status -->
+    <div class="card full">
+      <h3><i class="fa-solid fa-gavel"></i>評審送出狀態（影響成績定案）</h3>
+      <div class="kv"><span class="k">已送出評審</span>
+        <span class="v">
+          <span class="pill" :class="judgesSubmitted===3 ? 'pill-ok' : 'pill-warn'">{{ judgesSubmitted }} / 3</span>
+        </span>
+      </div>
+      <div class="note">{{ judgesSubmitted===3 ? '三位評審皆已送出，評審成績可定案。' : '尚有評審未送出，評審成績未完整。' }}</div>
+    </div>
+
+    <!-- closing checklist -->
+    <div class="card full">
+      <h3><i class="fa-solid fa-clipboard-check"></i>結案檢核清單</h3>
+      <div class="check" v-for="c in checklist" :key="c.label">
+        <span class="ci" :class="c.ok ? 'ci-ok' : 'ci-no'">{{ c.ok ? '✓' : '✗' }}</span>
+        <span class="ctext">{{ c.label }} <span class="cdetail">— {{ c.detail }}</span></span>
+      </div>
+    </div>
+
+    <!-- actions -->
+    <div class="card full">
+      <h3><i class="fa-solid fa-toolbox"></i>結案動作</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn primary" @click="snapshot"><i class="fa-solid fa-camera"></i>凍結快照（下載 JSON）</button>
+        <button class="btn ghost" @click="refreshJudges"><i class="fa-solid fa-rotate"></i>重新整理評審狀態</button>
+      </div>
+      <div class="instr" style="margin-top:14px;" v-if="!votingClosed">
+        <strong>關閉投票需到教師端：</strong>開啟 <code>zzzzzz.html</code>（admin 登入）→ 點「學生投票開啟中（點此關閉）」
+        → 寫入 <code>status.votingClosed = true</code>。本主控台會即時反映鎖定狀態。
+        （本台為唯讀確認，不直接改寫投票狀態以策安全。）
+      </div>
+      <div class="note">快照會記錄當下時戳、鎖定狀態、票數、總分、完整性、名單對帳與當前 Borda 排名，作為結案存證。</div>
+    </div>
+
+  </template>
+
+</div>
+</div>
+
+<script type="module">
+import { createApp, ref, computed, onMounted, onUnmounted } from 'https://unpkg.com/vue@3.4.19/dist/vue.esm-browser.prod.js';
+
+const GAS_URL='https://script.google.com/macros/s/AKfycbzF6ntS5kGtvbvWeZLWkd_0qdjQnlSLJM0NiLifopAN64OyzSiqqL5ma3bul7quXZ1zGA/exec';
+const GAS_SECRET='zodiac-2026-cmuh';
+const FIREBASE={apiKey:"AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",authDomain:"cmu-11402-pathophysiology.firebaseapp.com",databaseURL:"https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"cmu-11402-pathophysiology",storageBucket:"cmu-11402-pathophysiology.firebasestorage.app",messagingSenderId:"367793212618",appId:"1:367793212618:web:c11acedc50ce6fc3897833"};
+const ZODIAC=['子鼠','丑牛','寅虎','卯兔','辰龍','巳蛇','午馬','未羊','申猴','酉雞','戌狗','亥豬'];
+
+createApp({
+  setup(){
+    const SESSION = new URLSearchParams(location.search).get('session') || '20260611-9X9Y';
+    const state = ref('loading');
+    const status = ref({});      // {votingClosed}
+    const votes  = ref({});
+    const students = ref({});
+    const judgesSubmitted = ref(0);
+    const now = ref(Date.now());
+    const tickSec = 5;
+    let timer=null;
+
+    const votingClosed = computed(()=> status.value?.votingClosed === true);
+    const voteCount = computed(()=> Object.keys(votes.value).length);
+    const rosterCount = computed(()=> Object.keys(students.value).length);
+
+    const totalPts = computed(()=>{
+      let t=0;
+      Object.values(votes.value).forEach(v=>{
+        t+=(v.rank1?3:0)+(v.rank2?2:0)+(v.rank3?1:0);
+      });
+      return t;
+    });
+    const integrityOK = computed(()=> totalPts.value === voteCount.value*6 && voteCount.value>0);
+
+    const votedIds = computed(()=> new Set(Object.keys(votes.value)));
+    const notVotedCount = computed(()=> Object.keys(students.value).filter(id=>!votedIds.value.has(id)).length);
+    const outsideRoster = computed(()=>{
+      const r=new Set(Object.keys(students.value));
+      return Object.keys(votes.value).filter(id=>!r.has(id)).length;
+    });
+    const onlineNotVoted = computed(()=>{
+      const t=now.value;
+      return Object.entries(students.value).filter(([id,s])=>
+        !votedIds.value.has(id) && s.lastSeen && (t - s.lastSeen < 40000)
+      ).length;
+    });
+
+    const lastVoteTs = computed(()=>{
+      const ts=Object.values(votes.value).map(v=>v.submittedAt||0).filter(Boolean);
+      return ts.length?Math.max(...ts):0;
+    });
+    const lastVoteStr = computed(()=> lastVoteTs.value
+      ? new Date(lastVoteTs.value).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : '—');
+    const lastVoteAgoMin = computed(()=> lastVoteTs.value ? (now.value-lastVoteTs.value)/60000 : 99999);
+    const lastVoteAgoStr = computed(()=>{
+      const m=lastVoteAgoMin.value;
+      if(m>=99999) return '—';
+      if(m<1) return '不到 1 分鐘前 ⚠';
+      if(m<60) return `${Math.floor(m)} 分鐘前`;
+      if(m<1440) return `${Math.floor(m/60)} 小時前`;
+      return `${Math.floor(m/1440)} 天前`;
+    });
+
+    // closing checklist
+    const checklist = computed(()=>[
+      {label:'投票已鎖定', ok:votingClosed.value,
+       detail: votingClosed.value?'status.votingClosed = true':'仍開啟中，需至 zzzzzz.html 關閉'},
+      {label:'票數已停止變動', ok:lastVoteAgoMin.value>=10,
+       detail: lastVoteAgoMin.value>=10?`最後投票 ${lastVoteAgoStr.value}`:'近 10 分鐘內仍有新票'},
+      {label:'完整性通過（無灌票）', ok:integrityOK.value,
+       detail:`總分 ${totalPts.value} ${integrityOK.value?'= ':'≠ '}${voteCount.value}×6`},
+      {label:'名單對帳無異常', ok:outsideRoster.value===0,
+       detail: outsideRoster.value===0?'無名單外投票':`${outsideRoster.value} 筆名單外投票`},
+      {label:'三位評審皆已送出', ok:judgesSubmitted.value===3,
+       detail:`${judgesSubmitted.value}/3 已送出`},
+    ]);
+    const canClose = computed(()=> checklist.value.every(c=>c.ok));
+    const verdictWhy = computed(()=>{
+      if(canClose.value) return '所有結案條件達成，可凍結快照並定案。';
+      const fail=checklist.value.filter(c=>!c.ok).map(c=>c.label);
+      return '未完成：'+fail.join('、');
+    });
+
+    const bordaRank = computed(()=>{
+      const pts={}; ZODIAC.forEach(z=>pts[z]=0);
+      Object.values(votes.value).forEach(v=>{
+        if(v.rank1&&pts[v.rank1]!==undefined)pts[v.rank1]+=3;
+        if(v.rank2&&pts[v.rank2]!==undefined)pts[v.rank2]+=2;
+        if(v.rank3&&pts[v.rank3]!==undefined)pts[v.rank3]+=1;
+      });
+      return Object.entries(pts).sort((a,b)=>b[1]-a[1]).map(([z,p],i)=>({rank:i+1,zodiac:z,pts:p}));
+    });
+
+    const snapshot = ()=>{
+      const snap={
+        takenAt:new Date().toISOString(),
+        session:SESSION,
+        votingClosed:votingClosed.value,
+        voteCount:voteCount.value,
+        rosterCount:rosterCount.value,
+        notVoted:notVotedCount.value,
+        outsideRoster:outsideRoster.value,
+        totalPoints:totalPts.value,
+        integrityOK:integrityOK.value,
+        lastVoteAt: lastVoteTs.value? new Date(lastVoteTs.value).toISOString():null,
+        judgesSubmitted:judgesSubmitted.value,
+        canClose:canClose.value,
+        bordaRanking:bordaRank.value,
+      };
+      const blob=new Blob([JSON.stringify(snap,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`closing_snapshot_${SESSION}_${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.json`;
+      a.click();
+    };
+
+    const refreshJudges = async ()=>{
+      try{
+        const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'getScores',secret:GAS_SECRET})});
+        const j=await r.json();
+        if(j.status==='success'&&Array.isArray(j.submitted))
+          judgesSubmitted.value=j.submitted.filter(Boolean).length;
+      }catch(e){console.error(e);}
+    };
+
+    onMounted(async()=>{
+      try{
+        await refreshJudges();
+        const [appMod,dbMod,authMod]=await Promise.all([
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js'),
+          import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js')]);
+        const app=appMod.initializeApp(FIREBASE);
+        const db=dbMod.getDatabase(app); const auth=authMod.getAuth(app);
+        await authMod.signInAnonymously(auth);
+        const base=`classrooms/${SESSION}`;
+        dbMod.onValue(dbMod.ref(db,`${base}/status`),s=>{status.value=s.val()||{};});
+        dbMod.onValue(dbMod.ref(db,`${base}/posterVotes`),s=>{votes.value=s.val()||{};state.value='ready';});
+        dbMod.onValue(dbMod.ref(db,`${base}/students`),s=>{students.value=s.val()||{};});
+        timer=setInterval(()=>{now.value=Date.now();},tickSec*1000);
+      }catch(e){console.error(e);state.value='error';}
+    });
+    onUnmounted(()=>{ if(timer)clearInterval(timer); });
+
+    return {SESSION,state,tickSec,votingClosed,voteCount,rosterCount,totalPts,integrityOK,
+      notVotedCount,outsideRoster,onlineNotVoted,lastVoteStr,lastVoteAgoMin,lastVoteAgoStr,
+      judgesSubmitted,checklist,canClose,verdictWhy,snapshot,refreshJudges};
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
