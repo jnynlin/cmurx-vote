@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "classrooms": {
+      "$sessionId": {
+        ".read": "auth != null",
+
+        "status":          { ".write": "auth.token.email == 'admin@zodiac.com'",
+                             ".validate": "newData.hasChildren(['loginStatus'])" },
+        "groupLinks":      { ".write": "auth.token.email == 'admin@zodiac.com'" },
+        "assignmentLinks": { ".write": "auth.token.email == 'admin@zodiac.com'" },
+
+        "posterVotes": {
+          ".write": "auth != null",
+          "$voterId": { ".validate": "newData.hasChildren(['rank1','rank2','rank3'])" }
+        },
+
+        "students": {
+          ".write": "auth.token.email == 'admin@zodiac.com'",
+          "$uid": {
+            ".write": "auth != null",
+            "rating":   { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+            "feedback": { ".validate": "newData.isString() && newData.val().length <= 5000" }
+          }
+        }
+      }
+    }
+  }
+}
