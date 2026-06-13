@@ -2323,12 +2323,12 @@ createApp({
 
     const liftStyle = (v) => {
       const n=parseFloat(v);
-      if(n>=3)   return 'background:#14532d;color:#4ade80;';
-      if(n>=2)   return 'background:#166534;color:#86efac;';
-      if(n>=1.5) return 'background:#1c3a28;color:#86efac;';
-      if(n>=0.8) return 'background:#1e293b;color:#64748b;';
-      if(n>=0.5) return 'background:#2a1f1f;color:#fca5a5;';
-      return             'background:#450a0a;color:#f87171;';
+      if(n>=3)   return 'background:#dcfce7;color:#14532d;font-weight:800;';
+      if(n>=2)   return 'background:#bbf7d0;color:#15803d;font-weight:700;';
+      if(n>=1.5) return 'background:#d1fae5;color:#16a34a;';
+      if(n>=0.8) return 'background:var(--surface2);color:var(--faint);';
+      if(n>=0.5) return 'background:#ffe4e6;color:#be123c;';
+      return             'background:#fecdd3;color:#dc2626;font-weight:700;';
     };
 
     const temporalData = computed(()=>{
