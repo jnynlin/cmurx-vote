@@ -404,15 +404,25 @@
       <!-- Correlation analysis -->
       <div class="sec">
         <div class="sec-title"><i class="fa-solid fa-link"></i>團隊合作 vs 三面向 — 相關性分析</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
-          <div class="ib" :class="teamCorr.teacher<0?'ib-grow':'ib-strong'">
+        <!-- Low-variance guard: do NOT show a misleading precise r when tw is near-uniform -->
+        <div v-if="teamCorr.lowVar" class="ib ib-grow" style="margin-bottom:14px;">
+          <h4 style="color:var(--accent);"><i class="fa-solid fa-circle-exclamation"></i> 不計算相關係數（變異過小）</h4>
+          <div class="body">
+            修正後團隊合作分趨於一致（3×5.0 + 9×4.5，標準差僅 {{ teamCorr.sd }}）。
+            變異這麼小時，Pearson r 實質上退化為「是否屬前 3 名標竿組」的點二系列相關，由極少數組別主導，
+            <strong>不是有意義的相關係數</strong>，故不顯示數字以免誤導。
+            （供參考：若仍計算，r 介於 −0.26～+0.25 之間、正負不一、皆不顯著。）
+          </div>
+        </div>
+        <div v-else style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="ib ib-strong">
             <h4 style="color:var(--text2);">vs 學術深度</h4>
-            <div style="font-size:22px;font-weight:900;" :style="{color:teamCorr.teacher<-0.3?'var(--danger)':teamCorr.teacher>0.3?'var(--ok)':'var(--muted)'}">r = {{ teamCorr.teacher.toFixed(2) }}</div>
+            <div style="font-size:22px;font-weight:900;">r = {{ teamCorr.teacher.toFixed(2) }}</div>
             <div class="note">{{ corrLabel(teamCorr.teacher) }}</div>
           </div>
-          <div class="ib" :class="teamCorr.student<0?'ib-grow':'ib-strong'">
+          <div class="ib ib-strong">
             <h4 style="color:var(--text2);">vs 同學共鳴</h4>
-            <div style="font-size:22px;font-weight:900;" :style="{color:teamCorr.student<-0.3?'var(--danger)':teamCorr.student>0.3?'var(--ok)':'var(--muted)'}">r = {{ teamCorr.student.toFixed(2) }}</div>
+            <div style="font-size:22px;font-weight:900;">r = {{ teamCorr.student.toFixed(2) }}</div>
             <div class="note">{{ corrLabel(teamCorr.student) }}</div>
           </div>
           <div class="ib" style="background:var(--surface2);border:1px solid var(--border);">
@@ -426,8 +436,8 @@
           <div class="body">
             <strong>更正（2026-06-13）：</strong>先前用純文字偵測曾得出「團隊合作與學術分強負相關」，
             但那是<strong>量測偏誤</strong>——圖像式簡報與用姓名（非學號）的名單被低估了。
-            經逐頁實際檢視後，<strong>12 組皆備有完整貢獻名單＋分工＋歷程</strong>，團隊合作分趨於一致（多數 4.5、子鼠 5.0），
-            因此與學術/人氣已<strong>無明顯相關</strong>（上方 r 因變異極小而不具統計意義，僅供參考）。
+            經逐頁實際檢視後，<strong>12 組皆備有完整貢獻名單＋分工＋歷程</strong>，團隊合作分趨於一致（多數 4.5、三組 5.0），
+            變異過小，<strong>無法計算有意義的相關係數</strong>（如上所述，故不顯示 r 值）。
             真正的結論是：<strong>全班在協作這件事上都做得很扎實</strong>；加分項肯定了這份共同的努力。
             標竿有二：子鼠（呼吸道）的 A/B/C/D 四階段結構，與戌狗（阿茲治療）的露臉視訊會議截圖＋完整討論紀錄——後者是全班最高規格的真實協作佐證。
           </div>
@@ -711,12 +721,17 @@ createApp({
     };
     const teamCorr=computed(()=>{
       const zs=ZODIAC.filter(z=>aiOf(z)&&tea.value[z]&&stu.value[z]);
-      if(zs.length<3) return {teacher:0,student:0,ai:0};
+      if(zs.length<3) return {teacher:0,student:0,ai:0,lowVar:true,sd:0};
       const tw=zs.map(z=>aiOf(z).tw);
+      const m=tw.reduce((a,b)=>a+b,0)/tw.length;
+      const sd=Math.sqrt(tw.reduce((s,x)=>s+(x-m)**2,0)/tw.length);
+      // tw is near-uniform after correction → Pearson r is not meaningful (point-biserial on ~binary)
+      const lowVar = sd < 0.35;
       return {
         teacher:+pearson(tw,zs.map(z=>tea.value[z].final)).toFixed(2),
         student:+pearson(tw,zs.map(z=>stu.value[z].z)).toFixed(2),
         ai:+pearson(tw,zs.map(z=>aiOf(z).base)).toFixed(2),
+        lowVar, sd:+sd.toFixed(2),
       };
     });
     const corrLabel=(r)=>{
