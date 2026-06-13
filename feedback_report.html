@@ -348,6 +348,31 @@
         </div>
       </div>
 
+      <!-- Task-distribution equity -->
+      <div class="sec">
+        <div class="sec-title"><i class="fa-solid fa-users-between-lines"></i>任務分配均勻度（真分工 vs 名義分工）</div>
+        <div class="note" style="margin-bottom:10px;">
+          分工表的<strong>任務指派粒度</strong>：每人/每段是否有實質專責，還是多數僅列「參與討論」。
+          ⚠ 此為<strong>documentation 粒度</strong>，非實際貢獻——「參與討論」可能是謙虛自述，不代表沒出力。<strong>不影響團隊合作評分</strong>，僅供解讀。
+        </div>
+        <table>
+          <thead><tr><th>組別</th><th>分級</th><th>分工粒度</th></tr></thead>
+          <tbody>
+            <tr v-for="p in equityGraded" :key="p.z"
+                :style="p.g===3?'background:var(--ok-soft)':p.g===1?'background:var(--accent-soft)':''">
+              <td><span style="font-weight:700;">{{ p.z }}</span> <span style="font-size:11px;color:var(--muted);">{{ p.topic }}</span></td>
+              <td style="white-space:nowrap;font-weight:700;"
+                  :style="p.g===3?'color:var(--ok)':p.g===2?'color:var(--text2)':'color:var(--accent)'">{{ p.glabel }}</td>
+              <td style="font-size:12px;color:var(--text2);">{{ p.t }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note" style="margin-top:8px;">
+          值得注意：<strong>辰龍、未羊</strong>名單最大（各 22 人）但分工粒度最低（多數「參與討論」）——大團隊未必等於分散協作。
+          <strong>子鼠、戌狗、申猴、巳蛇</strong>則每段都有實質專責，是「真分工」的範例。
+        </div>
+      </div>
+
       <!-- Correlation analysis -->
       <div class="sec">
         <div class="sec-title"><i class="fa-solid fa-link"></i>團隊合作 vs 三面向 — 相關性分析</div>
@@ -424,6 +449,22 @@ const TEAM_EV={
   '酉雞':[1,1,1,1,0], // SMA: 貢獻表+視訊會議截圖(22:00-23:00)
   '戌狗':[1,1,1,1,1], // 阿茲治療: 7段命名分工+露臉視訊(5/25 23:00)+LINE+時間線
   '亥豬':[1,1,1,1,1], // 糖尿βcell: 完整分工表+LINE語音通話+時間線
+};
+// Task-distribution granularity (3=逐人/細分專責, 2=區段分明無填充, 1=多數「參與討論」集中)
+// NOTE: measures DOCUMENTED task-assignment granularity, not actual effort — 「參與討論」may be modest self-report.
+const TEAM_EQUITY={
+  '子鼠':{g:3,t:'A/B/C/D 四子組 × 逐人專責（左半/右半/視覺/結論），無填充'},
+  '戌狗':{g:3,t:'7 段任務各 2–3 人專責'},
+  '申猴':{g:3,t:'7 段（歷程/疾病/機轉/化療/標靶/副作用/統整）逐項命名'},
+  '巳蛇':{g:3,t:'工作項目×內容×成員三欄，含主題討論/報告統籌專責'},
+  '午馬':{g:2,t:'依內容區段指派（疾病介紹/治療困難/藥設/改變），全員有專段、無「參與討論」填充'},
+  '亥豬':{g:2,t:'7 任務組各 2–3 人（動機/機制/藥設/研發/限制/結論/排版）'},
+  '卯兔':{g:2,t:'色彩分區任務表逐區指派'},
+  '酉雞':{g:2,t:'逐人任務（主題發想/海報風格/治療/排版）'},
+  '寅虎':{g:2,t:'逐人任務（主題討論/海報製作/治療方向）'},
+  '丑牛':{g:2,t:'依 5/15→5/26→5/30 階段命名分工'},
+  '辰龍':{g:1,t:'22 人但約 18 人僅「參與討論」，實質任務集中於 4–5 人'},
+  '未羊':{g:1,t:'22 人多數為「討論、校對」，實質分工較集中'},
 };
 // Timeline sophistication (3=泳道圖 swimlane, 2=階段時間線, 1=里程碑/討論日期, 0=無專案時間線)
 const TEAM_TIMELINE={
@@ -603,6 +644,12 @@ createApp({
         glabel:TL_LABEL[TEAM_TIMELINE[z]?.g??0]}))
         .sort((a,b)=>b.g-a.g)
     );
+    const EQ_LABEL={3:'★★★ 高度分工',2:'★★ 區段分明',1:'★ 任務集中'};
+    const equityGraded=computed(()=>
+      ZODIAC.map(z=>({z, topic:topicShort(z), g:TEAM_EQUITY[z]?.g??0, t:TEAM_EQUITY[z]?.t||'—',
+        glabel:EQ_LABEL[TEAM_EQUITY[z]?.g??1]}))
+        .sort((a,b)=>b.g-a.g)
+    );
     const pearson=(xs,ys)=>{
       const n=xs.length; if(n<2)return 0;
       const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
@@ -663,7 +710,7 @@ createApp({
     return {tab,sel,loadState,stu,tea,N,ZODIAC,EV_LABELS,topicOf,aiOf,mappedCount,
       bandClass,bandLabel,bandExplain,teaTier,
       barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,
-      topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded};
+      topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded};
   }
 }).mount('#app');
 </script>
