@@ -96,6 +96,8 @@
     <br>① 內容深度依海報全文判讀；視覺評分依算圖縮圖（解析度有限，細節以實際海報為準）。
     ② 各組以<strong>主題</strong>標示，已知組號者加註；本檔未對應到生肖組名（需由班級名冊轉換）。
     ③ AI 傾向於保守給分但對「呈現完整、內容正確」者較寬容，分數區間或略高於評審席，請以<strong>相對排序</strong>為主要參考。
+    ④ <strong>團隊合作為加分項</strong>，依各組 PDF 中可擷取的協作證據評定（分工表／作者貢獻名單／研究歷程／討論照片／時間線）；
+    以圖像呈現而無文字紀錄者得基準分（不加不減，不扣分）。
   </div>
 
   <div class="rubric">
@@ -103,7 +105,10 @@
     <div class="row"><span class="k">病生理深度</span><span>內容正確性與病生理機轉深度（design）</span></div>
     <div class="row"><span class="k">視覺表達</span><span>版面、圖示、清晰度（creativity）</span></div>
     <div class="row"><span class="k">整體印象</span><span>綜合 1–5 分判斷（total）</span></div>
-    <div class="formula">加權分 = 50% × 平均(選題,病理,視覺) + 50% × 整體印象　|　錨點：1 待加強 · 2 尚可 · 3 普通 · 4 良好 · 5 優異</div>
+    <div class="row"><span class="k" style="color:var(--ok);">團隊合作</span><span>分工表／研究歷程／討論紀錄等協作證據（加分項）</span></div>
+    <div class="formula">基礎加權分 = 50% × 平均(選題,病理,視覺) + 50% × 整體印象<br>
+      團隊合作加分 = max(0, (團隊合作 − 3) × 0.25)　（上限 +0.5，基準 3 分不加不減）<br>
+      <strong>總分 = 基礎加權分 + 團隊合作加分</strong>　|　錨點：1 待加強 · 2 尚可 · 3 普通 · 4 良好 · 5 優異</div>
   </div>
 
   <div class="stat-row">
@@ -121,7 +126,9 @@
         <tr>
           <th style="width:40px;">排名</th><th>主題</th>
           <th class="r">選題</th><th class="r">病理</th><th class="r">視覺</th><th class="r">整體</th>
-          <th class="r">加權分</th>
+          <th class="r">基礎分</th>
+          <th class="r" style="color:var(--ok);">團隊</th><th class="r" style="color:var(--ok);">加分</th>
+          <th class="r">總分</th>
         </tr>
       </thead>
       <tbody id="rank-body"></tbody>
@@ -145,130 +152,144 @@
 const DATA = [
   {
     topic:'甲狀腺未分化癌 (ATC)：從惡性去分化到精準醫療', gnum:'第九組',
-    dims:[4.5, 5, 4.5, 4.5],
+    dims:[4.5, 5, 4.5, 4.5], tw:4.5,
     notes:{
       sel:'罕見但極惡性，以「去分化」為切入點，未滿足需求極清楚——預後極差、傳統治療無效。',
       path:'分子機轉完整：BRAF V600E→MAPK、TERT promoter/telomerase 端粒維持；連結 mTKI、BRAF/MEK 雙標靶 (Dabrafenib+Trametinib)、PD-1/L1 (Pembrolizumab)、NGS 導向。研究所級深度。',
       vis:'以 DNA 雙螺旋為中軸貫穿版面，分區清楚（去分化→機轉→傳統化療→精準治療→未來），專業度極高。',
-      tot:'內容與設計皆為全場頂尖，學術深度最完整的作品。'
+      tot:'內容與設計皆為全場頂尖，學術深度最完整的作品。',
+      team:'完整作者貢獻表（20 位學號），分工明確。'
     }
   },
   {
     topic:'認識阿茲海默症：從疾病認識到最新治療', gnum:'第11組',
-    dims:[4.5, 4, 5, 4.5],
+    dims:[4.5, 4, 5, 4.5], tw:4,
     notes:{
       sel:'超高齡社會最大失智症負擔，選題切中龐大未滿足需求。',
       path:'Aβ/Tau 機轉清楚，新藥涵蓋 Leqembi(Lecanemab)、Kisunla(Donanemab)、Aduhelm(Aducanumab)，藥名與機轉正確。',
       vis:'五大分區色彩編碼、圖示精緻一致，是全場視覺完成度最高的海報之一。',
-      tot:'內容完整、視覺優異，從疾病到藥物到預防一氣呵成。'
+      tot:'內容完整、視覺優異，從疾病到藥物到預防一氣呵成。',
+      team:'分工表載明各段負責同學（研究動機/疾病介紹/病理機轉/藥物），分工清楚。'
     }
   },
   {
     topic:'亨丁頓舞蹈症 (HD)：從病程機轉到未來治療', gnum:'',
-    dims:[4, 4.5, 4.5, 4],
+    dims:[4, 4.5, 4.5, 4], tw:3.5,
     notes:{
       sel:'罕見體染色體顯性遺傳病，「發現基因卻 30 年無法治癒」的醫學不對稱切入有洞察力。',
       path:'CAG 重複擴增→突變 mHTT 毒性蛋白機轉正確；觸及 ASO 反義寡核苷酸技術與 CNS 遞送瓶頸，分子深度佳。',
       vis:'多面板組織清楚，遺傳→機轉→治療動線流暢。',
-      tot:'罕病但機轉論述紮實，前沿療法瓶頸分析到位。'
+      tot:'罕病但機轉論述紮實，前沿療法瓶頸分析到位。',
+      team:'研究歷程與分工有記錄，惟未附完整貢獻名單。'
     }
   },
   {
     topic:'糖尿病：不只控糖，更要護腎・顧神經', gnum:'第五組',
-    dims:[4.5, 4, 4.5, 4],
+    dims:[4.5, 4, 4.5, 4], tw:4,
     notes:{
       sel:'從龐大糖尿病人口聚焦到「腎病變(DKD)與神經病變(DPNP)」的未滿足需求，定位精準。',
       path:'SGLT2i (Empagliflozin)、非類固醇 MRA (Finerenone)、神經病變新嘗試；機轉正確且具臨床實用性。',
       vis:'三段式版面清楚，色彩分區佳。',
-      tot:'加入「藥師觀點」(HbA1c/eGFR 監測) 切合藥學系課程定位，是一大亮點。'
+      tot:'加入「藥師觀點」(HbA1c/eGFR 監測) 切合藥學系課程定位，是一大亮點。',
+      team:'完整學號名單（20 位）＋研究歷程，分工有據。'
     }
   },
   {
     topic:'脊髓性肌肉萎縮症 (SMA)：突破治療天花板', gnum:'',
-    dims:[4.5, 4.5, 4, 4],
+    dims:[4.5, 4.5, 4, 4], tw:4,
     notes:{
       sel:'由課堂 Zolgensma 基因治療延伸，選題具時效性與前沿性。',
       path:'SMN-dependent/independent 雙機轉、Zolgensma 肝毒性(急性肝衰竭)、雞尾酒協同療法；分子層次深入且能批判副作用。',
       vis:'全球流行病學地圖＋分區治療，資訊量大但仍清楚。',
-      tot:'前沿基因療法與安全性並重，論述成熟。'
+      tot:'前沿基因療法與安全性並重，論述成熟。',
+      team:'完整學號名單（20 位）＋研究歷程，分工有據。'
     }
   },
   {
     topic:'第一型/第二型糖尿病：β 細胞修復與根本治療', gnum:'第12組',
-    dims:[4, 3.5, 4.5, 4],
+    dims:[4, 3.5, 4.5, 4], tw:3,
     notes:{
       sel:'同時涵蓋 T1D/T2D 並指向「根本治療(β 細胞修復)」，企圖心佳。',
       path:'現行治療→β 細胞修復療法→biomarker 架構清楚，惟修復療法的機轉深度中等。',
       vis:'手繪 kawaii 風格一致、分區清爽，親和力高。',
-      tot:'視覺討喜、架構完整，深度可再強化。'
+      tot:'視覺討喜、架構完整，深度可再強化。',
+      team:'簡報以圖像為主，未見可擷取的分工/歷程文字（基準分；如圖中已載明請另計）。'
     }
   },
   {
     topic:'漸凍症 (ALS)：關於漸凍症我們了解多少？', gnum:'',
-    dims:[4.5, 4, 4, 4],
+    dims:[4.5, 4, 4, 4], tw:3.5,
     notes:{
       sel:'高死亡率、治療選項極有限，符合課程強調的藥物 R&D 主題。',
       path:'Riluzole / Tofersen / Edaravone 藥物資訊結構化呈現，機轉正確。',
       vis:'分區與 QR 延伸資源得宜，版面均衡。',
-      tot:'藥物比較清楚，臨床限制論述到位。'
+      tot:'藥物比較清楚，臨床限制論述到位。',
+      team:'「我們這組的討論過程」頁面記錄研究歷程，協作有跡。'
     }
   },
   {
     topic:'胰臟癌：困境與新藥設計策略探討', gnum:'',
-    dims:[4.5, 4, 3.5, 3.5],
+    dims:[4.5, 4, 3.5, 3.5], tw:3,
     notes:{
       sel:'高死亡率、早期難診斷，未滿足需求極強，選題佳。',
       path:'精準醫療／免疫療法／靶向分子標記技術涵蓋面廣，機轉正確。',
       vis:'資訊密度偏高、文字較多，視覺留白與層次稍弱。',
-      tot:'內容紮實但呈現偏密集，閱讀負擔較大。'
+      tot:'內容紮實但呈現偏密集，閱讀負擔較大。',
+      team:'僅見工作分配時間表，協作紀錄較少（基準分）。'
     }
   },
   {
     topic:'重症肌無力 (MG)：從傳統到精準的藥物設計', gnum:'',
-    dims:[4, 4, 4, 3.5],
+    dims:[4, 4, 4, 3.5], tw:4.5,
     notes:{
       sel:'自體免疫神經肌肉接合疾病，選題結合免疫學與藥學，連結課程佳。',
       path:'從傳統治療到精準藥物設計策略，免疫機轉正確。',
       vis:'分區與色彩運用得宜，藥物策略區資訊較密。',
-      tot:'結構完整，整體呈現中上。'
+      tot:'結構完整，整體呈現中上。',
+      team:'完整學號名單（20 位）＋研究歷程＋討論紀錄，協作證據充分。'
     }
   },
   {
     topic:'認識阿茲海默症：可能的病因與風險因素', gnum:'',
-    dims:[3.5, 3.5, 4.5, 3.5],
+    dims:[3.5, 3.5, 4.5, 3.5], tw:3.5,
     notes:{
       sel:'聚焦病因與風險因素，主題與另一阿茲海默組重疊，差異化稍弱。',
       path:'病因與風險因子整理清楚，惟分子治療層面較輕。',
       vis:'kawaii 插圖精緻、版面清爽，視覺討喜。',
-      tot:'視覺優秀，內容偏衛教導向、深度可再加強。'
+      tot:'視覺優秀，內容偏衛教導向、深度可再加強。',
+      team:'研究歷程與分工有敘述，協作有記錄。'
     }
   },
   {
     topic:'呼吸道感染：COVID-19 與肺結核的治療挑戰', gnum:'',
-    dims:[4, 3.5, 4, 3.5],
+    dims:[4, 3.5, 4, 3.5], tw:5,
     notes:{
       sel:'常見且高關聯性，COVID-19＋TB 雙主題，貼近時事。',
       path:'Paxlovid、MDR-TB、Long COVID 涵蓋面廣，惟同時處理兩疾病，深度略被稀釋（廣度優於深度）。',
       vis:'kawaii 風格、左右對比版面清楚。',
-      tot:'整合度佳、誠實標註使用 Canva/AI 工具，呈現中規中矩。'
+      tot:'整合度佳、誠實標註使用 Canva/AI 工具，呈現中規中矩。',
+      team:'全場最完整：A/B/C/D 四階段分工、完整作者貢獻表（19 位學號＋任務）、協作時間線。團隊合作典範。'
     }
   },
   {
     topic:'高血脂症：被忽略的隱形殺手', gnum:'第二組',
-    dims:[4.5, 4, 3, 3.5],
+    dims:[4.5, 4, 3, 3.5], tw:4,
     notes:{
       sel:'「高血脂無症狀、無法自測、每 3 人有 1 人」的隱形殺手框架極具洞察，選題切入最佳之一。',
       path:'三高比較與血脂機轉正確、資料完整。',
       vis:'資訊極為密集、以網頁海報呈現，文字量大、視覺層次與留白不足，閱讀門檻高。',
-      tot:'選題與內容紮實，惟視覺密度過高影響整體呈現。'
+      tot:'選題與內容紮實，惟視覺密度過高影響整體呈現。',
+      team:'附線上＋實體討論照片，呈現真實會議協作。'
     }
   },
 ];
 
-// ── Compute weighted finals & ranks ──────────────────────────────────────
+// ── Compute base + teamwork bonus + total ─────────────────────────────────
 DATA.forEach(d=>{
   const [c,de,cr,t]=d.dims;
-  d.final = +( (c+de+cr)/3*0.5 + t*0.5 ).toFixed(2);
+  d.base  = +( (c+de+cr)/3*0.5 + t*0.5 ).toFixed(2);
+  d.bonus = +Math.max(0, (d.tw - 3) * 0.25).toFixed(2);   // teamwork bonus, cap +0.5, floor 0
+  d.final = +(d.base + d.bonus).toFixed(2);
 });
 DATA.sort((a,b)=>b.final-a.final);
 DATA.forEach((d,i)=>{ d.rank=i+1; });
@@ -295,6 +316,9 @@ DATA.forEach(d=>{
     `<td><span class="rank-num rank-${d.rank}">${medal(d.rank)}</span></td>`+
     `<td><span class="grp-name">${d.topic}</span>${d.gnum?`<span class="gnum">${d.gnum}</span>`:''}</td>`+
     d.dims.map(s=>`<td class="c"><span class="dimscore ${scoreClass(s)}">${s}</span></td>`).join('')+
+    `<td class="c" style="color:var(--muted);">${d.base.toFixed(2)}</td>`+
+    `<td class="c"><span class="dimscore ${scoreClass(d.tw)}">${d.tw}</span></td>`+
+    `<td class="c" style="color:var(--ok);font-weight:700;">${d.bonus>0?'+'+d.bonus.toFixed(2):'—'}</td>`+
     `<td class="c"><strong style="font-size:15px;">${d.final.toFixed(2)}</strong></td>`;
   rb.appendChild(tr);
 });
@@ -308,7 +332,7 @@ DATA.forEach(d=>{
   card.innerHTML =
     `<div class="card-head">
        <div><span class="card-title">${medal(d.rank)} ${d.topic}</span>${d.gnum?`<span class="gnum">${d.gnum}</span>`:''}</div>
-       <div class="card-final">加權分 <b>${d.final.toFixed(2)}</b> / 5.00</div>
+       <div class="card-final">基礎 ${d.base.toFixed(2)} ${d.bonus>0?`<span style="color:var(--ok);">+ ${d.bonus.toFixed(2)}</span>`:''} = 總分 <b>${d.final.toFixed(2)}</b> / 5.00</div>
      </div>
      <div class="dimgrid">
        <div class="dim">
@@ -326,6 +350,10 @@ DATA.forEach(d=>{
        <div class="dim">
          <div class="dim-lbl">整體印象 <span class="s">${d.dims[3]}</span></div>
          <div class="dim-note">${d.notes.tot}</div>
+       </div>
+       <div class="dim" style="grid-column:1/-1;background:var(--ok-soft);border:1px solid #bbf7d0;">
+         <div class="dim-lbl" style="color:var(--ok);">團隊合作（加分） <span class="s">${d.tw} → ${d.bonus>0?'+'+d.bonus.toFixed(2):'+0'}</span></div>
+         <div class="dim-note">${d.notes.team}</div>
        </div>
      </div>`;
   cards.appendChild(card);
