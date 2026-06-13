@@ -47,11 +47,11 @@
   <div class="head">
     <div class="badge">藥學系 · Pathophysiology · 2026</div>
     <h1>各組綜合回饋</h1>
-    <div class="sub">整合同學票選 · 評審評分 · 系統評估 · 團隊協作四個視角</div>
+    <div class="sub">整合同學票選 · 評審評分 · 綜合分析 · 團隊協作四個視角</div>
   </div>
 
   <div class="intro">
-    這份回饋綜合了四個獨立視角——<strong>同學共鳴</strong>（票選）、<strong>學術深度</strong>（評審）、<strong>系統評估</strong>（電腦依評分面向的綜合評讀）、
+    這份回饋綜合了四個獨立視角——<strong>同學共鳴</strong>（票選）、<strong>學術深度</strong>（評審）、<strong>綜合分析</strong>（電腦依評分面向的綜合評讀）、
     與<strong>團隊協作</strong>（分工/討論紀錄＋個人自評貢獻）。四個視角衡量不同的東西，<strong>「不一致」本身就是最值得思考的回饋</strong>。
     排名僅供參考，重點在各組的獨特強項與下一步的成長空間。
   </div>
@@ -59,7 +59,7 @@
   <div id="cards"></div>
 
   <div class="foot">
-    Zodiac Ops 2026 · 中國醫藥大學藥學系 Pathophysiology · 綜合回饋（同學票選／評審／系統評估／團隊協作）
+    Zodiac Ops 2026 · 中國醫藥大學藥學系 Pathophysiology · 綜合回饋（同學票選／評審／綜合分析／團隊協作）
   </div>
 
 </div>
@@ -81,7 +81,7 @@ const G=[
 
  {n:3,z:'寅虎',topic:'漸凍症 ALS',tag:['民主協作','--ok-soft','var(--ok)'],
   stu:'#3 (z +1.6)',stuC:'mid',tea:'#7 (3.60)',teaC:'mid',ai:'4.08',team:'5.0 ★',
-  str:'同學票選前段、系統評估亦佳，藥物（Riluzole／Tofersen／Edaravone）資訊結構清楚。',
+  str:'同學票選前段、綜合分析亦佳，藥物（Riluzole／Tofersen／Edaravone）資訊結構清楚。',
   teamtxt:'最高規格協作佐證之一：露臉視訊會議（6/3）＋主題票選紀錄——你們用投票民主地決定研究主題，是很成熟的團隊運作示範。',
   grow:'技術／實作人力較稀缺（僅 2 位），視覺製作可再補強，讓紮實的內容有更亮眼的呈現。'},
 
@@ -89,7 +89,7 @@ const G=[
   stu:'#4 (z +1.4)',stuC:'mid',tea:'#2 (4.12)',teaC:'hi',ai:'3.75',team:'4.5',
   str:'高死亡率、早期難診斷的強選題，獲評審第二高肯定——三方平均排名靠前，是內容紮實的實力派。',
   teamtxt:'色彩分區的工作分配表＋帶時間戳的線上討論截圖（5/29、5/30），協作脈絡清楚。',
-  grow:'資訊密度偏高、版面留白稍弱（系統評估視覺面向較低），可讓畫面更透氣。'},
+  grow:'資訊密度偏高、版面留白稍弱（綜合分析視覺面向較低），可讓畫面更透氣。'},
 
  {n:5,z:'辰龍',topic:'糖尿病：護腎・顧神經',tag:['視覺亮眼，待凝聚','--accent-soft','var(--accent)'],
   stu:'#5 (z +1.3)',stuC:'mid',tea:'#11 (2.90)',teaC:'lo',ai:'4.17',team:'4.5',
@@ -118,7 +118,7 @@ const G=[
  {n:9,z:'申猴',topic:'甲狀腺未分化癌 ATC',tag:['最深學術企圖','--gold-soft','var(--gold)'],
   stu:'#12 (z −3.5)',stuC:'lo',tea:'#10 (3.02)',teaC:'mid',ai:'4.58 ★最高',
   team:'4.5',
-  str:'系統評估全場最高分——以 DNA 雙螺旋為軸貫穿版面，分子機轉（BRAF/MEK 雙標靶、TERT 端粒、mTKI、NGS 導向）達研究所級深度，一位評審也給予高分。自評實質研究參與率 90%（全場第二），是真的很多人在鑽研。',
+  str:'綜合分析全場最高分——以 DNA 雙螺旋為軸貫穿版面，分子機轉（BRAF/MEK 雙標靶、TERT 端粒、mTKI、NGS 導向）達研究所級深度，一位評審也給予高分。自評實質研究參與率 90%（全場第二），是真的很多人在鑽研。',
   teamtxt:'完整 20 人作者貢獻表，分工明確。',
   grow:'這是「深度 ≠ 第一眼吸引力」最鮮明的一組：你們的學術功力在能細讀的人眼中極為突出，但對快速瀏覽的同學門檻偏高（票選偏低）。下一步——把頂尖的內容，用更親近的視覺敘事包裝，讓深度被更多人接住。你們的硬實力毋庸置疑。'},
 
@@ -154,7 +154,7 @@ G.forEach(g=>{
      <div class="lenses">
        <span class="lens">同學共鳴 <b class="${g.stuC}">${g.stu}</b></span>
        <span class="lens">學術深度 <b class="${g.teaC}">評審 ${g.tea}</b></span>
-       <span class="lens">系統評估 <b>AI ${g.ai}</b></span>
+       <span class="lens">綜合分析 <b>AI ${g.ai}</b></span>
        <span class="lens">團隊協作 <b style="color:var(--primary);">${g.team}</b></span>
      </div>
      <div class="sect s-str"><h4>✦ 強項</h4><p>${g.str}</p></div>

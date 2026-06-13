@@ -101,7 +101,7 @@
 
   <div class="hd">
     <h1><i class="fa-solid fa-comments" style="color:var(--primary);margin-right:8px;"></i>海報回饋報告</h1>
-    <div class="sub">三面向 profile（同學共鳴 · 學術深度 · 系統評估 + 團隊合作）· 私下個別回饋 + 公開榮譽榜</div>
+    <div class="sub">三面向 profile（同學共鳴 · 學術深度 · 綜合分析 + 團隊合作）· 私下個別回饋 + 公開榮譽榜</div>
   </div>
 
   <div v-if="loadState==='loading'" class="loading">
@@ -159,7 +159,7 @@
         <!-- Lens 3: AI systematic (only if mapped) -->
         <div class="lens" v-if="aiOf(sel)">
           <div class="lens-row">
-            <span class="lens-name">系統評估</span>
+            <span class="lens-name">綜合分析</span>
             <div class="lens-bar-wrap"><div class="lens-bar" :style="barAI(sel)"></div></div>
             <span class="lens-tag" style="color:var(--accent-l);">AI {{ aiOf(sel).base.toFixed(2) }} / 5</span>
           </div>
@@ -197,7 +197,7 @@
           <div class="d"><b>整體印象（{{ aiOf(sel).dims[3] }}）：</b>{{ aiOf(sel).notes.tot }}</div>
         </div>
         <div v-else class="note" style="margin-top:14px;">
-          <i class="fa-solid fa-circle-info"></i> 此組尚未對應 AI 評估主題，補上 ZODIAC_TOPIC 對照後即顯示系統評估與逐面向回饋。
+          <i class="fa-solid fa-circle-info"></i> 此組尚未對應 AI 評估主題，補上 ZODIAC_TOPIC 對照後即顯示綜合分析與逐面向回饋。
         </div>
       </div>
       <div v-else class="note" style="text-align:center;padding:30px;">↑ 點選一個組別查看其私下回饋卡</div>
@@ -246,7 +246,7 @@
       </div>
       <div class="note">
         評選邏輯：學術深度獎＝評審加權最高；人氣獎＝學生票最高且統計顯著；最佳團隊＝AI 團隊合作分最高；
-        最佳視覺＝AI 視覺表達分最高；全方位＝同學共鳴／學術深度／系統評估三項標準化後總和最高。
+        最佳視覺＝AI 視覺表達分最高；全方位＝同學共鳴／學術深度／綜合分析三項標準化後總和最高。
       </div>
     </div>
 
@@ -427,7 +427,7 @@
             <div class="note">{{ corrLabel(teamCorr.student) }}</div>
           </div>
           <div class="ib" style="background:var(--surface2);border:1px solid var(--border);">
-            <h4 style="color:var(--text2);">vs 系統評估</h4>
+            <h4 style="color:var(--text2);">vs 綜合分析</h4>
             <div style="font-size:22px;font-weight:900;color:var(--muted);">r = {{ teamCorr.ai.toFixed(2) }}</div>
             <div class="note">{{ corrLabel(teamCorr.ai) }}</div>
           </div>
@@ -479,6 +479,43 @@
           <div class="note" style="margin-top:8px;">
             研究導向強、內容討論幾乎人人參與；<strong>實作型最稀缺</strong>（技術/視覺的關鍵專才）。
           </div>
+        </div>
+
+        <!-- Kolb learning-style overlay -->
+        <div class="sec" v-if="kolbStats">
+          <div class="sec-title"><i class="fa-solid fa-compass-drafting"></i>Kolb 學習風格傾向（詮釋性疊加）</div>
+          <div class="note" style="margin-bottom:12px;">
+            把上述協作角色對應到 Kolb 學習風格——<strong>這是詮釋性的對照，非經驗證的 Kolb 學習風格量表（LSI）測驗</strong>。
+            以全班貢獻的「風格佔比」呈現（不強制每人歸一類）。
+          </div>
+          <div v-for="k in kolbStats.mix" :key="k.label" style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
+            <span style="min-width:96px;font-size:13px;font-weight:700;">{{ k.label }}</span>
+            <div style="flex:1;height:14px;background:var(--surface2);border-radius:7px;overflow:hidden;">
+              <div :style="{width:k.pct+'%',height:'100%',borderRadius:'7px',background:k.pct>=30?'var(--primary)':k.pct>=15?'var(--ok-l)':'var(--accent-l)'}"></div>
+            </div>
+            <span style="min-width:44px;font-weight:700;font-size:13px;">{{ k.pct }}%</span>
+            <span style="flex:1.4;font-size:11px;color:var(--muted);">{{ k.desc }}</span>
+          </div>
+          <div class="note" style="margin-top:8px;">
+            全班偏<strong>發散型（討論發想）</strong>與<strong>適應型（協調執行）</strong>，<strong>同化型（文獻理論）</strong>穩定，
+            <strong>收斂型（技術解題）最稀缺</strong>——與「實作型人力稀缺」是同一現象的不同語言。
+          </div>
+        </div>
+
+        <!-- Per-group dominant Kolb style -->
+        <div class="sec" v-if="groupKolb.length">
+          <div class="sec-title"><i class="fa-solid fa-table-cells-large"></i>各組主導學習風格</div>
+          <table>
+            <thead><tr><th>組別</th><th>主導風格</th><th class="r">收斂型(技術解題)佔比</th></tr></thead>
+            <tbody>
+              <tr v-for="g in groupKolb" :key="g.z" :style="g.convPct<8?'background:var(--accent-soft)':''">
+                <td><span style="font-weight:700;">{{ g.z }}</span> <span style="font-size:11px;color:var(--muted);">{{ g.topic }}</span></td>
+                <td style="font-weight:700;color:var(--primary);">{{ g.dom }}</td>
+                <td class="r" :style="g.convPct<8?'color:var(--accent);font-weight:700':'color:var(--muted)'">{{ g.convPct }}%</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note" style="margin-top:8px;">收斂型（技術解題）佔比偏低的組，視覺/製作較吃力——對應前述技術人力稀缺的組。</div>
         </div>
 
         <!-- Breadth -->
@@ -703,7 +740,7 @@ createApp({
       const out={};
       const s=stu.value[z]; if(s) out['同學共鳴']=Math.max(0,Math.min(1,(s.z+3)/6));
       const t=tea.value[z]; if(t) out['學術深度']=t.final/5;
-      const a=aiOf(z); if(a) out['系統評估']=a.base/5;
+      const a=aiOf(z); if(a) out['綜合分析']=a.base/5;
       return out;
     };
     const strengthText=(z)=>{
@@ -711,7 +748,7 @@ createApp({
       const best=keys.reduce((a,b)=>n[b]>n[a]?b:a);
       const map={'同學共鳴':'同學給予高度共鳴——你們的海報在全班眼中很有吸引力。',
                  '學術深度':'評審肯定你們的學術深度與病生理正確性——內容紮實。',
-                 '系統評估':'在選題、病理、視覺、整體四個面向都表現得均衡而完整。'};
+                 '綜合分析':'在選題、病理、視覺、整體四個面向都表現得均衡而完整。'};
       const a=aiOf(z);
       let extra='';
       if(a&&a.bonus>0.3) extra=' 你們的分工與討論紀錄也很完整，是團隊合作的好示範。';
@@ -722,7 +759,7 @@ createApp({
       const worst=keys.reduce((a,b)=>n[b]<n[a]?b:a);
       const map={'同學共鳴':'可在視覺吸引力與第一眼溝通上再加強，讓同學在快速瀏覽時更容易被吸引。',
                  '學術深度':'病生理機轉的因果鏈可再深化，補強分子層次與藥物作用機制的正確性。',
-                 '系統評估':'整體呈現的完整度與各面向的均衡可再加強。'};
+                 '綜合分析':'整體呈現的完整度與各面向的均衡可再加強。'};
       const a=aiOf(z);
       let extra='';
       if(a){ const dn=['選題需求','病生理深度','視覺表達','整體印象'][a.dims.indexOf(Math.min(...a.dims))];
@@ -742,7 +779,7 @@ createApp({
       // visual: AI dims[2] max (among mapped)
       let vis=ZODIAC.filter(z=>aiOf(z)).sort((a,b)=>aiOf(b).dims[2]-aiOf(a).dims[2])[0]||'';
       // allround: normalized sum of 3 lenses
-      const score=(z)=>{const n=norm(z); return (n['同學共鳴']||0)+(n['學術深度']||0)+(n['系統評估']||0);};
+      const score=(z)=>{const n=norm(z); return (n['同學共鳴']||0)+(n['學術深度']||0)+(n['綜合分析']||0);};
       let all=ZODIAC.filter(z=>tea.value[z]&&stu.value[z]&&aiOf(z)).sort((a,b)=>score(b)-score(a))[0]||'';
       return {
         academic:{z:acad, v:T[acad]?.final?.toFixed(2)??'—'},
@@ -846,6 +883,31 @@ createApp({
         leaderProfile, leaderN:leaders.length,
         customN: recs.filter(r=>r.custom).length };
     });
+    // ── Kolb 學習風格疊加（詮釋性，非經驗證 LSI 測驗）──
+    const KOLB_MAP={'內容與討論':'發散型','文獻與研究':'同化型','技術與實作':'收斂型','進度與溝通':'適應型','協作支援':'適應型'};
+    const KOLB_ORDER=['發散型','同化型','收斂型','適應型'];
+    const KOLB_DESC={'發散型':'感受＋觀察｜創意、多元視角、愛討論','同化型':'觀察＋思考｜理論、文獻、邏輯統整','收斂型':'思考＋實作｜技術、解決問題、動手做','適應型':'實作＋感受｜行動、協調、推進落實'};
+    const kolbStats=computed(()=>{
+      const cnt={發散型:0,同化型:0,收斂型:0,適應型:0}; let tot=0;
+      Object.values(stu_raw.value).forEach(s=>{
+        (s?.tasks?.assignment?.contributions||[]).forEach(x=>{const k=KOLB_MAP[x];if(k){cnt[k]++;tot++;}});
+      });
+      if(!tot) return null;
+      return {tot, mix:KOLB_ORDER.map(k=>({label:k,desc:KOLB_DESC[k],n:cnt[k],pct:Math.round(cnt[k]/tot*100)}))};
+    });
+    const groupKolb=computed(()=>
+      ZODIAC.map(z=>{
+        const cnt={發散型:0,同化型:0,收斂型:0,適應型:0}; let tot=0;
+        Object.values(stu_raw.value).forEach(s=>{
+          if(s?.profile?.Zodiac!==z) return;
+          (s?.tasks?.assignment?.contributions||[]).forEach(x=>{const k=KOLB_MAP[x];if(k){cnt[k]++;tot++;}});
+        });
+        if(!tot) return null;
+        const dom=KOLB_ORDER.reduce((a,b)=>cnt[b]>cnt[a]?b:a);
+        return {z,topic:topicShort(z),dom,convPct:Math.round(cnt.收斂型/tot*100)};
+      }).filter(Boolean)
+    );
+
     const groupTraits=computed(()=>{
       const g={}; ZODIAC.forEach(z=>g[z]={研究型:0,實作型:0,內容型:0,協調型:0,支援型:0});
       Object.values(stu_raw.value).forEach(s=>{
@@ -927,7 +989,7 @@ createApp({
       bandClass,bandLabel,bandExplain,teaTier,
       barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,
       topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded,contribMetrics,
-      traitStats,groupTraits};
+      traitStats,groupTraits,kolbStats,groupKolb};
   }
 }).mount('#app');
 </script>
