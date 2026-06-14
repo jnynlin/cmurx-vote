@@ -226,15 +226,15 @@
           </div>
           <div class="award aw-team">
             <div class="ico">🤝</div>
-            <div class="atitle">最佳團隊協作獎</div>
+            <div class="atitle">團隊協作獎</div>
             <div class="winner" style="font-size:20px;">{{ awards.team.label }}</div>
-            <div class="detail">團隊協作 {{ awards.team.tw }}/5 並列最高（協作佐證最完整）</div>
+            <div class="detail">團隊協作 {{ awards.team.tw }}/5 並列領先（協作佐證完整）</div>
           </div>
           <div class="award aw-vis">
             <div class="ico">🙌</div>
             <div class="atitle">全員投入獎</div>
             <div class="winner">{{ awards.participation.z }}</div>
-            <div class="detail">實質研究參與率最高 · {{ awards.participation.v }}%（每個人都下去做）</div>
+            <div class="detail">實質研究參與率領先 · {{ awards.participation.v }}%（每個人都下去做）</div>
           </div>
         </div>
       </div>
@@ -242,7 +242,7 @@
       <div class="sec">
         <div class="sec-title"><i class="fa-solid fa-medal"></i>特色獎（每組各擅勝場）</div>
         <div class="note" style="margin-bottom:12px;">
-          每一組都有獨特的亮點——以下表揚各組最具代表性的特色，與上方數據獎並列，共同構成多元的榮譽。
+          每一組都有獨特的亮點——以下表揚各組具代表性的特色，與上方數據獎並列，共同構成多元的榮譽。
         </div>
         <div class="awards">
           <div class="award" v-for="s in SIGNATURE" :key="s.title"
@@ -255,7 +255,7 @@
         </div>
       </div>
       <div class="note">
-        多元榮譽設計：除了學術／人氣／協作／投入四項數據獎，每組另設一面向自己最強的特色獎——
+        多元榮譽設計：除了學術／人氣／協作／投入四項數據獎，每組另設一面向自己擅長的特色獎——
         讓全班 12 組都被看見、被肯定，而非只有名次。
       </div>
     </div>
@@ -800,13 +800,13 @@ createApp({
     });
     // ── Curated signature awards: every group gets a distinct honour ──
     const SIGNATURE=[
-      {ico:'🌟',title:'最深學術企圖獎',z:'申猴',reason:'分子機轉（BRAF/MEK、TERT、mTKI、NGS）達研究所級深度，綜合分析全場最高'},
+      {ico:'🌟',title:'學術企圖獎',z:'申猴',reason:'分子機轉（BRAF/MEK、TERT、mTKI、NGS）達研究所級深度，綜合分析評價突出'},
       {ico:'🏅',title:'內容實力獎',    z:'卯兔',reason:'胰臟癌強選題，評審加權次高、內容紮實'},
       {ico:'🔬',title:'機轉論述獎',    z:'巳蛇',reason:'CAG→mHTT 與 ASO 前沿技術論述清楚，評審第三'},
-      {ico:'💡',title:'選題洞察獎',    z:'丑牛',reason:'「無症狀、每 3 人有 1 人」的隱形殺手框架，最具洞察'},
+      {ico:'💡',title:'選題洞察獎',    z:'丑牛',reason:'「無症狀、每 3 人有 1 人」的隱形殺手框架，深具洞察'},
       {ico:'🗳',title:'民主協作獎',    z:'寅虎',reason:'以票選民主決定研究主題＋露臉視訊會議'},
       {ico:'📊',title:'協作歷程獎',    z:'子鼠',reason:'全班唯一用泳道圖（A/B/C/D × 時間軸）呈現協作'},
-      {ico:'💊',title:'臨床切題獎',    z:'辰龍',reason:'加入「藥師觀點」（HbA1c/eGFR 監測），最切合課程定位'},
+      {ico:'💊',title:'臨床切題獎',    z:'辰龍',reason:'加入「藥師觀點」（HbA1c/eGFR 監測），切合課程定位'},
       {ico:'📖',title:'衛教傳達獎',    z:'未羊',reason:'阿茲海默病因與風險因子整理清晰、視覺親和'},
       {ico:'⏱',title:'時程規劃獎',    z:'亥豬',reason:'完整階段時間線（5/29 決定→5/30 分工→6/11 製作）＋紮實架構'},
     ];
