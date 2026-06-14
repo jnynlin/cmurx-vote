@@ -284,6 +284,8 @@
           <thead><tr>
             <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">類型</th>
             <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">組別</th>
+            <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">姓名</th>
+            <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">學號</th>
             <th style="text-align:left;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">角色</th>
             <th style="text-align:center;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">展覽</th>
             <th style="text-align:center;padding:6px 10px;background:var(--surface2);color:var(--muted);border-bottom:1px solid var(--border);">任務</th>
@@ -297,7 +299,9 @@
                 <span v-else style="color:var(--danger);font-weight:700;">👻 消極</span>
               </td>
               <td style="padding:6px 10px;font-weight:700;">{{ r.z }}</td>
-              <td style="padding:6px 10px;">{{ r.role==='leader'?'組長':'組員' }}</td>
+              <td style="padding:6px 10px;font-weight:600;">{{ r.name }}</td>
+              <td style="padding:6px 10px;font-family:monospace;color:var(--muted);">{{ r.sid }}</td>
+              <td style="padding:6px 10px;" :style="r.role==='leader'?'color:var(--accent);font-weight:700;':''">{{ r.role==='leader'?'組長 ★':'組員' }}</td>
               <td style="padding:6px 10px;text-align:center;">{{ r.gallery?'✓':'—' }}</td>
               <td style="padding:6px 10px;text-align:center;color:var(--muted);">{{ r.ntasks }}/6</td>
               <td style="padding:6px 10px;text-align:center;">{{ r.online?'🟢':r.ever?'⚪':'✗' }}</td>
@@ -382,8 +386,8 @@ createApp({
         const ever=!!(s.lastSeen&&s.lastSeen>0);
         const online=!!(s.lastSeen&&(t-s.lastSeen<40000));
         const cat = !ever ? 'ghost' : !gallery ? 'unlocked' : 'skipped';
-        return {id, z:p.Zodiac||'?', role:p.Role||'member', gallery, ntasks, ever, online, cat};
-      }).sort((a,b)=>a.ntasks-b.ntasks);
+        return {id, name:p.Name||p.StudentName||'—', sid:p.StudentId||id, z:p.Zodiac||'?', role:p.Role||'member', gallery, ntasks, ever, online, cat};
+      }).sort((a,b)=> (a.z===b.z? a.ntasks-b.ntasks : String(a.z).localeCompare(String(b.z))));
     });
     const nonVoterCats = computed(()=>{
       const c={unlocked:0,skipped:0,ghost:0};
