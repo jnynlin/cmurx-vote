@@ -66,6 +66,8 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);line-hei
 </style>
 </head>
 <body>
+<style>@media print{#snapBanner{display:none!important;}}</style>
+<div id="snapBanner" style="display:none;font-family:system-ui,'Noto Sans TC',sans-serif;padding:9px 16px;text-align:center;font-size:13px;font-weight:600;border-bottom:1px solid;line-height:1.5;"></div>
 <div class="page">
 
   <!-- Header -->
@@ -257,5 +259,33 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);line-hei
   </div>
 
 </div>
+<script type="module">
+(async()=>{
+  const SNAP_N=231;
+  const FIREBASE={apiKey:"AIzaSyBPdK2Ptbc9srt8DY74URKQyNmceexM-ro",authDomain:"cmu-11402-pathophysiology.firebaseapp.com",databaseURL:"https://cmu-11402-pathophysiology-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"cmu-11402-pathophysiology",storageBucket:"cmu-11402-pathophysiology.firebasestorage.app",messagingSenderId:"367793212618",appId:"1:367793212618:web:c11acedc50ce6fc3897833"};
+  const SESSION=new URLSearchParams(location.search).get('session')||'20260611-9X9Y';
+  const el=document.getElementById('snapBanner');
+  const show=(html,bg,fg,bd)=>{el.innerHTML=html;el.style.background=bg;el.style.color=fg;el.style.borderColor=bd;el.style.display='block';};
+  try{
+    const [a,d,au]=await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js'),
+      import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js')]);
+    const app=a.initializeApp(FIREBASE,'snap-'+Date.now());const db=d.getDatabase(app);const auth=au.getAuth(app);
+    await au.signInAnonymously(auth);
+    const snap=await d.get(d.ref(db,'classrooms/'+SESSION+'/posterVotes'));
+    const raw=snap.val()||{};
+    const liveN=Object.entries(raw).filter(([k,v])=>/^S?11[1-4]003\d{3,4}$/.test(String((v&&v.voterId)||k))).length;
+    const date=new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    if(liveN===SNAP_N){
+      show('📌 定格快照 N='+SNAP_N+'　·　與目前即時票數一致（'+date+' 查核）','#ecfdf5','#065f46','#6ee7b7');
+    }else{
+      show('⚠ 本信為 <b>N='+SNAP_N+'</b> 時撰寫的定格版本　·　目前即時票數已為 <b>N='+liveN+'</b>（'+date+'）　·　最新數據請見 <a href="master_console.html" style="color:inherit;text-decoration:underline;">master_console</a>','#fffbeb','#92400e','#fcd34d');
+    }
+  }catch(e){
+    show('📌 本信為 N='+SNAP_N+' 時撰寫的定格版本　·　即時數據請見 <a href="master_console.html" style="color:inherit;text-decoration:underline;">master_console</a>','#f8fafc','#475569','#cbd5e1');
+  }
+})();
+</script>
 </body>
 </html>
