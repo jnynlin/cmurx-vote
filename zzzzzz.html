@@ -683,8 +683,8 @@ function useClassroom(sessionId, addToast) {
     const saveSchedule = async () => {
         try {
             await update(dbRef(db, `classrooms/${sessionId.value}/status`), {
-                scheduledOpenAt:  scheduleInputs.openAt  || null,
-                scheduledCloseAt: scheduleInputs.closeAt || null,
+                scheduledOpenAt:  scheduleInputs.openAt  || '',
+                scheduledCloseAt: scheduleInputs.closeAt || '',
             });
             scheduleDirty.value = false;
             addToast("時程已設定", "success", "fa-solid fa-clock");
@@ -698,7 +698,7 @@ function useClassroom(sessionId, addToast) {
         try {
             scheduleInputs.openAt = '';
             scheduleInputs.closeAt = '';
-            await update(dbRef(db, `classrooms/${sessionId.value}/status`), { scheduledOpenAt: null, scheduledCloseAt: null });
+            await update(dbRef(db, `classrooms/${sessionId.value}/status`), { scheduledOpenAt: '', scheduledCloseAt: '' });
             scheduleDirty.value = false;
             addToast("排程已清除,門禁改為純手動", "info", "fa-solid fa-eraser");
         } catch (e) {
