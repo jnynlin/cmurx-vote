@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>系統設計 — 核心架構與計分生理</title>
+<style>
+  :root{
+    --bg:#f4f4f5;--surface:#fff;--surface2:#fafafa;--border:#e4e4e7;
+    --text:#18181b;--text2:#3f3f46;--muted:#71717a;--faint:#a1a1aa;
+    --primary:#4f46e5;--primary-soft:#eef2ff;--ok:#15803d;--ok-soft:#f0fdf4;
+    --accent:#b45309;--accent-soft:#fffbeb;--danger:#dc2626;--danger-soft:#fef2f2;--gold:#ca8a04;
+    --up:#0ea5e9;--up-soft:#e0f2fe;--mid2:#8b5cf6;--mid-soft:#f5f3ff;--down:#16a34a;--down-soft:#f0fdf4;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+  .page{max-width:920px;margin:0 auto;padding:30px 20px 80px;}
+  h1{font-size:24px;font-weight:900;}
+  .sub{font-size:13px;color:var(--muted);margin-top:4px;margin-bottom:24px;}
+  h2{font-size:17px;font-weight:800;margin:30px 0 14px;display:flex;align-items:center;gap:9px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+  h2 .n{background:var(--primary);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+  h3{font-size:14px;font-weight:800;margin:18px 0 8px;color:var(--text2);}
+  p{font-size:14px;color:var(--text2);margin-bottom:10px;}
+
+  /* layer diagram */
+  .layer{border-radius:14px;padding:16px 18px;margin-bottom:14px;border:1px solid;}
+  .layer-up{background:var(--up-soft);border-color:#7dd3fc;}
+  .layer-mid{background:var(--mid-soft);border-color:#ddd6fe;}
+  .layer-down{background:var(--down-soft);border-color:#bbf7d0;}
+  .layer-h{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .layer-up .layer-h{color:#0369a1;} .layer-mid .layer-h{color:#6d28d9;} .layer-down .layer-h{color:#15803d;}
+  .nodes{display:flex;gap:10px;flex-wrap:wrap;}
+  .node{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-size:12.5px;min-width:120px;}
+  .node b{display:block;font-size:13px;font-weight:700;}
+  .node span{color:var(--muted);font-size:11px;}
+  .flow{text-align:center;font-size:18px;color:var(--faint);margin:2px 0;}
+
+  /* scoring */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 11px;border-bottom:1px solid var(--border);text-align:left;}
+  th.r{text-align:right;}
+  td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:top;}
+  td.r{text-align:right;font-weight:700;}
+  tr:last-child td{border-bottom:none;}
+  .formula{background:#1e1e2e;color:#e2e8f0;border-radius:10px;padding:14px 16px;font-family:'SF Mono',Consolas,monospace;font-size:12.5px;line-height:1.7;margin:10px 0;overflow-x:auto;}
+  .formula .c{color:#94a3b8;} .formula .k{color:#fbbf24;} .formula .v{color:#86efac;}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;}
+  .pill-warn{background:var(--accent-soft);color:var(--accent);border:1px solid #fde68a;}
+  .pill-ok{background:var(--ok-soft);color:var(--ok);border:1px solid #bbf7d0;}
+  .note{font-size:12px;color:var(--muted);line-height:1.6;}
+  .callout{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;margin:12px 0;font-size:13px;color:var(--text2);}
+  .callout b{color:var(--accent);}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){.two{grid-template-columns:1fr;}}
+  @media print{.page{padding:10px;}.card,.layer{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1><i style="margin-right:6px;">🫀</i>系統設計：核心架構與計分生理</h1>
+  <div class="sub">Zodiac Ops 2026 · Pathophysiology 海報展 · 系統的「解剖」與「生理」</div>
+
+  <!-- ═══ 1. ANATOMY ═══ -->
+  <h2><span class="n">1</span>核心架構（解剖學）</h2>
+  <p>系統分三層，資料由上往下單向流動：<strong>採集 → 儲存 → 分析</strong>。兩個獨立的儲存後端（Firebase 與 Google Sheet）分別承載「即時互動」與「成績結算」。</p>
+
+  <div class="layer layer-up">
+    <div class="layer-h">🔼 上游 · 資料採集（Client）</div>
+    <div class="nodes">
+      <div class="node"><b>index.html</b><span>學生端：任務、海報票選、課末回饋</span></div>
+      <div class="node"><b>poster_judge.html</b><span>評審端：3 位老師評分（A/B/C 槽）</span></div>
+      <div class="node"><b>zzzzzz.html</b><span>教師端：名單、投票開關、同步</span></div>
+    </div>
+  </div>
+  <div class="flow">▼ 寫入</div>
+  <div class="layer layer-mid">
+    <div class="layer-h">⏺ 中游 · 儲存（Backend）</div>
+    <div class="nodes">
+      <div class="node"><b>Firebase RTDB</b><span>classrooms/{session}/ students · posterVotes · status</span></div>
+      <div class="node"><b>Google Sheet（GAS）</b><span>個人成績表 · 海報評審表（12×20）</span></div>
+    </div>
+    <div class="note" style="margin-top:8px;">Firebase＝即時雙向（投票、任務狀態、線上）；GAS＝結算與評審分（教師按「同步」快照寫入）。</div>
+  </div>
+  <div class="flow">▼ 讀取（唯讀分析）</div>
+  <div class="layer layer-down">
+    <div class="layer-h">🔽 下游 · 分析與輸出（Read-only）</div>
+    <div class="nodes">
+      <div class="node"><b>master_console</b><span>專案中控 · 結案判定</span></div>
+      <div class="node"><b>score_report</b><span>7 tab 完整分析</span></div>
+      <div class="node"><b>vote_report</b><span>即時投票監控</span></div>
+      <div class="node"><b>feedback_report</b><span>三面向回饋 · 榮譽榜 · 特質</span></div>
+      <div class="node"><b>ai_evaluation</b><span>AI rubric 評估</span></div>
+      <div class="node"><b>group_feedback</b><span>各組綜合回饋</span></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>單向資料流原則：</b>下游全部唯讀——分析工具只讀不寫，永不污染原始資料。唯一的寫入動作（關閉投票、刪除帳號）保留在教師端 zzzzzz.html（admin 認證）。
+  </div>
+
+  <!-- ═══ 2. PHYSIOLOGY ═══ -->
+  <h2><span class="n">2</span>計分生理（兩套循環系統）</h2>
+  <p>系統內有<strong>兩套獨立的計分循環</strong>，在一個點交會。理解它們的分流與匯流，是理解整個評量設計的關鍵。</p>
+
+  <div class="two">
+    <div class="card" style="border-top:3px solid var(--primary);">
+      <h3>🩸 循環 A：個人成績</h3>
+      <p class="note">衡量「每位學生的課堂參與」。由 GAS 在教師同步時計算，寫入個人成績表。</p>
+      <table>
+        <tr><th>項目</th><th class="r">分數</th></tr>
+        <tr><td>校準 calibration</td><td class="r">5</td></tr>
+        <tr><td>反思 rating</td><td class="r">10</td></tr>
+        <tr><td>作業 assignment</td><td class="r">15</td></tr>
+        <tr><td>展覽 gallery</td><td class="r">15</td></tr>
+        <tr><td>閱讀 notebook <span class="note">(秒讀&lt;15s 罰)</span></td><td class="r">5–15</td></tr>
+        <tr><td>互動 slido <span class="note">(秒關&lt;5s 罰)</span></td><td class="r">5–15</td></tr>
+        <tr><td>測驗 forms <span class="note">(秒填&lt;20s 罰)</span></td><td class="r">10–25</td></tr>
+        <tr><td>協作貢獻 <span class="note">(每項3, 上限)</span></td><td class="r">0–9</td></tr>
+        <tr><td>組長加成 <span class="note">(rating×2, 上限)</span></td><td class="r">0–10</td></tr>
+        <tr style="background:var(--accent-soft);"><td><b>海報票選分</b> <span class="pill pill-warn">無上限</span></td><td class="r" style="color:var(--accent);">0–N×?</td></tr>
+      </table>
+      <div class="note" style="margin-top:8px;">非海報項上限 ≈ <b>119 分</b>；海報票選分直接累加，無封頂。</div>
+    </div>
+
+    <div class="card" style="border-top:3px solid var(--gold);">
+      <h3>🏆 循環 B：海報評選</h3>
+      <p class="note">衡量「海報作品的排名」。有兩個獨立來源，產出典禮排名，<strong>不直接計入個人成績</strong>（除了 B1 的票數回流到循環 A）。</p>
+      <h3 style="margin-top:10px;font-size:13px;">B1 · 學生票選（人氣）</h3>
+      <div class="formula"><span class="c">// 每位學生選 3 名，Borda 計分</span><br>第1名 <span class="v">+3</span>　第2名 <span class="v">+2</span>　第3名 <span class="v">+1</span><br><span class="k">組票數</span> = Σ 全班給該組的分</div>
+      <h3 style="font-size:13px;">B2 · 評審評分（學術）</h3>
+      <div class="formula"><span class="c">// 3 評審 × 4 面向(1–5)</span><br><span class="k">加權分</span> = <span class="v">0.5</span>×平均(選題,病理,視覺)<br>　　　　 + <span class="v">0.5</span>×整體印象<br><span class="k">最終分</span> = 平均(A,B,C 加權分)<br><span class="c">　（未送出的評審不計入平均）</span></div>
+    </div>
+  </div>
+
+  <div class="card" style="border:2px solid var(--accent);background:var(--accent-soft);">
+    <h3 style="color:var(--accent);">⚡ 交會點：海報票選分（循環 B1 → 循環 A）</h3>
+    <div class="formula" style="background:#3b2410;"><span class="c">// 學生投票的組票數，回流成每位組員的個人成績</span><br>個人.poster_score = <span class="k">組Borda票數</span>　<span class="c">(整組相同, 無上限)</span><br><span class="k">個人總分</span> = 課堂項(≤119) + <span class="v">poster_score</span></div>
+    <p class="note" style="margin-top:6px;"><b>設計決策（刻意不設上限）：</b>實測海報分範圍 63–169，個人成績差距達 106 分。經分析——只有「無上限」能讓第 1 名組的每位成員，在個人成績上都高於第 12 名組（差距 66 分、無重疊）。任何形式的封頂都會造成組別成績混疊，使票選失去鑑別意義。</p>
+  </div>
+
+  <!-- ═══ 3. third lens ═══ -->
+  <h2><span class="n">3</span>第三道視角：AI 綜合分析（旁路）</h2>
+  <p>AI rubric 評估是一條<strong>旁路（不進成績、不進排名）</strong>，純作為第三方參考，與評審、學生票交叉比對。同樣 50/50 加權，外加團隊合作加分。</p>
+  <div class="formula"><span class="k">AI 基礎分</span> = <span class="v">0.5</span>×平均(選題,病理,視覺) + <span class="v">0.5</span>×整體　<span class="c">// 同評審公式</span><br><span class="k">團隊加分</span> = max(0, (團隊分−3) × <span class="v">0.25</span>)　<span class="c">// 上限 +0.5</span></div>
+  <div class="callout">
+    <b>三方分流的意義：</b>學生票＝人氣／溝通；評審＝學術深度；AI＝一致性參考。三者衡量不同的東西——<b>「不一致」本身就是最有價值的教學訊號</b>（如 ATC：AI 第一、評審第十、學生第十二＝深度≠吸引力）。
+  </div>
+
+  <!-- ═══ 4. integrity ═══ -->
+  <h2><span class="n">4</span>系統恆定（資料完整性機制）</h2>
+  <div class="two">
+    <div class="card">
+      <h3>票數恆定律</h3>
+      <div class="formula"><span class="k">投出總分</span> = 投票人數 × <span class="v">6</span><br><span class="c">（每人恰好 3+2+1=6 分）</span></div>
+      <p class="note">若總分 = N×6 → 無灌票、無覆蓋。這是結案的鐵證（master_console 即時驗算）。</p>
+    </div>
+    <div class="card">
+      <h3>解鎖閘門</h3>
+      <p class="note">投票卡僅在 <code>gallery.done</code> 後出現——所以「未投票」多為<b>結構性</b>（沒完成展覽，卡未解鎖），非冷漠。提高投票率的槓桿是「完成展覽」。</p>
+      <h3 style="margin-top:10px;">DEBUG 根除</h3>
+      <p class="note">真實學號格式 <code>S11[1-4]003xxxx</code>；測試帳號（S1101/S1102/S111000999）在所有分析入口 root 排除。</p>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:30px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">
+    Zodiac Ops 2026 · 中國醫藥大學藥學系 Pathophysiology · 系統設計參考（架構＋計分機制）
+  </div>
+
+</div>
+</body>
+</html>
