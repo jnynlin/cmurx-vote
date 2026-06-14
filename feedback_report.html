@@ -206,8 +206,8 @@
     <!-- ═══ HONOR ROLL ═══ -->
     <div v-show="tab==='honor'">
       <div class="warn-map" v-if="mappedCount < 12">
-        <strong>提醒：</strong>目前 {{ mappedCount }}/12 組已對應 AI 主題。「最佳團隊」「最佳視覺」獎需完整對應後才準確（目前依已對應組計算）。
-        「人氣獎」「學術深度獎」由學生票與評審分直接決定，不受影響。
+        <strong>提醒：</strong>目前 {{ mappedCount }}/12 組已對應 AI 主題。「團隊協作獎」需完整對應後才準確（目前依已對應組計算）。
+        「人氣獎」「學術深度獎」由同學票與評審分直接決定，不受影響。
       </div>
       <div class="sec">
         <div class="sec-title"><i class="fa-solid fa-trophy"></i>數據獎（即時計算）</div>
@@ -222,7 +222,7 @@
             <div class="ico">🔥</div>
             <div class="atitle">人氣獎</div>
             <div class="winner">{{ awards.popular.z }}</div>
-            <div class="detail">學生票選第一 · {{ awards.popular.v }} 票（z = {{ awards.popular.z2 }}，顯著）</div>
+            <div class="detail">同學票選人氣突出 · {{ awards.popular.v }} 票</div>
           </div>
           <div class="award aw-team">
             <div class="ico">🤝</div>
