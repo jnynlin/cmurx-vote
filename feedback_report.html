@@ -797,16 +797,18 @@ createApp({
     // ── Honor roll awards ─────────────────────────────────────────────────
     const awards=computed(()=>{
       const T=tea.value, S=stu.value;
-      // academic: teacher rank 1
-      let acad=ZODIAC.filter(z=>T[z]).sort((a,b)=>T[a].rank-T[b].rank)[0]||'';
-      // popular: student pts max
-      let pop=ZODIAC.filter(z=>S[z]).sort((a,b)=>S[b].pts-S[a].pts)[0]||'';
+      // 數據獎保留給「未獲專屬特色獎」的 3 組（午馬／酉雞／戌狗），確保每組恰一榮譽、不重複得獎
+      const sigZ=new Set(SIGNATURE.map(s=>s.z));
+      // academic: teacher rank 1 (among non-signature groups)
+      let acad=ZODIAC.filter(z=>T[z]&&!sigZ.has(z)).sort((a,b)=>T[a].rank-T[b].rank)[0]||'';
+      // popular: student pts max (among non-signature groups)
+      let pop=ZODIAC.filter(z=>S[z]&&!sigZ.has(z)).sort((a,b)=>S[b].pts-S[a].pts)[0]||'';
       // team: AI tw max — celebrate ALL tied (the 5.0 group)
       const twMax=Math.max(...ZODIAC.filter(z=>aiOf(z)).map(z=>aiOf(z).tw),0);
       const teamZs=ZODIAC.filter(z=>aiOf(z)&&aiOf(z).tw===twMax);
-      // participation: highest substantive-research rate (Firebase self-report)
+      // participation: highest substantive-research rate among non-signature groups (Firebase self-report)
       const cm=contribMetrics.value||[];
-      const part=cm.length?[...cm].sort((a,b)=>b.substRate-a.substRate)[0]:null;
+      const part=cm.length?[...cm].filter(r=>!sigZ.has(r.z)).sort((a,b)=>b.substRate-a.substRate)[0]:null;
       return {
         academic:{z:acad, v:T[acad]?.final?.toFixed(2)??'—'},
         popular: {z:pop,  v:S[pop]?.pts??'—', z2:S[pop]?.z?.toFixed(2)??'—'},
