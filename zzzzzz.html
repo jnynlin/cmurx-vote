@@ -658,14 +658,18 @@ function useClassroom(sessionId, addToast) {
     };
 
     const clockNow = ref(Date.now());
+    let _prevTick = Date.now();
     const _clockTimer = setInterval(() => {
         const now = Date.now();
         clockNow.value = now;
+        const prev = _prevTick; _prevTick = now;
         const openTs = toTs(state.scheduledOpenAt);
         const closeTs = toTs(state.scheduledCloseAt);
-        if (closeTs && state.loginStatus !== 'locked' && now >= closeTs) {
+        // 邊緣觸發:只在「跨過」排定時刻的那一秒切換一次,之後不再持續覆寫。
+        // (舊版每秒強制寫回目標值,會與手動操作/殘留排程/另一分頁互搶,造成開放↔禁止反覆閃爍)
+        if (closeTs && prev < closeTs && now >= closeTs && state.loginStatus !== 'locked') {
             setStatus('locked');
-        } else if (openTs && state.loginStatus !== 'open' && now >= openTs && (!closeTs || now < closeTs)) {
+        } else if (openTs && prev < openTs && now >= openTs && state.loginStatus !== 'open') {
             setStatus('open');
         }
     }, 1000);
