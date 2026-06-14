@@ -258,6 +258,22 @@
         多元榮譽設計：除了學術／人氣／協作／投入四項數據獎，每組另設一面向自己擅長的特色獎——
         讓全班 12 組都被看見、被肯定，而非只有名次。
       </div>
+
+      <div class="sec" style="margin-top:8px;">
+        <div class="sec-title"><i class="fa-solid fa-table-cells-large"></i>全班 12 組榮譽總覽</div>
+        <div class="note" style="margin-bottom:12px;">每一組都至少獲得一項榮譽——下表一次看清 12 組的得獎分布。</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;">
+          <div v-for="c in coverage" :key="c.z"
+               style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface);">
+            <div style="font-weight:800;font-size:15px;">{{ c.z }}
+              <span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:4px;">{{ c.topic }}</span></div>
+            <div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px;">
+              <span v-for="a in c.awards" :key="a"
+                    style="font-family:system-ui,sans-serif;font-size:11px;font-weight:700;background:var(--gold-soft);color:var(--gold);border:1px solid #f0e0b8;border-radius:20px;padding:2px 9px;">🏅 {{ a }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ TEAMWORK ANALYSIS ═══ -->
@@ -810,6 +826,16 @@ createApp({
       {ico:'📖',title:'衛教傳達獎',    z:'未羊',reason:'阿茲海默病因與風險因子整理清晰、視覺親和'},
       {ico:'🌱',title:'治本視野獎',    z:'亥豬',reason:'不只血糖管理，著眼 β 細胞修復的根本治療，並統整 T1D／T2D 全貌，架構紮實完整'},
     ];
+    // ── 全班 12 組榮譽總覽（靜態，必定呈現；每組至少一獎，不依賴即時資料）──
+    const FIXED_DATA={'酉雞':'學術深度獎','戌狗':'人氣獎','午馬':'全員投入獎'};
+    const TEAM5=['子鼠','寅虎','戌狗'];   // AI 團隊協作 tw=5.0 並列
+    const coverage=computed(()=> ZODIAC.map(z=>{
+      const list=[];
+      const sig=SIGNATURE.find(s=>s.z===z); if(sig) list.push(sig.title);
+      if(FIXED_DATA[z]) list.push(FIXED_DATA[z]);
+      if(TEAM5.includes(z)) list.push('團隊協作獎');
+      return {z, topic:topicOf(z), awards:list};
+    }));
 
     // ── Teamwork analysis ─────────────────────────────────────────────────
     const topicShort=(z)=>{const t=topicOf(z); return t? t.replace(/（.*）/,'').slice(0,8):'';};
@@ -1008,7 +1034,7 @@ createApp({
 
     return {tab,sel,loadState,stu,tea,N,ZODIAC,EV_LABELS,topicOf,aiOf,mappedCount,
       bandClass,bandLabel,bandExplain,teaTier,
-      barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,SIGNATURE,
+      barStudent,barTeacher,barAI,barTeam,strengthText,growthText,awards,SIGNATURE,coverage,
       topicShort,teamRanked,evCoverage,teamCorr,corrLabel,photoGraded,timelineGraded,equityGraded,contribMetrics,
       traitStats,groupTraits,kolbStats,groupKolb};
   }
