@@ -269,9 +269,14 @@
                                     <i class="fa-solid fa-lock text-red-500 w-4 text-center text-xs shrink-0"></i>
                                     <input type="datetime-local" v-model="scheduleInputs.closeAt" @change="scheduleDirty=true" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono focus:border-red-500 outline-none">
                                 </div>
-                                <button @click="saveSchedule" class="w-full py-1.5 rounded-lg text-xs font-bold transition border" :class="scheduleDirty ? 'bg-blue-600 hover:bg-blue-500 border-blue-400 text-white animate-pulse' : 'bg-slate-800 border-slate-600 text-slate-500'">
-                                    <i class="fa-solid fa-check mr-1"></i>{{ scheduleDirty ? '套用時程' : '已同步' }}
-                                </button>
+                                <div class="flex gap-2">
+                                    <button @click="saveSchedule" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition border" :class="scheduleDirty ? 'bg-blue-600 hover:bg-blue-500 border-blue-400 text-white animate-pulse' : 'bg-slate-800 border-slate-600 text-slate-500'">
+                                        <i class="fa-solid fa-check mr-1"></i>{{ scheduleDirty ? '套用時程' : '已同步' }}
+                                    </button>
+                                    <button @click="clearSchedule" title="清除排程,門禁改為純手動" class="px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-slate-800 border-slate-600 text-slate-400 hover:bg-red-900/40 hover:text-red-300 hover:border-red-700">
+                                        <i class="fa-solid fa-eraser mr-1"></i>清除排程
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -688,6 +693,19 @@ function useClassroom(sessionId, addToast) {
         }
     };
 
+    // 清除排程:把殘留的 scheduledOpenAt/CloseAt 歸零,門禁改為純手動(避免排程與手動互相覆寫)
+    const clearSchedule = async () => {
+        try {
+            scheduleInputs.openAt = '';
+            scheduleInputs.closeAt = '';
+            await update(dbRef(db, `classrooms/${sessionId.value}/status`), { scheduledOpenAt: null, scheduledCloseAt: null });
+            scheduleDirty.value = false;
+            addToast("排程已清除,門禁改為純手動", "info", "fa-solid fa-eraser");
+        } catch (e) {
+            addToast("清除失敗", "error", "fa-solid fa-triangle-exclamation");
+        }
+    };
+
     const fmtMs = (ms) => {
         const sec = Math.floor(Math.abs(ms) / 1000);
         return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
@@ -746,7 +764,7 @@ function useClassroom(sessionId, addToast) {
         }
     };
 
-    return { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, toggleVoting, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule };
+    return { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, toggleVoting, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule, clearSchedule };
 }
 
 function useRoster(sessionId, students, posterScores, addToast) {
@@ -1083,7 +1101,7 @@ createApp({
         
         const { form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession } = useAuthAndSession(addToast);
         const sessionId = computed(() => form.sessionId);
-        const { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, toggleVoting, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule } = useClassroom(sessionId, addToast);
+        const { state, students, localLinks, linksDirty, initListeners, setStatus, updateConfig, toggleVoting, switchPhase, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule, clearSchedule } = useClassroom(sessionId, addToast);
         const { posterScores, voteCount, maxVoteScore, initVoteListener } = usePosterVoting(sessionId);
         const { searchQuery, displayedList, studentCount, activeCount, calculateScore, isSpeedrun, getStatusColor, getBeaconClass, revokeToken, assignLeader, revokeLeader, deleteStudent } = useRoster(sessionId, students, posterScores, addToast);
         const { importRaw, importMode, parsedPreview, generateDemoRoster, executeImport, undoLastImport, exportToCSV } = useImporter(sessionId, students, showImporter, addToast);
@@ -1137,7 +1155,7 @@ createApp({
         return { 
             form, hasJoined, login, logout, refreshId, sessionHistory, showHistory, manualSessionId, switchSession,
             toasts, showImporter, showGroupLinkSetting,
-            state, localLinks, linksDirty, setStatus, switchPhase, updateConfig, toggleVoting, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule,
+            state, localLinks, linksDirty, setStatus, switchPhase, updateConfig, toggleVoting, syncLinks, sessionTimer, scheduleInputs, scheduleDirty, saveSchedule, clearSchedule,
             searchQuery, displayedList, studentCount, activeCount, globalProgress,
             calculateScore, isSpeedrun, getStatusColor, getBeaconClass,
             assignLeader, revokeLeader, revokeToken, deleteStudent,
